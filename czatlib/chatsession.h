@@ -8,6 +8,7 @@
 
 #include "conversationstate.h"
 
+class QImage;
 class QWebSocket;
 class QTimerEvent;
 
@@ -49,6 +50,7 @@ signals:
   void privateConversationStateChanged(const QString &nickname,
                                        ConversationState state);
   void privateMessageReceived(const Message &msg);
+  void imageReceived(const QString &nickname, const QImage &image);
   void userJoined(const QString &nickname);
   void userLeft(const QString &nickname);
 

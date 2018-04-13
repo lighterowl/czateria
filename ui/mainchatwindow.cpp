@@ -1,8 +1,13 @@
 #include "mainchatwindow.h"
 #include "ui_mainchatwindow.h"
 
+#include <QDateTime>
+#include <QDialogButtonBox>
+#include <QFileDialog>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QSortFilterProxyModel>
+#include <QStandardPaths>
 
 #include <czatlib/chatsession.h>
 #include <czatlib/message.h>
@@ -15,6 +20,40 @@ int getOptimalUserListWidth(QWidget *widget) {
   auto font = widget->font();
   font.setBold(true);
   return QFontMetrics(font).size(Qt::TextSingleLine, worstCase).width();
+}
+
+void showImageDialog(QWidget *parent, const QString &nickname,
+                     const QString &channel, const QImage &image) {
+  auto imgDialog = new QDialog(parent);
+  imgDialog->setAttribute(Qt::WA_DeleteOnClose);
+  imgDialog->setModal(false);
+  imgDialog->setWindowTitle(QObject::tr("Image from %1").arg(nickname));
+  auto layout = new QVBoxLayout;
+  auto label = new QLabel;
+  auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Save);
+  buttonBox->setCenterButtons(true);
+  auto defaultPath = QString(QLatin1String("%1/czateria_%2_%3_%4.png"))
+                         .arg(QStandardPaths::writableLocation(
+                             QStandardPaths::PicturesLocation))
+                         .arg(channel)
+                         .arg(nickname)
+                         .arg(QDateTime::currentDateTime().toString(
+                             QLatin1String("yyyyMMddHHmmss")));
+  QObject::connect(buttonBox->button(QDialogButtonBox::Save),
+                   &QPushButton::clicked, [=](auto) {
+                     auto fileName = QFileDialog::getSaveFileName(
+                         parent,
+                         QObject::tr("Save image from %1").arg(nickname),
+                         defaultPath);
+                     if (!fileName.isNull()) {
+                       image.save(fileName);
+                     }
+                   });
+  label->setPixmap(QPixmap::fromImage(image));
+  layout->addWidget(label);
+  layout->addWidget(buttonBox);
+  imgDialog->setLayout(layout);
+  imgDialog->show();
 }
 } // namespace
 
@@ -52,6 +91,10 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
           &ChatWindowTabWidget::onPrivateConversationStateChanged);
   connect(mChatSession, &Czateria::ChatSession::nicknameAssigned,
           ui->nicknameLabel, &QLabel::setText);
+  connect(mChatSession, &Czateria::ChatSession::imageReceived,
+          [=](auto &&nickname, auto &&image) {
+            showImageDialog(this, nickname, mChatSession->channel(), image);
+          });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
           mChatSession,

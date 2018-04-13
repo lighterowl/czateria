@@ -1,7 +1,7 @@
 #include "icons.h"
 
-#include <QRegularExpression>
 #include <QDebug>
+#include <QRegularExpression>
 
 namespace {
 struct Icon {
