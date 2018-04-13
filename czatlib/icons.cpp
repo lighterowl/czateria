@@ -1,5 +1,7 @@
 #include "icons.h"
 
+#include <array>
+
 #include <QDebug>
 #include <QRegularExpression>
 
