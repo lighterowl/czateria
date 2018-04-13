@@ -1,6 +1,7 @@
 #include "icons.h"
 
 #include <QRegularExpression>
+#include <QDebug>
 
 namespace {
 struct Icon {
@@ -76,7 +77,9 @@ QString tagsToTextIcons(const QString &str) {
     rv.replace(m.capturedStart() + offset, m.capturedLength(), icon.text);
     offset += (icon.text.length() - m.capturedLength());
   }
-
+  // messages tend to contain an embedded \u0000 for some reason. there's no
+  // real point in keeping them.
+  rv.remove(QChar(0));
   return rv;
 }
 
