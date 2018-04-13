@@ -119,6 +119,7 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
   if (rv == QMessageBox::Yes) {
     mChatSession->acceptPrivateConversation(nickname);
     ui->tabWidget->openPrivateMessageTab(nickname);
+    ui->lineEdit->setFocus(Qt::OtherFocusReason);
   } else {
     mChatSession->rejectPrivateConversation(nickname);
   }
