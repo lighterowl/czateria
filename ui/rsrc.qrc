@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/czateria.png</file>
+        <file>icons/door_in.png</file>
+        <file>icons/door_out.png</file>
+        <file>icons/no_entry.png</file>
+        <file>icons/text_bold.png</file>
+        <file>icons/text_italic.png</file>
+        <file>icons/text_underline.png</file>
+        <file>icons/transmit_blue.png</file>
+    </qresource>
+</RCC>
