@@ -16,7 +16,7 @@
 namespace {
 bool loginCodeToFailReason(int code, Czateria::LoginFailReason &why) {
   using r = Czateria::LoginFailReason;
-  static const std::array<std::tuple<int, r>, 6> codeToFailReason = {
+  static const std::array<std::tuple<int, r>, 5> codeToFailReason = {
       {{-9, r::BadCaptcha},
        {-5, r::NickRegistered},
        {-6, r::NoSuchUser},
