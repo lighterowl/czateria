@@ -58,6 +58,11 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
   case Czateria::LoginFailReason::NoSuchUser:
     message = QObject::tr("no such user");
     break;
+  case Czateria::LoginFailReason::NaughtyNick:
+    message =
+        QObject::tr("nick rejected by the server.\nYou probably have naughty "
+                    "words in it.");
+    break;
   case Czateria::LoginFailReason::Unknown:
     message = QObject::tr("reason unknown");
     break;

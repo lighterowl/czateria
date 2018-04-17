@@ -87,6 +87,9 @@ void LoginSession::onReplyReceived(const QByteArray &data) {
     case -8:
       why = LoginFailReason::BadPassword;
       break;
+    case -10:
+      why = LoginFailReason::NaughtyNick;
+      break;
     default:
       qDebug() << "unknown login reply" << json;
     }

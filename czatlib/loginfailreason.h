@@ -8,7 +8,8 @@ enum class LoginFailReason {
   BadCaptcha,
   BadPassword,
   NickRegistered,
-  NoSuchUser
+  NoSuchUser,
+  NaughtyNick
 };
 }
 
