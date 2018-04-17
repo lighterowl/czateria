@@ -11,6 +11,20 @@
 #include <QUrlQuery>
 
 #include "captcha.h"
+#include "util.h"
+
+namespace {
+bool loginCodeToFailReason(int code, Czateria::LoginFailReason &why) {
+  using r = Czateria::LoginFailReason;
+  static const std::array<std::tuple<int, r>, 6> codeToFailReason = {
+      {{-9, r::BadCaptcha},
+       {-5, r::NickRegistered},
+       {-6, r::NoSuchUser},
+       {-8, r::BadPassword},
+       {-10, r::NaughtyNick}}};
+  return CzateriaUtil::convert(code, why, codeToFailReason);
+}
+} // namespace
 
 namespace Czateria {
 
@@ -74,23 +88,7 @@ void LoginSession::onReplyReceived(const QByteArray &data) {
       obj[QLatin1String("status")].toInt() != 1 || !login_data.isObject()) {
     auto code = obj[QLatin1String("code")].toInt();
     LoginFailReason why = LoginFailReason::Unknown;
-    switch (code) {
-    case -9:
-      why = LoginFailReason::BadCaptcha;
-      break;
-    case -5:
-      why = LoginFailReason::NickRegistered;
-      break;
-    case -6:
-      why = LoginFailReason::NoSuchUser;
-      break;
-    case -8:
-      why = LoginFailReason::BadPassword;
-      break;
-    case -10:
-      why = LoginFailReason::NaughtyNick;
-      break;
-    default:
+    if (!loginCodeToFailReason(code, why)) {
       qDebug() << "unknown login reply" << json;
     }
     emit loginFailed(why, login_data.toString());

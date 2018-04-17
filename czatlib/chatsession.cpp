@@ -15,6 +15,7 @@
 #include "loginsession.h"
 #include "message.h"
 #include "userlistmodel.h"
+#include "util.h"
 
 namespace {
 QByteArray loginMsg(const QString &sessionId, const QString &channelName,
@@ -117,24 +118,16 @@ bool shouldUseQueuedConnectionForWebSocket() {
   return rv;
 }
 
-Czateria::ConversationState privSubcodeToState(int subcode, bool &ok) {
-  ok = true;
+bool privSubcodeToState(int subcode, Czateria::ConversationState &state) {
   using s = Czateria::ConversationState;
-  switch (subcode) {
-  case 13:
-  case 18:
-    return s::Rejected;
-  case 14:
-    return s::Closed;
-  case 15:
-    return s::UserLeft;
-  case 16:
-    return s::NoPrivs;
-  case 17:
-    return s::NoFreePrivs;
-  }
-  ok = false;
-  return s::InviteReceived;
+  static const std::array<std::tuple<int, s>, 6> subcodeToState = {
+      {{13, s::Rejected},
+       {18, s::Rejected},
+       {14, s::Closed},
+       {15, s::UserLeft},
+       {16, s::NoPrivs},
+       {17, s::NoFreePrivs}}};
+  return CzateriaUtil::convert(subcode, state, subcodeToState);
 }
 } // namespace
 
@@ -363,11 +356,12 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
     return true;
   }
   bool ok;
-  auto newState = privSubcodeToState(subcode, ok);
-  if (ok) {
+  Czateria::ConversationState newState;
+  if ((ok = privSubcodeToState(subcode, newState))) {
     mCurrentPrivate[user] = newState;
     emit privateConversationStateChanged(user, newState);
   }
+
   return ok;
 } // namespace Czateria
 

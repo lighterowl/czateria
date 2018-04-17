@@ -25,4 +25,5 @@ HEADERS += room.h \
     user.h \
     userlistmodel.h \
     icons.h \
-    conversationstate.h
+    conversationstate.h \
+    util.h
