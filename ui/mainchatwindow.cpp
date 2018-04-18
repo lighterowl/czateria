@@ -1,6 +1,7 @@
 #include "mainchatwindow.h"
 #include "ui_mainchatwindow.h"
 
+#include <QAction>
 #include <QDateTime>
 #include <QDialogButtonBox>
 #include <QFileDialog>
@@ -105,6 +106,25 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
 
   connect(ui->listView, &QAbstractItemView::doubleClicked, this,
           &MainChatWindow::onUserNameDoubleClicked);
+
+  connect(ui->tabWidget, &QTabWidget::currentChanged,
+          [=](auto idx) { ui->sendImageButton->setEnabled(idx != 0); });
+  connect(ui->sendImageButton, &QAbstractButton::clicked, [=](auto) {
+    // TODO specify a filter
+    auto filename =
+        QFileDialog::getOpenFileName(this, tr("Select an image file"));
+    if (filename.isEmpty()) {
+      return;
+    }
+    auto image = QImage(filename);
+    if (image.isNull()) {
+      QMessageBox::critical(
+          this, tr("Not an image"),
+          tr("The selected file does not appear to be an image"));
+      return;
+    }
+    mChatSession->sendImage(ui->tabWidget->getCurrentNickname(), image);
+  });
 
   mChatSession->start();
 }
