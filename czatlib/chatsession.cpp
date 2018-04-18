@@ -1,5 +1,6 @@
 #include "chatsession.h"
 
+#include <QBuffer>
 #include <QImage>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -89,6 +90,22 @@ QByteArray privClosedMsg(const QString &nickname) {
   obj.insert(QLatin1String("code"), 97);
   obj.insert(QLatin1String("subcode"), 14);
   obj.insert(QLatin1String("user"), nickname);
+  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+}
+
+QByteArray privImageMsg(const QString &nickname, const QImage &image) {
+  QJsonObject obj;
+  obj.insert(QLatin1String("code"), 97);
+  obj.insert(QLatin1String("subcode"), 25);
+  obj.insert(QLatin1String("user"), nickname);
+  obj.insert(QLatin1String("type"), 1);
+  obj.insert(QLatin1String("imgWidth"), image.width());
+  obj.insert(QLatin1String("imgHeight"), image.height());
+  QByteArray imageData;
+  QBuffer buf(&imageData);
+  buf.open(QIODevice::WriteOnly);
+  image.save(&buf, "JPG", -1);
+  obj.insert(QLatin1String("data"), QString::fromLatin1(imageData.toBase64()));
   return QJsonDocument(obj).toJson(QJsonDocument::Compact);
 }
 
@@ -202,6 +219,18 @@ void ChatSession::sendPrivateMessage(const QString &nickname,
   } else {
     Q_ASSERT(false && "unknown private conversation state");
   }
+}
+
+void ChatSession::sendImage(const QString &nickname, const QImage &image) {
+  auto sentImage = image;
+  if (image.width() > 600 || image.height() > 600) {
+    // the website seems to scale images to be at most 600 pixels wide or high
+    // before actually sending them.
+    sentImage =
+        image.scaled(600, 600, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  }
+  mWebSocket->sendTextMessage(
+      QString::fromUtf8(privImageMsg(nickname, sentImage)));
 }
 
 void ChatSession::timerEvent(QTimerEvent *ev) {

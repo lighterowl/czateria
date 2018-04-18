@@ -38,6 +38,7 @@ public:
 
   void sendRoomMessage(const QString &message);
   void sendPrivateMessage(const QString &nickname, const QString &message);
+  void sendImage(const QString &nickname, const QImage &image);
 
   const QString &channel() const { return mChannel; }
   const QString &nickname() const { return mNickname; }
