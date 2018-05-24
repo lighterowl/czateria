@@ -135,7 +135,8 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
   auto question =
       QObject::tr("%1 wants to talk in private.\nDo you accept?").arg(nickname);
   auto rv = QMessageBox::question(this, QObject::tr("New private conversation"),
-                                  question);
+                                  question, QMessageBox::Yes | QMessageBox::No,
+                                  QMessageBox::Yes);
   if (rv == QMessageBox::Yes) {
     mChatSession->acceptPrivateConversation(nickname);
     ui->tabWidget->openPrivateMessageTab(nickname);
