@@ -25,6 +25,8 @@ public:
   QString getCurrentNickname() const;
 
   void addMessageToCurrent(const Czateria::Message &msg);
+  void addMessageToCurrent(const QString &str);
+  QPlainTextEdit *privateMessageTab(const QString &nickname);
 
 signals:
   void privateConversationClosed(const QString &nickname);
@@ -33,7 +35,6 @@ private:
   void onTabCloseRequested(int index);
   void writePrivateInfo(const QString &nickname, const QString &message,
                         const QIcon &icon);
-  QPlainTextEdit *privateMessageTab(const QString &nickname);
   void indicateTabActivity(int idx, const QIcon &icon);
   void indicateTabActivity(QPlainTextEdit *tab, const QIcon &icon);
   void clearTabActivity(int idx);

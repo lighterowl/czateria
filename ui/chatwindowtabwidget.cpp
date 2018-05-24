@@ -114,8 +114,11 @@ QString ChatWindowTabWidget::getCurrentNickname() const {
 }
 
 void ChatWindowTabWidget::addMessageToCurrent(const Czateria::Message &msg) {
-  static_cast<QPlainTextEdit *>(currentWidget())
-      ->appendPlainText(formatMessage(msg));
+  addMessageToCurrent(formatMessage(msg));
+}
+
+void ChatWindowTabWidget::addMessageToCurrent(const QString &str) {
+  static_cast<QPlainTextEdit *>(currentWidget())->appendPlainText(str);
 }
 
 void ChatWindowTabWidget::onTabCloseRequested(int index) {

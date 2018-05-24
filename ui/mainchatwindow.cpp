@@ -6,6 +6,7 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSortFilterProxyModel>
 #include <QStandardPaths>
@@ -95,6 +96,10 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
   connect(mChatSession, &Czateria::ChatSession::imageReceived,
           [=](auto &&nickname, auto &&image) {
             showImageDialog(this, nickname, mChatSession->channel(), image);
+            ui->tabWidget->privateMessageTab(nickname)->appendPlainText(
+                QObject::tr("[%1] Image received")
+                    .arg(QDateTime::currentDateTime().toString(
+                        QLatin1String("HH:mm:ss"))));
           });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
@@ -124,6 +129,10 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
       return;
     }
     mChatSession->sendImage(ui->tabWidget->getCurrentNickname(), image);
+    ui->tabWidget->addMessageToCurrent(
+        QObject::tr("[%1] Image sent")
+            .arg(QDateTime::currentDateTime().toString(
+                QLatin1String("HH:mm:ss"))));
   });
 
   mChatSession->start();
