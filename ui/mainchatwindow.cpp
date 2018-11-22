@@ -111,6 +111,8 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
 
   connect(ui->listView, &QAbstractItemView::doubleClicked, this,
           &MainChatWindow::onUserNameDoubleClicked);
+  connect(ui->listView, &CustomListView::mouseMiddleClicked, this,
+          &MainChatWindow::onUserNameMiddleClicked);
 
   connect(ui->tabWidget, &QTabWidget::currentChanged,
           [=](auto idx) { ui->sendImageButton->setEnabled(idx != 0); });
@@ -177,4 +179,11 @@ void MainChatWindow::onUserNameDoubleClicked(const QModelIndex &proxyIdx) {
     ui->tabWidget->openPrivateMessageTab(nickname);
     ui->lineEdit->setFocus(Qt::OtherFocusReason);
   }
+}
+
+void MainChatWindow::onUserNameMiddleClicked() {
+  auto idx =
+      mSortProxy->mapToSource(ui->listView->selectionModel()->currentIndex());
+  auto nickname = mChatSession->userListModel()->data(idx).toString();
+  ui->lineEdit->insert(nickname);
 }

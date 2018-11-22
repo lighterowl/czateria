@@ -27,6 +27,7 @@ private:
   void onNewPrivateConversation(const QString &nickname);
   void onReturnPressed();
   void onUserNameDoubleClicked(const QModelIndex &idx);
+  void onUserNameMiddleClicked();
 
   Ui::MainChatWindow *ui;
   Czateria::ChatSession *const mChatSession;
