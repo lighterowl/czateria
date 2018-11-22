@@ -2,6 +2,7 @@
 #include "ui_mainchatwindow.h"
 
 #include <QAction>
+#include <QCompleter>
 #include <QDateTime>
 #include <QDialogButtonBox>
 #include <QFileDialog>
@@ -108,6 +109,12 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
 
   connect(ui->lineEdit, &QLineEdit::returnPressed, this,
           &MainChatWindow::onReturnPressed);
+  // TODO should be disabled for private message tabs
+  auto completer = new QCompleter(mChatSession->userListModel());
+  completer->setCompletionRole(Qt::DisplayRole);
+  completer->setCaseSensitivity(Qt::CaseInsensitive);
+  completer->setCompletionMode(QCompleter::InlineCompletion);
+  ui->lineEdit->setCompleter(completer);
 
   connect(ui->listView, &QAbstractItemView::doubleClicked, this,
           &MainChatWindow::onUserNameDoubleClicked);
