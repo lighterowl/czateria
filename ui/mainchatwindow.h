@@ -4,6 +4,7 @@
 #include <QWidget>
 
 class QSortFilterProxyModel;
+class QCompleter;
 
 namespace Ui {
 class MainChatWindow;
@@ -32,6 +33,7 @@ private:
   Ui::MainChatWindow *ui;
   Czateria::ChatSession *const mChatSession;
   QSortFilterProxyModel *const mSortProxy;
+  QCompleter *const mNicknameCompleter;
 };
 
 #endif // MAINCHATWINDOW_H

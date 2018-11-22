@@ -58,13 +58,24 @@ void showImageDialog(QWidget *parent, const QString &nickname,
   imgDialog->setLayout(layout);
   imgDialog->show();
 }
+
+QCompleter *createNicknameCompleter(Czateria::UserListModel *userlist,
+                                    QObject *parent) {
+  auto rv = new QCompleter(userlist, parent);
+  rv->setCompletionRole(Qt::DisplayRole);
+  rv->setCaseSensitivity(Qt::CaseInsensitive);
+  rv->setCompletionMode(QCompleter::InlineCompletion);
+  return rv;
+}
 } // namespace
 
 MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
                                QWidget *parent)
     : QWidget(parent, Qt::Window), ui(new Ui::MainChatWindow),
       mChatSession(new Czateria::ChatSession(login, this)),
-      mSortProxy(new QSortFilterProxyModel(this)) {
+      mSortProxy(new QSortFilterProxyModel(this)),
+      mNicknameCompleter(
+          createNicknameCompleter(mChatSession->userListModel(), this)) {
   ui->setupUi(this);
   setWindowTitle(mChatSession->channel());
 
@@ -106,15 +117,14 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
           mChatSession,
           &Czateria::ChatSession::notifyPrivateConversationClosed);
+  connect(ui->tabWidget, &ChatWindowTabWidget::currentChanged, [=](int tabIdx) {
+    // disable completer for private conversations
+    ui->lineEdit->setCompleter(tabIdx == 0 ? mNicknameCompleter : nullptr);
+  });
 
   connect(ui->lineEdit, &QLineEdit::returnPressed, this,
           &MainChatWindow::onReturnPressed);
-  // TODO should be disabled for private message tabs
-  auto completer = new QCompleter(mChatSession->userListModel());
-  completer->setCompletionRole(Qt::DisplayRole);
-  completer->setCaseSensitivity(Qt::CaseInsensitive);
-  completer->setCompletionMode(QCompleter::InlineCompletion);
-  ui->lineEdit->setCompleter(completer);
+  ui->lineEdit->setCompleter(mNicknameCompleter);
 
   connect(ui->listView, &QAbstractItemView::doubleClicked, this,
           &MainChatWindow::onUserNameDoubleClicked);
