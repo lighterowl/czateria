@@ -6,6 +6,7 @@
 #include <QDateTime>
 #include <QDialogButtonBox>
 #include <QFileDialog>
+#include <QImageReader>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -65,6 +66,25 @@ QCompleter *createNicknameCompleter(Czateria::UserListModel *userlist,
   rv->setCompletionRole(Qt::DisplayRole);
   rv->setCaseSensitivity(Qt::CaseInsensitive);
   rv->setCompletionMode(QCompleter::InlineCompletion);
+  return rv;
+}
+
+QString getImageFilter() {
+  static QString cached_result;
+  if (!cached_result.isNull()) {
+    return cached_result;
+  }
+  auto rv = QObject::tr("Images (");
+  auto formats = QImageReader::supportedImageFormats();
+  for (auto &&format : formats) {
+    rv.append(QString(QLatin1Literal("*.%1"))
+                  .arg(QString::fromUtf8(format.constData()).toLower()));
+    if (&format != &formats.back()) {
+      rv.append(QLatin1Char(' '));
+    }
+  }
+  rv.append(QLatin1Char(')'));
+  cached_result = rv;
   return rv;
 }
 } // namespace
@@ -134,9 +154,8 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
   connect(ui->tabWidget, &QTabWidget::currentChanged,
           [=](auto idx) { ui->sendImageButton->setEnabled(idx != 0); });
   connect(ui->sendImageButton, &QAbstractButton::clicked, [=](auto) {
-    // TODO specify a filter
-    auto filename =
-        QFileDialog::getOpenFileName(this, tr("Select an image file"));
+    auto filename = QFileDialog::getOpenFileName(
+        this, tr("Select an image file"), QString(), getImageFilter());
     if (filename.isEmpty()) {
       return;
     }
