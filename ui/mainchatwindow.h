@@ -14,6 +14,7 @@ namespace Czateria {
 class LoginSession;
 class ChatSession;
 class Message;
+class AvatarHandler;
 } // namespace Czateria
 
 class MainChatWindow : public QWidget {
@@ -21,6 +22,7 @@ class MainChatWindow : public QWidget {
 
 public:
   explicit MainChatWindow(const Czateria::LoginSession &login,
+                          Czateria::AvatarHandler &avatars,
                           QWidget *parent = nullptr);
   ~MainChatWindow();
 

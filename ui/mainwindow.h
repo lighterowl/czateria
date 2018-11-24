@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 #include <czatlib/loginfailreason.h>
+#include <czatlib/avatarhandler.h>
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -32,6 +33,7 @@ private:
   Ui::MainWindow *ui;
   QNetworkAccessManager *const mNAM;
   Czateria::RoomListModel *mRoomListModel;
+  Czateria::AvatarHandler mAvatarHandler;
 
   void onChannelDoubleClicked(const QModelIndex &);
   bool isLoginDataEntered();

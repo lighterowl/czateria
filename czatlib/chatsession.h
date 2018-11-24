@@ -17,11 +17,13 @@ namespace Czateria {
 class LoginSession;
 class Message;
 class UserListModel;
+class AvatarHandler;
 
 class ChatSession : public QObject {
   Q_OBJECT
 public:
-  ChatSession(const LoginSession &login, QObject *parent = nullptr);
+  ChatSession(const LoginSession &login, const AvatarHandler &avatars,
+              QObject *parent = nullptr);
   virtual ~ChatSession() override;
 
   void start();

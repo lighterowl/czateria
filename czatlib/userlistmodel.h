@@ -13,10 +13,12 @@ class QJsonObject;
 
 namespace Czateria {
 
+class AvatarHandler;
+
 class UserListModel : public QAbstractListModel {
   Q_OBJECT
 public:
-  UserListModel(QObject *parent = nullptr);
+  UserListModel(const AvatarHandler& avatars, QObject *parent = nullptr);
 
   void setUserData(const QJsonArray &userData);
   void setCardData(const QJsonArray &cardData);
@@ -26,6 +28,7 @@ public:
 
   void addUsers(const QJsonArray &userData);
   void removeUser(const QString &nickname);
+  User *user(const QString &nickname);
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   QVariant data(const QModelIndex &index,
@@ -38,6 +41,8 @@ private:
 
   std::unique_ptr<QJsonArray> mUserDataCache;
   std::unique_ptr<QJsonArray> mCardDataCache;
+  
+  const AvatarHandler& mAvatarHandler;
 };
 
 } // namespace Czateria

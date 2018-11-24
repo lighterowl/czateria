@@ -27,6 +27,8 @@ Czateria::User::Sex sexToUserSex(const QString &sex) {
     return sx::Male;
   } else if (sex == QLatin1String("F")) {
     return sx::Female;
+  } else if (sex == QLatin1String("B")) {
+    return sx::Both;
   } else {
     return sx::Unspecified;
   }
@@ -46,13 +48,6 @@ User::User(const QJsonObject &basicInfo)
       mMobileUser(basicInfo[QLatin1String("isMobileUser")].toBool()),
       mHasPrivs(basicInfo[QLatin1String("privs")].toInt() > 0),
       mType(permToUserType(basicInfo[QLatin1String("perm")].toInt())) {}
-
-/* TODO : avatars are downloaded from one of these two addresses :
- * https://qan.interia.pl/chat/applet/chat_resources/images/avatars/defaults/17.jpg
- * or
- * https://qan.interia.pl/chat/applet/chat_resources/images/avatars/users/15280697_1495985497508.jpg
- * looks like both can be accessed without any extra authentication
- */
 
 void User::updateCardInfo(const QJsonObject &cardInfo) {
   mDescription = cardInfo[QLatin1String("description")].toString();

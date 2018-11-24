@@ -2,6 +2,9 @@
 
 #include <QFont>
 #include <QJsonObject>
+#include <QTextStream>
+
+#include "avatarhandler.h"
 
 namespace {
 template <typename ForwardIt, typename T>
@@ -9,11 +12,73 @@ ForwardIt binary_find(ForwardIt first, ForwardIt last, const T &value) {
   first = std::lower_bound(first, last, value);
   return (first != last && (!(value < *first))) ? first : last;
 }
+
+QLatin1String describeSex(Czateria::User::Sex s) {
+  using sx = Czateria::User::Sex;
+  switch (s) {
+  case sx::Male:
+    return QLatin1String("Male");
+  case sx::Female:
+    return QLatin1String("Female");
+  case sx::Both:
+    return QLatin1String("Both");
+  case sx::Unspecified:
+    return QLatin1String("Unknown");
+  }
+  Q_ASSERT(0);
+  return QLatin1String();
+}
+
+bool sexIsUnspecified(Czateria::User::Sex s) {
+  return s == Czateria::User::Sex::Unspecified;
+}
+
+QString createToolTip(const Czateria::User &user,
+                      const Czateria::AvatarHandler &avatars) {
+  QString rv;
+  QTextStream s(&rv);
+  // return an empty string early instead of an empty HTML body in order to skip
+  // showing the tooltip if there's nothing to show.
+  if (user.mDescription.isEmpty() && !avatars.hasAvatar(user) &&
+      sexIsUnspecified(user.mSex) && sexIsUnspecified(user.mSearchSex) &&
+      !user.mBirthDate.isValid()) {
+    return QString();
+  }
+  s << "<html><body><center>";
+  if (!user.mDescription.isEmpty()) {
+    s << "<i>" << user.mDescription << "</i><br>";
+  }
+  if (avatars.hasAvatar(user)) {
+    auto &&avatar = avatars.getAvatar(user);
+    s << QString(QLatin1String("<img src=\"data:%1;base64, "))
+             .arg(avatar.contentType());
+    s << QString::fromUtf8(avatar.data.toBase64());
+    s << "\">";
+  }
+  s << "</center><table>";
+  if (user.mSex != Czateria::User::Sex::Unspecified) {
+    s << "<tr><td>Sex</td><td>" << describeSex(user.mSex) << "</td></tr>";
+  }
+  if (user.mSearchSex != Czateria::User::Sex::Unspecified) {
+    s << "<tr><td>Looking for</td><td>" << describeSex(user.mSearchSex);
+    if (user.mAgeFrom || user.mAgeTo) {
+      s << " (" << user.mAgeFrom << "-" << user.mAgeTo << ")";
+    }
+    s << "</tr>";
+  }
+  if (user.mBirthDate.isValid()) {
+    s << "<tr><td>Birthday</td><td>" << user.mBirthDate.toString()
+      << "</td></tr>";
+  }
+  s << "</table></body></html>";
+  return rv;
+}
 } // namespace
 
 namespace Czateria {
 
-UserListModel::UserListModel(QObject *parent) : QAbstractListModel(parent) {}
+UserListModel::UserListModel(const AvatarHandler &avatars, QObject *parent)
+    : QAbstractListModel(parent), mAvatarHandler(avatars) {}
 
 void UserListModel::setUserData(const QJsonArray &userData) {
   if (mCardDataCache) {
@@ -68,7 +133,7 @@ void UserListModel::setPrivStatus(const QString &nickname, bool hasPrivs) {
   const auto itEnd = std::end(mUsers);
   auto it = binary_find(itBegin, itEnd, User(nickname));
   if (it != itEnd) {
-    it->setHasPrivs(hasPrivs);
+    it->mHasPrivs = hasPrivs;
     auto row = std::distance(itBegin, it);
     auto modIdx = index(static_cast<int>(row));
     emit dataChanged(modIdx, modIdx, {Qt::FontRole});
@@ -98,6 +163,13 @@ void UserListModel::removeUser(const QString &nickname) {
   }
 }
 
+User *UserListModel::user(const QString &nickname) {
+  const auto itBegin = std::begin(mUsers);
+  const auto itEnd = std::end(mUsers);
+  auto it = binary_find(itBegin, itEnd, User(nickname));
+  return it != itEnd ? &(*it) : nullptr;
+}
+
 int UserListModel::rowCount(const QModelIndex &) const {
   return static_cast<int>(mUsers.size());
 }
@@ -110,16 +182,16 @@ QVariant UserListModel::data(const QModelIndex &index, int role) const {
   auto &&user = mUsers[static_cast<unsigned>(index.row())];
   switch (role) {
   case Qt::DisplayRole:
-    return user.nickname();
+    return user.mLogin;
   case Qt::FontRole: {
     QFont font;
-    if (user.hasPrivs()) {
+    if (user.mHasPrivs) {
       font.setBold(true);
     }
     return font;
   }
   case Qt::ToolTipRole: {
-    return user.description();
+    return createToolTip(user, mAvatarHandler);
   }
   }
 

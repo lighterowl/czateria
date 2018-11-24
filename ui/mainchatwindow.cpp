@@ -90,9 +90,10 @@ QString getImageFilter() {
 } // namespace
 
 MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
+                               Czateria::AvatarHandler &avatars,
                                QWidget *parent)
     : QWidget(parent, Qt::Window), ui(new Ui::MainChatWindow),
-      mChatSession(new Czateria::ChatSession(login, this)),
+      mChatSession(new Czateria::ChatSession(login, avatars, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)) {
@@ -111,6 +112,9 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
           &QSortFilterProxyModel::setFilterFixedString);
 
   ui->listView->setModel(mSortProxy);
+  ui->listView->setUserListModel(mChatSession->userListModel());
+  ui->listView->setAvatarHandler(&avatars);
+
   ui->nicknameLabel->setText(mChatSession->nickname());
   setAttribute(Qt::WA_DeleteOnClose);
 

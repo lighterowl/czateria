@@ -74,7 +74,8 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
 
 MainWindow::MainWindow(QNetworkAccessManager *nam, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mNAM(nam),
-      mRoomListModel(new Czateria::RoomListModel(this, nam)) {
+      mRoomListModel(new Czateria::RoomListModel(this, nam)),
+      mAvatarHandler(nam) {
   ui->setupUi(this);
 
   auto refreshAct =
@@ -168,7 +169,7 @@ void MainWindow::startLogin(const Czateria::Room &room) {
           });
   connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
     blockUi(ui, false);
-    auto win = new MainChatWindow(*session, this);
+    auto win = new MainChatWindow(*session, mAvatarHandler, this);
     win->show();
     session->deleteLater();
   });

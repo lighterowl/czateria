@@ -150,14 +150,15 @@ bool privSubcodeToState(int subcode, Czateria::ConversationState &state) {
 
 namespace Czateria {
 
-ChatSession::ChatSession(const LoginSession &login, QObject *parent)
+ChatSession::ChatSession(const LoginSession &login,
+                         const AvatarHandler &avatars, QObject *parent)
     : QObject(parent), mWebSocket(new QWebSocket(
                            QString(), QWebSocketProtocol::VersionLatest, this)),
       mNickname(login.nickname()), mSessionId(login.sessionId()),
       mChannel(login.room().name),
       mHost(QString(QLatin1String("wss://%1-proxy-czateria.interia.pl"))
                 .arg(login.room().port)),
-      mHelloReceived(false), mUserListModel(new UserListModel(this)) {
+      mHelloReceived(false), mUserListModel(new UserListModel(avatars, this)) {
   connect(this, &ChatSession::userLeft, mUserListModel,
           &UserListModel::removeUser);
   connect(mWebSocket, &QWebSocket::textMessageReceived, this,

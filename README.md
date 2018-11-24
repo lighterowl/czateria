@@ -9,12 +9,13 @@ Basic functionality, that is :
  * logging in as a registered user,
  * sending and receiving chatroom messages,
  * sending and receiving private messages,
- * sending and receiving images in private conversations
+ * sending and receiving images in private conversations,
+ * user profile information.
 
 is working.
 
-Certain things are missing, most notably graphical icons in conversations, full
-user profile information, and text formatting.
+Certain things are missing, most notably graphical icons in conversations and
+text formatting.
 
 # Disclaimer
 This software is not endorsed in any way by the owner of Czateria. Please use it
