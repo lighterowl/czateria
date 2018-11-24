@@ -3,10 +3,10 @@
 
 #include <QListView>
 
-class CustomListView : public QListView {
+class UserListView : public QListView {
   Q_OBJECT
 public:
-  explicit CustomListView(QWidget *parent = nullptr);
+  explicit UserListView(QWidget *parent = nullptr);
 
 protected:
   void mouseReleaseEvent(QMouseEvent *) override;

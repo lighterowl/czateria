@@ -107,7 +107,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="CustomListView" name="listView">
+           <widget class="UserListView" name="listView">
             <property name="horizontalScrollBarPolicy">
              <enum>Qt::ScrollBarAlwaysOff</enum>
             </property>
@@ -183,9 +183,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>CustomListView</class>
+   <class>UserListView</class>
    <extends>QListView</extends>
-   <header>customlistview.h</header>
+   <header>userlistview.h</header>
   </customwidget>
  </customwidgets>
  <resources>

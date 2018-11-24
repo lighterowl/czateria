@@ -12,14 +12,14 @@ SOURCES += \
     captchadialog.cpp \
     mainchatwindow.cpp \
     chatwindowtabwidget.cpp \
-    customlistview.cpp
+    userlistview.cpp
 
 HEADERS += \
         mainwindow.h \
     captchadialog.h \
     mainchatwindow.h \
     chatwindowtabwidget.h \
-    customlistview.h
+    userlistview.h
 
 FORMS += \
         mainwindow.ui \

@@ -148,7 +148,7 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
 
   connect(ui->listView, &QAbstractItemView::doubleClicked, this,
           &MainChatWindow::onUserNameDoubleClicked);
-  connect(ui->listView, &CustomListView::mouseMiddleClicked, this,
+  connect(ui->listView, &UserListView::mouseMiddleClicked, this,
           &MainChatWindow::onUserNameMiddleClicked);
 
   connect(ui->tabWidget, &QTabWidget::currentChanged,
