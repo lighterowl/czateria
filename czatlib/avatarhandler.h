@@ -41,31 +41,32 @@ public:
 
     if (avatarId.length() <= 2) {
       static const std::array<QLatin1String, 37> defaults = {
-          QLatin1String("0007CY94U0F5I2T0"), QLatin1String("0007CY7OUHUUOVC4"),
-          QLatin1String("0007CY83K51QMXUH"), QLatin1String("0007DH2IBF8WULD5"),
-          QLatin1String("0007CY880T6DETYC"), QLatin1String("0007CY896GTRBDWE"),
-          QLatin1String("0007CY8AB4O5MPQJ"), QLatin1String("0007CY8ETOWITNRX"),
-          QLatin1String("0007CY8HQ6P0VIUT"), QLatin1String("0007CY8J91F1T56G"),
-          QLatin1String("0007CY8LX62SRH5A"), QLatin1String("0007CY8M5HYD0WLA"),
-          QLatin1String("0007CY8O8WWUJ68N"), QLatin1String("0007CY8RCVFFXGEM"),
-          QLatin1String("0007CY8SH1QN17WX"), QLatin1String("0007CY8UYINS2U56"),
-          QLatin1String("0007CY8VMJWVQ0VD"), QLatin1String("0007CY8W73V7D82N"),
-          QLatin1String("0007CY8X5C98EDM0"), QLatin1String("0007CY8YMHLK1G8S"),
-          QLatin1String("0007CY8ZN3ERO4H6"), QLatin1String("0007CY90CSV4YFBB"),
-          QLatin1String("0007CY91FMWMGGW8"), QLatin1String("0007CY92FRN013EP"),
-          QLatin1String("0007CY932SSKHP6N"), QLatin1String("0007CY86EN2ERNYY"),
-          QLatin1String("0007CY875CAE7ULI"), QLatin1String("0007CY8BMBQRMVIX"),
-          QLatin1String("0007CY8CAFA4SMQU"), QLatin1String("0007CY8DBK1DQO6V"),
-          QLatin1String("0007CY8GTI3U1LWT"), QLatin1String("0007CY8IOIJ7D81G"),
-          QLatin1String("0007CY8K1T3YKWXY"), QLatin1String("0007CY8NA1ACWK3R"),
-          QLatin1String("0007CY8P6FNXQXFE"), QLatin1String("0007CY8QFXE5MNF6"),
-          QLatin1String("0007CY8TF1U7FIEE")};
+          QLatin1String("CY94U0F5I2T0"), QLatin1String("CY7OUHUUOVC4"),
+          QLatin1String("CY83K51QMXUH"), QLatin1String("DH2IBF8WULD5"),
+          QLatin1String("CY880T6DETYC"), QLatin1String("CY896GTRBDWE"),
+          QLatin1String("CY8AB4O5MPQJ"), QLatin1String("CY8ETOWITNRX"),
+          QLatin1String("CY8HQ6P0VIUT"), QLatin1String("CY8J91F1T56G"),
+          QLatin1String("CY8LX62SRH5A"), QLatin1String("CY8M5HYD0WLA"),
+          QLatin1String("CY8O8WWUJ68N"), QLatin1String("CY8RCVFFXGEM"),
+          QLatin1String("CY8SH1QN17WX"), QLatin1String("CY8UYINS2U56"),
+          QLatin1String("CY8VMJWVQ0VD"), QLatin1String("CY8W73V7D82N"),
+          QLatin1String("CY8X5C98EDM0"), QLatin1String("CY8YMHLK1G8S"),
+          QLatin1String("CY8ZN3ERO4H6"), QLatin1String("CY90CSV4YFBB"),
+          QLatin1String("CY91FMWMGGW8"), QLatin1String("CY92FRN013EP"),
+          QLatin1String("CY932SSKHP6N"), QLatin1String("CY86EN2ERNYY"),
+          QLatin1String("CY875CAE7ULI"), QLatin1String("CY8BMBQRMVIX"),
+          QLatin1String("CY8CAFA4SMQU"), QLatin1String("CY8DBK1DQO6V"),
+          QLatin1String("CY8GTI3U1LWT"), QLatin1String("CY8IOIJ7D81G"),
+          QLatin1String("CY8K1T3YKWXY"), QLatin1String("CY8NA1ACWK3R"),
+          QLatin1String("CY8P6FNXQXFE"), QLatin1String("CY8QFXE5MNF6"),
+          QLatin1String("CY8TF1U7FIEE")};
       address.append(QLatin1String("https://i.iplsc.com/-/"));
       bool ok;
       auto avatar_id = avatarId.toUInt(&ok);
       if (!ok || avatar_id >= defaults.size()) {
         return;
       }
+      address.append(QLatin1String("0007"));
       address.append(defaults[avatar_id]);
       address.append(QLatin1String("-C103.png"));
       fmt = Avatar::Format::PNG;
