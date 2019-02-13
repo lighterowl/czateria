@@ -115,6 +115,9 @@
           </item>
           <item>
            <widget class="QLineEdit" name="lineEdit_2">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;You can use regular expressions here&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="placeholderText">
              <string>Search...</string>
             </property>

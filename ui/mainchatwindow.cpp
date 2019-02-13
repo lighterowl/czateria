@@ -108,8 +108,9 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
   mSortProxy->setFilterCaseSensitivity(Qt::CaseInsensitive);
   mSortProxy->setSortLocaleAware(true);
   mSortProxy->setDynamicSortFilter(true);
-  connect(ui->lineEdit_2, &QLineEdit::textChanged, mSortProxy,
-          &QSortFilterProxyModel::setFilterFixedString);
+  void (QSortFilterProxyModel::*setFilterFn)(const QString &) =
+      &QSortFilterProxyModel::setFilterRegExp;
+  connect(ui->lineEdit_2, &QLineEdit::textChanged, mSortProxy, setFilterFn);
 
   ui->listView->setModel(mSortProxy);
   ui->listView->setUserListModel(mChatSession->userListModel());
