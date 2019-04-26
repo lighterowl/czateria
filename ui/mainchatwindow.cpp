@@ -186,10 +186,13 @@ MainChatWindow::~MainChatWindow() { delete ui; }
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
   auto question =
       QObject::tr("%1 wants to talk in private.\nDo you accept?").arg(nickname);
-  auto rv = QMessageBox::question(this, QObject::tr("New private conversation"),
-                                  question, QMessageBox::Yes | QMessageBox::No,
-                                  QMessageBox::Yes);
-  if (rv == QMessageBox::Yes) {
+  QMessageBox msgbox(QMessageBox::Question,
+                     QObject::tr("New private conversation"), question,
+                     QMessageBox::Yes | QMessageBox::No, this);
+  msgbox.setDefaultButton(QMessageBox::Yes);
+  msgbox.button(QMessageBox::Yes)->setShortcut(QKeySequence());
+  msgbox.button(QMessageBox::No)->setShortcut(QKeySequence());
+  if (msgbox.exec() == QMessageBox::Yes) {
     mChatSession->acceptPrivateConversation(nickname);
     ui->tabWidget->openPrivateMessageTab(nickname);
     ui->lineEdit->setFocus(Qt::OtherFocusReason);
