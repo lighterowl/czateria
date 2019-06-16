@@ -60,12 +60,8 @@ const std::array<Icon, 33> icons = {{
 namespace Czateria {
 QString tagsToTextIcons(const QString &str) {
   static const auto re =
-      QRegularExpression(QLatin1String("<icon>(\\d+)</icon>")
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
-                             ,
-                         QRegularExpression::OptimizeOnFirstUsageOption
-#endif
-      );
+      QRegularExpression(QLatin1String("<icon>(\\d+)</icon>"),
+                         QRegularExpression::OptimizeOnFirstUsageOption);
   auto rv = str;
   auto it = re.globalMatch(str);
   int offset = 0;

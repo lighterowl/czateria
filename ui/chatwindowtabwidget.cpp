@@ -23,9 +23,7 @@ QPlainTextEdit *createTextWidget(QWidget *parent) {
 } // namespace
 
 ChatWindowTabWidget::ChatWindowTabWidget(QWidget *parent) : QTabWidget(parent) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   setTabBarAutoHide(true);
-#endif
   setTabsClosable(true);
   addTab(createTextWidget(this), QObject::tr("Main chat"));
   connect(this, &QTabWidget::tabCloseRequested, this,
