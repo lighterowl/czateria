@@ -96,6 +96,16 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QCheckBox" name="saveCredentialsCheckBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Save credentials (in plaintext)</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
@@ -129,7 +139,7 @@
      <x>0</x>
      <y>0</y>
      <width>491</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
   </widget>
@@ -181,8 +191,8 @@
      <y>306</y>
     </hint>
     <hint type="destinationlabel">
-     <x>342</x>
-     <y>354</y>
+     <x>469</x>
+     <y>348</y>
     </hint>
    </hints>
   </connection>
@@ -213,8 +223,8 @@
      <y>335</y>
     </hint>
     <hint type="destinationlabel">
-     <x>342</x>
-     <y>354</y>
+     <x>469</x>
+     <y>348</y>
     </hint>
    </hints>
   </connection>
@@ -245,8 +255,24 @@
      <y>364</y>
     </hint>
     <hint type="destinationlabel">
-     <x>342</x>
-     <y>354</y>
+     <x>469</x>
+     <y>348</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>nickAndPassRadioButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>saveCredentialsCheckBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>107</x>
+     <y>364</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>346</x>
+     <y>365</y>
     </hint>
    </hints>
   </connection>

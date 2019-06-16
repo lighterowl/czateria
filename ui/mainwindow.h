@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QHash>
+#include <QStringListModel>
 
 #include <czatlib/loginfailreason.h>
 #include <czatlib/avatarhandler.h>
@@ -34,12 +36,17 @@ private:
   QNetworkAccessManager *const mNAM;
   Czateria::RoomListModel *mRoomListModel;
   Czateria::AvatarHandler mAvatarHandler;
+  QHash<QString, QString> mSavedLogins;
+  QStringListModel mSavedLoginsModel;
 
   void onChannelDoubleClicked(const QModelIndex &);
   bool isLoginDataEntered();
   void refreshRoomList();
   void onLoginFailed(Czateria::LoginFailReason, const QString &);
   void startLogin(const Czateria::Room &);
+  void readSettings();
+  void saveSettings() const;
+  void saveLoginData(const QString&, const QString&);
 };
 
 #endif // MAINWINDOW_H

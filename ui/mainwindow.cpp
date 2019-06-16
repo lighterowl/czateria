@@ -8,7 +8,9 @@
 #include <czatlib/roomlistmodel.h>
 
 #include <QCloseEvent>
+#include <QCompleter>
 #include <QMessageBox>
+#include <QSettings>
 
 namespace {
 template <typename F1, typename F2, typename F3>
@@ -112,6 +114,14 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, QWidget *parent)
   });
 
   refreshRoomList();
+  readSettings();
+
+  auto completer = new QCompleter(&mSavedLoginsModel, this);
+  connect(completer, QOverload<const QString &>::of(&QCompleter::activated),
+          [this](auto &&text) {
+            ui->passwordLineEdit->setText(mSavedLogins[text]);
+          });
+  ui->nicknameLineEdit->setCompleter(completer);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
@@ -178,15 +188,52 @@ void MainWindow::startLogin(const Czateria::Room &room) {
             session->deleteLater();
             onLoginFailed(why, loginData);
           });
-  inspectRadioButtons(ui, [=]() { session->login(); },
-                      [=](auto &&nickname) { session->login(nickname); },
-                      [=](auto &&nickname, auto &&password) {
-                        session->login(nickname, password);
-                      });
+  inspectRadioButtons(
+      ui, [=]() { session->login(); },
+      [=](auto &&nickname) { session->login(nickname); },
+      [=](auto &&nickname, auto &&password) {
+        session->login(nickname, password);
+        connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
+          if (ui->saveCredentialsCheckBox) {
+            saveLoginData(nickname, password);
+          }
+        });
+      });
   blockUi(ui, true);
 }
 
-MainWindow::~MainWindow() { delete ui; }
+void MainWindow::readSettings() {
+  QSettings settings;
+  auto logins = settings.value(QLatin1String("logins"));
+  if (logins.isValid() && logins.type() == QVariant::Hash) {
+    auto loginsHash = logins.toHash();
+    for (auto it = loginsHash.cbegin(); it != loginsHash.cend(); ++it) {
+      mSavedLogins[it.key()] = it.value().toString();
+    }
+  }
+
+  mSavedLoginsModel.setStringList(mSavedLogins.keys());
+}
+
+void MainWindow::saveSettings() const {
+  QHash<QString, QVariant> logins;
+  for (auto it = mSavedLogins.cbegin(); it != mSavedLogins.cend(); ++it) {
+    logins[it.key()] = it.value();
+  }
+  QSettings settings;
+  settings.setValue(QLatin1String("logins"), logins);
+}
+
+void MainWindow::saveLoginData(const QString &username,
+                               const QString &password) {
+  mSavedLogins[username] = password;
+  mSavedLoginsModel.setStringList(mSavedLogins.keys());
+}
+
+MainWindow::~MainWindow() {
+  saveSettings();
+  delete ui;
+}
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
   auto evAction = &QCloseEvent::accept;
