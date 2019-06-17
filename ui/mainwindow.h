@@ -47,6 +47,8 @@ private:
   void readSettings();
   void saveSettings() const;
   void saveLoginData(const QString&, const QString&);
+
+  bool eventFilter(QObject*, QEvent*) override;
 };
 
 #endif // MAINWINDOW_H

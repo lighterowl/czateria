@@ -122,6 +122,7 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, QWidget *parent)
             ui->passwordLineEdit->setText(mSavedLogins[text]);
           });
   ui->nicknameLineEdit->setCompleter(completer);
+  ui->nicknameLineEdit->installEventFilter(this);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
@@ -228,6 +229,18 @@ void MainWindow::saveLoginData(const QString &username,
                                const QString &password) {
   mSavedLogins[username] = password;
   mSavedLoginsModel.setStringList(mSavedLogins.keys());
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *ev)
+{
+  if (obj == ui->nicknameLineEdit && ev->type() == QEvent::KeyPress) {
+    auto keyEv = static_cast<QKeyEvent *>(ev);
+    if (keyEv->key() == Qt::Key_Down) {
+      ui->nicknameLineEdit->completer()->complete();
+      return true;
+    }
+  }
+  return QMainWindow::eventFilter(obj, ev);
 }
 
 MainWindow::~MainWindow() {
