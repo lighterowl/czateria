@@ -136,6 +136,10 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   connect(
       ui->actionSave_pictures_automatically, &QAction::toggled,
       [=](bool checked) { mAppSettings.savePicturesAutomatically = checked; });
+  ui->actionSave_pictures_automatically->setStatusTip(
+      tr("Save the received images into the pictures directory without "
+         "displaying them"));
+
   startTimer(channelListRefreshInterval);
 }
 
