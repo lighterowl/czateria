@@ -1,5 +1,5 @@
-#include "mainwindow.h"
 #include "appsettings.h"
+#include "mainwindow.h"
 #include <QApplication>
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>

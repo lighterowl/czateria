@@ -6,7 +6,7 @@
 namespace Czateria {
 class UserListModel;
 class AvatarHandler;
-}
+} // namespace Czateria
 
 class UserListView : public QListView {
   Q_OBJECT
