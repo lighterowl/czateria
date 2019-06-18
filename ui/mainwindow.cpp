@@ -13,6 +13,8 @@
 #include <QMessageBox>
 #include <QSettings>
 
+#include <chrono>
+
 namespace {
 template <typename F1, typename F2, typename F3>
 auto inspectRadioButtons(Ui::MainWindow *ui, F1 noNicknameFn, F2 nicknameFn,
@@ -73,6 +75,9 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
   QMessageBox::critical(parent, QObject::tr("Login error"),
                         QObject::tr("Login failed : %1").arg(message));
 }
+
+using namespace std::literals::chrono_literals;
+constexpr auto channelListRefreshInterval = 1min;
 } // namespace
 
 MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
@@ -131,6 +136,7 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   connect(
       ui->actionSave_pictures_automatically, &QAction::toggled,
       [=](bool checked) { mAppSettings.savePicturesAutomatically = checked; });
+  startTimer(channelListRefreshInterval);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
@@ -249,6 +255,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
   }
   return QMainWindow::eventFilter(obj, ev);
 }
+
+void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
 MainWindow::~MainWindow() {
   saveSettings();

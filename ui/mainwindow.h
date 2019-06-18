@@ -52,6 +52,7 @@ private:
   void saveLoginData(const QString &, const QString &);
 
   bool eventFilter(QObject *, QEvent *) override;
+  void timerEvent(QTimerEvent*) override;
 };
 
 #endif // MAINWINDOW_H
