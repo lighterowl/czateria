@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "appsettings.h"
 #include <QApplication>
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
@@ -16,7 +17,8 @@ int main(int argc, char **argv) {
   cache->setCacheDirectory(
       QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
   nam.setCache(cache);
-  MainWindow w(&nam);
+  AppSettings settings;
+  MainWindow w(&nam, settings);
   w.show();
 
   return a.exec();

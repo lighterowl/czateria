@@ -5,6 +5,7 @@
 
 class QSortFilterProxyModel;
 class QCompleter;
+class AppSettings;
 
 namespace Ui {
 class MainChatWindow;
@@ -23,6 +24,7 @@ class MainChatWindow : public QWidget {
 public:
   explicit MainChatWindow(const Czateria::LoginSession &login,
                           Czateria::AvatarHandler &avatars,
+                          const AppSettings &settings,
                           QWidget *parent = nullptr);
   ~MainChatWindow();
 
@@ -36,6 +38,7 @@ private:
   Czateria::ChatSession *const mChatSession;
   QSortFilterProxyModel *const mSortProxy;
   QCompleter *const mNicknameCompleter;
+  const AppSettings &mAppSettings; // Hania tu byla
 };
 
 #endif // MAINCHATWINDOW_H

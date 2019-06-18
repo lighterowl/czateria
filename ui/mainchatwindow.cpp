@@ -1,4 +1,5 @@
 #include "mainchatwindow.h"
+#include "appsettings.h"
 #include "ui_mainchatwindow.h"
 
 #include <QAction>
@@ -26,6 +27,15 @@ int getOptimalUserListWidth(QWidget *widget) {
   return QFontMetrics(font).size(Qt::TextSingleLine, worstCase).width();
 }
 
+QString imageDefaultPath(const QString &channel, const QString &nickname) {
+  return QString(QLatin1String("%1/czateria_%2_%3_%4.png"))
+      .arg(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation))
+      .arg(channel)
+      .arg(nickname)
+      .arg(QDateTime::currentDateTime().toString(
+          QLatin1String("yyyyMMddHHmmss")));
+}
+
 void showImageDialog(QWidget *parent, const QString &nickname,
                      const QString &channel, const QImage &image) {
   auto imgDialog = new QDialog(parent);
@@ -36,13 +46,7 @@ void showImageDialog(QWidget *parent, const QString &nickname,
   auto label = new QLabel;
   auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Save);
   buttonBox->setCenterButtons(true);
-  auto defaultPath = QString(QLatin1String("%1/czateria_%2_%3_%4.png"))
-                         .arg(QStandardPaths::writableLocation(
-                             QStandardPaths::PicturesLocation))
-                         .arg(channel)
-                         .arg(nickname)
-                         .arg(QDateTime::currentDateTime().toString(
-                             QLatin1String("yyyyMMddHHmmss")));
+  auto defaultPath = imageDefaultPath(channel, nickname);
   QObject::connect(buttonBox->button(QDialogButtonBox::Save),
                    &QPushButton::clicked, [=](auto) {
                      auto fileName = QFileDialog::getSaveFileName(
@@ -91,12 +95,13 @@ QString getImageFilter() {
 
 MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
                                Czateria::AvatarHandler &avatars,
-                               QWidget *parent)
+                               const AppSettings &settings, QWidget *parent)
     : QWidget(parent, Qt::Window), ui(new Ui::MainChatWindow),
       mChatSession(new Czateria::ChatSession(login, avatars, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
-          createNicknameCompleter(mChatSession->userListModel(), this)) {
+          createNicknameCompleter(mChatSession->userListModel(), this)),
+      mAppSettings(settings) {
   ui->setupUi(this);
   setWindowTitle(mChatSession->channel());
 
@@ -132,11 +137,23 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
           ui->nicknameLabel, &QLabel::setText);
   connect(mChatSession, &Czateria::ChatSession::imageReceived,
           [=](auto &&nickname, auto &&image) {
-            showImageDialog(this, nickname, mChatSession->channel(), image);
-            ui->tabWidget->privateMessageTab(nickname)->appendPlainText(
-                QObject::tr("[%1] Image received")
-                    .arg(QDateTime::currentDateTime().toString(
-                        QLatin1String("HH:mm:ss"))));
+            auto textedit = ui->tabWidget->privateMessageTab(nickname);
+            if (mAppSettings.savePicturesAutomatically) {
+              auto defaultPath =
+                  imageDefaultPath(mChatSession->channel(), nickname);
+              image.save(defaultPath);
+              textedit->appendPlainText(
+                  QObject::tr("[%1] Image saved as %2")
+                      .arg(QDateTime::currentDateTime().toString(
+                          QLatin1String("HH:mm:ss")))
+                      .arg(defaultPath));
+            } else {
+              showImageDialog(this, nickname, mChatSession->channel(), image);
+              textedit->appendPlainText(
+                  QObject::tr("[%1] Image received")
+                      .arg(QDateTime::currentDateTime().toString(
+                          QLatin1String("HH:mm:ss"))));
+            }
           });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,

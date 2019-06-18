@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "appsettings.h"
 #include "captchadialog.h"
 #include "mainchatwindow.h"
 
@@ -74,10 +75,11 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
 }
 } // namespace
 
-MainWindow::MainWindow(QNetworkAccessManager *nam, QWidget *parent)
+MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
+                       QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mNAM(nam),
       mRoomListModel(new Czateria::RoomListModel(this, nam)),
-      mAvatarHandler(nam) {
+      mAvatarHandler(nam), mAppSettings(settings) {
   ui->setupUi(this);
 
   auto refreshAct =
@@ -123,6 +125,12 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, QWidget *parent)
           });
   ui->nicknameLineEdit->setCompleter(completer);
   ui->nicknameLineEdit->installEventFilter(this);
+
+  ui->actionSave_pictures_automatically->setChecked(
+      mAppSettings.savePicturesAutomatically);
+  connect(
+      ui->actionSave_pictures_automatically, &QAction::toggled,
+      [=](bool checked) { mAppSettings.savePicturesAutomatically = checked; });
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
@@ -180,7 +188,7 @@ void MainWindow::startLogin(const Czateria::Room &room) {
           });
   connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
     blockUi(ui, false);
-    auto win = new MainChatWindow(*session, mAvatarHandler, this);
+    auto win = new MainChatWindow(*session, mAvatarHandler, mAppSettings, this);
     win->show();
     session->deleteLater();
   });
@@ -231,8 +239,7 @@ void MainWindow::saveLoginData(const QString &username,
   mSavedLoginsModel.setStringList(mSavedLogins.keys());
 }
 
-bool MainWindow::eventFilter(QObject *obj, QEvent *ev)
-{
+bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
   if (obj == ui->nicknameLineEdit && ev->type() == QEvent::KeyPress) {
     auto keyEv = static_cast<QKeyEvent *>(ev);
     if (keyEv->key() == Qt::Key_Down) {

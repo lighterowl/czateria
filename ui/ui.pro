@@ -7,6 +7,7 @@ QT       += core gui network widgets websockets
 INCLUDEPATH += ..
 
 SOURCES += \
+  appsettings.cpp \
         main.cpp \
         mainwindow.cpp \
     captchadialog.cpp \
@@ -15,6 +16,7 @@ SOURCES += \
     userlistview.cpp
 
 HEADERS += \
+  appsettings.h \
         mainwindow.h \
     captchadialog.h \
     mainchatwindow.h \

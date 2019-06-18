@@ -1,16 +1,17 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
 #include <QHash>
+#include <QMainWindow>
 #include <QStringListModel>
 
-#include <czatlib/loginfailreason.h>
 #include <czatlib/avatarhandler.h>
+#include <czatlib/loginfailreason.h>
 
 class QNetworkAccessManager;
 class QNetworkReply;
 class CaptchaDialog;
+class AppSettings;
 
 namespace Ui {
 class MainWindow;
@@ -25,7 +26,8 @@ class MainWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  explicit MainWindow(QNetworkAccessManager *nam, QWidget *parent = nullptr);
+  explicit MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
+                      QWidget *parent = nullptr);
   ~MainWindow() override;
 
 protected:
@@ -38,6 +40,7 @@ private:
   Czateria::AvatarHandler mAvatarHandler;
   QHash<QString, QString> mSavedLogins;
   QStringListModel mSavedLoginsModel;
+  AppSettings &mAppSettings;
 
   void onChannelDoubleClicked(const QModelIndex &);
   bool isLoginDataEntered();
@@ -46,9 +49,9 @@ private:
   void startLogin(const Czateria::Room &);
   void readSettings();
   void saveSettings() const;
-  void saveLoginData(const QString&, const QString&);
+  void saveLoginData(const QString &, const QString &);
 
-  bool eventFilter(QObject*, QEvent*) override;
+  bool eventFilter(QObject *, QEvent *) override;
 };
 
 #endif // MAINWINDOW_H
