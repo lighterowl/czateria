@@ -1,14 +1,14 @@
 #ifndef MAINCHATWINDOW_H
 #define MAINCHATWINDOW_H
 
-#include <QWidget>
+#include <QMainWindow>
 
 class QSortFilterProxyModel;
 class QCompleter;
 class AppSettings;
 
 namespace Ui {
-class MainChatWindow;
+class ChatWidget;
 }
 
 namespace Czateria {
@@ -18,7 +18,7 @@ class Message;
 class AvatarHandler;
 } // namespace Czateria
 
-class MainChatWindow : public QWidget {
+class MainChatWindow : public QMainWindow {
   Q_OBJECT
 
 public:
@@ -34,7 +34,7 @@ private:
   void onUserNameDoubleClicked(const QModelIndex &idx);
   void onUserNameMiddleClicked();
 
-  Ui::MainChatWindow *ui;
+  Ui::ChatWidget *ui;
   Czateria::ChatSession *const mChatSession;
   QSortFilterProxyModel *const mSortProxy;
   QCompleter *const mNicknameCompleter;

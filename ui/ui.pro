@@ -24,9 +24,9 @@ HEADERS += \
     userlistview.h
 
 FORMS += \
+  chatwidget.ui \
         mainwindow.ui \
-    captchadialog.ui \
-    mainchatwindow.ui
+    captchadialog.ui
 
 win32:CONFIG (release, debug|release): LIBS += -L../czatlib/release -lczatlib
 else:win32:CONFIG (debug, debug|release): LIBS += -L../czatlib/debug -lczatlib

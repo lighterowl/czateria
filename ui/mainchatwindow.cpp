@@ -1,6 +1,6 @@
 #include "mainchatwindow.h"
 #include "appsettings.h"
-#include "ui_mainchatwindow.h"
+#include "ui_chatwidget.h"
 
 #include <QAction>
 #include <QCompleter>
@@ -96,14 +96,16 @@ QString getImageFilter() {
 MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
                                Czateria::AvatarHandler &avatars,
                                const AppSettings &settings, QWidget *parent)
-    : QWidget(parent, Qt::Window), ui(new Ui::MainChatWindow),
+    : QMainWindow(parent), ui(new Ui::ChatWidget),
       mChatSession(new Czateria::ChatSession(login, avatars, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)),
       mAppSettings(settings) {
-  ui->setupUi(this);
+  auto centralWidget = new QWidget(this);
+  ui->setupUi(centralWidget);
   setWindowTitle(mChatSession->channel());
+  setCentralWidget(centralWidget);
 
   auto desiredWidth = getOptimalUserListWidth(ui->listView);
   ui->widget_3->setMaximumSize(QSize(desiredWidth, QWIDGETSIZE_MAX));
