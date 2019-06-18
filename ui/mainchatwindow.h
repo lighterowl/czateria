@@ -39,6 +39,8 @@ private:
   QSortFilterProxyModel *const mSortProxy;
   QCompleter *const mNicknameCompleter;
   const AppSettings &mAppSettings; // Hania tu byla
+
+  QAction *mAutoAcceptPrivs;
 };
 
 #endif // MAINCHATWINDOW_H

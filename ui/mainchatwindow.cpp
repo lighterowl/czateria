@@ -8,6 +8,7 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QImageReader>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -101,11 +102,20 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)),
-      mAppSettings(settings) {
+      mAppSettings(settings),
+      mAutoAcceptPrivs(new QAction(
+          QObject::tr("Automatically accept private conversations"))) {
   auto centralWidget = new QWidget(this);
   ui->setupUi(centralWidget);
   setWindowTitle(mChatSession->channel());
   setCentralWidget(centralWidget);
+  statusBar();
+
+  auto menu = menuBar()->addMenu(QObject::tr("Options"));
+  mAutoAcceptPrivs->setStatusTip(
+      QObject::tr("Accept private conversations without prompting"));
+  mAutoAcceptPrivs->setCheckable(true);
+  menu->addAction(mAutoAcceptPrivs);
 
   auto desiredWidth = getOptimalUserListWidth(ui->listView);
   ui->widget_3->setMaximumSize(QSize(desiredWidth, QWIDGETSIZE_MAX));
@@ -211,7 +221,7 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
   msgbox.setDefaultButton(QMessageBox::Yes);
   msgbox.button(QMessageBox::Yes)->setShortcut(QKeySequence());
   msgbox.button(QMessageBox::No)->setShortcut(QKeySequence());
-  if (msgbox.exec() == QMessageBox::Yes) {
+  if (mAutoAcceptPrivs->isChecked() || msgbox.exec() == QMessageBox::Yes) {
     mChatSession->acceptPrivateConversation(nickname);
     ui->tabWidget->openPrivateMessageTab(nickname);
     ui->lineEdit->setFocus(Qt::OtherFocusReason);
