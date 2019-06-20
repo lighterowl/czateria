@@ -85,7 +85,6 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
     : QMainWindow(parent), ui(new Ui::MainWindow), mNAM(nam),
       mRoomListModel(new Czateria::RoomListModel(this, nam)),
       mAvatarHandler(nam), mAppSettings(settings) {
-  setAttribute(Qt::WA_DeleteOnClose);
   ui->setupUi(this);
 
   auto refreshAct =
@@ -202,7 +201,7 @@ void MainWindow::startLogin(const Czateria::Room &room) {
     // we keep our own list of this instead of using parenting due to having
     // these windows as children of MainWindow causes QApplication::alert not to
     // work properly.
-    auto win = new MainChatWindow(*session, mAvatarHandler, mAppSettings);
+    auto win = new MainChatWindow(*session, mAvatarHandler, mAppSettings, this);
     mChatWindows.push_back(win);
     connect(win, &QObject::destroyed, [=]() { mChatWindows.removeAll(win); });
     win->show();
@@ -270,23 +269,14 @@ void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
 MainWindow::~MainWindow() {
   saveSettings();
-  for (auto w : mChatWindows) {
-    w->blockSignals(true);
-    delete w;
-  }
   delete ui;
 }
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
-  auto evAction = &QCloseEvent::accept;
-  if (!mChatWindows.empty()) {
-    auto rv = QMessageBox::question(
-        this, QObject::tr("Application shutdown"),
-        QObject::tr("Closing this window will also close all chat windows.\nDo "
-                    "you want to continue?"));
-    if (rv == QMessageBox::No) {
-      evAction = &QCloseEvent::ignore;
-    }
+  if (mChatWindows.empty()) {
+    ev->accept();
+  } else {
+    ev->ignore();
+    hide();
   }
-  (ev->*evAction)();
 }

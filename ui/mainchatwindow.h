@@ -6,6 +6,7 @@
 class QSortFilterProxyModel;
 class QCompleter;
 class AppSettings;
+class MainWindow;
 
 namespace Ui {
 class ChatWidget;
@@ -25,7 +26,7 @@ public:
   explicit MainChatWindow(const Czateria::LoginSession &login,
                           Czateria::AvatarHandler &avatars,
                           const AppSettings &settings,
-                          QWidget *parent = nullptr);
+                          MainWindow *mainWin);
   ~MainChatWindow();
 
 private:
@@ -42,6 +43,7 @@ private:
 
   QAction *const mAutoAcceptPrivs;
   QAction *const mSendImageAction;
+  QAction *const mShowChannelListAction;
 };
 
 #endif // MAINCHATWINDOW_H

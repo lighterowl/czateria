@@ -1,5 +1,6 @@
 #include "mainchatwindow.h"
 #include "appsettings.h"
+#include "mainwindow.h"
 #include "ui_chatwidget.h"
 
 #include <QAction>
@@ -97,8 +98,8 @@ QString getImageFilter() {
 
 MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
                                Czateria::AvatarHandler &avatars,
-                               const AppSettings &settings, QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::ChatWidget),
+                               const AppSettings &settings, MainWindow *mainWin)
+    : QMainWindow(nullptr), ui(new Ui::ChatWidget),
       mChatSession(new Czateria::ChatSession(login, avatars, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
@@ -108,7 +109,10 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
           QObject::tr("Automatically accept private conversations"))),
       mSendImageAction(
           new QAction(QIcon(QLatin1String(":/icons/file-picture-icon.png")),
-                      QObject::tr("Send an image"))) {
+                      QObject::tr("Send an image"))),
+      mShowChannelListAction(
+          new QAction(QIcon(QLatin1String(":/icons/czateria.png")),
+                      QObject::tr("Show channel list"))) {
   QIcon icon;
   icon.addFile(QString::fromUtf8(":/icons/czateria.png"), QSize(),
                QIcon::Normal, QIcon::Off);
@@ -120,6 +124,13 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
   statusBar();
   auto toolbar = new QToolBar;
   addToolBar(Qt::TopToolBarArea, toolbar);
+
+  mShowChannelListAction->setToolTip(QObject::tr("Show channel list"));
+  mShowChannelListAction->setStatusTip(
+      QObject::tr("Shows the channel list window"));
+  connect(mShowChannelListAction, &QAction::triggered,
+          [=](auto) { mainWin->show(); });
+  toolbar->addAction(mShowChannelListAction);
 
   connect(mSendImageAction, &QAction::triggered, [=](auto) {
     auto filename = QFileDialog::getOpenFileName(
