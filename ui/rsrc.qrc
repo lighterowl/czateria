@@ -8,5 +8,6 @@
         <file>icons/text_italic.png</file>
         <file>icons/text_underline.png</file>
         <file>icons/transmit_blue.png</file>
+        <file>icons/file-picture-icon.png</file>
     </qresource>
 </RCC>

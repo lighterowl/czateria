@@ -14,6 +14,7 @@
 #include <QPushButton>
 #include <QSortFilterProxyModel>
 #include <QStandardPaths>
+#include <QToolBar>
 
 #include <czatlib/chatsession.h>
 #include <czatlib/message.h>
@@ -104,7 +105,10 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
           createNicknameCompleter(mChatSession->userListModel(), this)),
       mAppSettings(settings),
       mAutoAcceptPrivs(new QAction(
-          QObject::tr("Automatically accept private conversations"))) {
+          QObject::tr("Automatically accept private conversations"))),
+      mSendImageAction(
+          new QAction(QIcon(QLatin1String(":/icons/file-picture-icon.png")),
+                      QObject::tr("Send an image"))) {
   QIcon icon;
   icon.addFile(QString::fromUtf8(":/icons/czateria.png"), QSize(),
                QIcon::Normal, QIcon::Off);
@@ -114,6 +118,33 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
   setWindowTitle(mChatSession->channel());
   setCentralWidget(centralWidget);
   statusBar();
+  auto toolbar = new QToolBar;
+  addToolBar(Qt::TopToolBarArea, toolbar);
+
+  connect(mSendImageAction, &QAction::triggered, [=](auto) {
+    auto filename = QFileDialog::getOpenFileName(
+        this, tr("Select an image file"), QString(), getImageFilter());
+    if (filename.isEmpty()) {
+      return;
+    }
+    auto image = QImage(filename);
+    if (image.isNull()) {
+      QMessageBox::critical(
+          this, tr("Not an image"),
+          tr("The selected file does not appear to be an image"));
+      return;
+    }
+    mChatSession->sendImage(ui->tabWidget->getCurrentNickname(), image);
+    ui->tabWidget->addMessageToCurrent(
+        QObject::tr("[%1] Image sent")
+            .arg(QDateTime::currentDateTime().toString(
+                QLatin1String("HH:mm:ss"))));
+  });
+  mSendImageAction->setToolTip(QObject::tr("Send an image"));
+  mSendImageAction->setStatusTip(
+      QObject::tr("Sends an image to your conversation partner"));
+  mSendImageAction->setEnabled(false);
+  toolbar->addAction(mSendImageAction);
 
   auto menu = menuBar()->addMenu(QObject::tr("Options"));
   mAutoAcceptPrivs->setStatusTip(
@@ -191,26 +222,7 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
           &MainChatWindow::onUserNameMiddleClicked);
 
   connect(ui->tabWidget, &QTabWidget::currentChanged,
-          [=](auto idx) { ui->sendImageButton->setEnabled(idx != 0); });
-  connect(ui->sendImageButton, &QAbstractButton::clicked, [=](auto) {
-    auto filename = QFileDialog::getOpenFileName(
-        this, tr("Select an image file"), QString(), getImageFilter());
-    if (filename.isEmpty()) {
-      return;
-    }
-    auto image = QImage(filename);
-    if (image.isNull()) {
-      QMessageBox::critical(
-          this, tr("Not an image"),
-          tr("The selected file does not appear to be an image"));
-      return;
-    }
-    mChatSession->sendImage(ui->tabWidget->getCurrentNickname(), image);
-    ui->tabWidget->addMessageToCurrent(
-        QObject::tr("[%1] Image sent")
-            .arg(QDateTime::currentDateTime().toString(
-                QLatin1String("HH:mm:ss"))));
-  });
+          [=](auto idx) { mSendImageAction->setEnabled(idx != 0); });
 
   mChatSession->start();
 }

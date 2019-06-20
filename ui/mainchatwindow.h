@@ -40,7 +40,8 @@ private:
   QCompleter *const mNicknameCompleter;
   const AppSettings &mAppSettings; // Hania tu byla
 
-  QAction *mAutoAcceptPrivs;
+  QAction *const mAutoAcceptPrivs;
+  QAction *const mSendImageAction;
 };
 
 #endif // MAINCHATWINDOW_H
