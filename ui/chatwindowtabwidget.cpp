@@ -1,5 +1,6 @@
 #include "chatwindowtabwidget.h"
 
+#include <QApplication>
 #include <QPlainTextEdit>
 #include <QTabBar>
 
@@ -42,6 +43,7 @@ void ChatWindowTabWidget::displayPrivateMessage(const Czateria::Message &msg) {
   privMsgTab->appendPlainText(formatMessage(msg));
   indicateTabActivity(privMsgTab,
                       QIcon(QLatin1String(":/icons/transmit_blue.png")));
+  QApplication::alert(this);
 }
 
 void ChatWindowTabWidget::openPrivateMessageTab(const QString &nickname) {

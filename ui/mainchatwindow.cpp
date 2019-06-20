@@ -105,6 +105,10 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
       mAppSettings(settings),
       mAutoAcceptPrivs(new QAction(
           QObject::tr("Automatically accept private conversations"))) {
+  QIcon icon;
+  icon.addFile(QString::fromUtf8(":/icons/czateria.png"), QSize(),
+               QIcon::Normal, QIcon::Off);
+  setWindowIcon(icon);
   auto centralWidget = new QWidget(this);
   ui->setupUi(centralWidget);
   setWindowTitle(mChatSession->channel());
@@ -166,6 +170,7 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
                       .arg(QDateTime::currentDateTime().toString(
                           QLatin1String("HH:mm:ss"))));
             }
+            QApplication::alert(this);
           });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
@@ -225,6 +230,7 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
     mChatSession->acceptPrivateConversation(nickname);
     ui->tabWidget->openPrivateMessageTab(nickname);
     ui->lineEdit->setFocus(Qt::OtherFocusReason);
+    QApplication::alert(this);
   } else {
     mChatSession->rejectPrivateConversation(nickname);
   }

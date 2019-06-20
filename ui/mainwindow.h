@@ -12,6 +12,7 @@ class QNetworkAccessManager;
 class QNetworkReply;
 class CaptchaDialog;
 class AppSettings;
+class MainChatWindow;
 
 namespace Ui {
 class MainWindow;
@@ -41,6 +42,7 @@ private:
   QHash<QString, QString> mSavedLogins;
   QStringListModel mSavedLoginsModel;
   AppSettings &mAppSettings;
+  QList<MainChatWindow*> mChatWindows;
 
   void onChannelDoubleClicked(const QModelIndex &);
   bool isLoginDataEntered();
