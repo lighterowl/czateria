@@ -81,8 +81,6 @@ void sortByColumn(QVector<Czateria::Room> &v, int col, SortFn x) {
   case 1:
     sortByMember(v, &room::num_users, x);
     break;
-  default:
-    Q_ASSERT(0 && "unknown column");
   }
 }
 

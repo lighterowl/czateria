@@ -11,7 +11,7 @@
 class QNetworkAccessManager;
 class QNetworkReply;
 class CaptchaDialog;
-class AppSettings;
+struct AppSettings;
 class MainChatWindow;
 
 namespace Ui {
@@ -20,7 +20,7 @@ class MainWindow;
 
 namespace Czateria {
 class RoomListModel;
-class Room;
+struct Room;
 } // namespace Czateria
 
 class MainWindow : public QMainWindow {

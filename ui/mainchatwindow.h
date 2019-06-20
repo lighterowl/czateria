@@ -5,7 +5,7 @@
 
 class QSortFilterProxyModel;
 class QCompleter;
-class AppSettings;
+struct AppSettings;
 class MainWindow;
 
 namespace Ui {

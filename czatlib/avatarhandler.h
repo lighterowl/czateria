@@ -6,6 +6,8 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 
+#include <array>
+
 #include "user.h"
 
 class QNetworkAccessManager;
