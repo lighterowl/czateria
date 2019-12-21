@@ -42,7 +42,7 @@ private:
   QHash<QString, QString> mSavedLogins;
   QStringListModel mSavedLoginsModel;
   AppSettings &mAppSettings;
-  QList<MainChatWindow*> mChatWindows;
+  QList<MainChatWindow *> mChatWindows;
 
   void onChannelDoubleClicked(const QModelIndex &);
   bool isLoginDataEntered();
@@ -54,7 +54,7 @@ private:
   void saveLoginData(const QString &, const QString &);
 
   bool eventFilter(QObject *, QEvent *) override;
-  void timerEvent(QTimerEvent*) override;
+  void timerEvent(QTimerEvent *) override;
 };
 
 #endif // MAINWINDOW_H
