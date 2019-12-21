@@ -103,16 +103,16 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   connect(mRoomListModel, &Czateria::RoomListModel::downloadError,
           [=](auto err) {
             networkErrorMessageBox(this, ui, tr("Network error"));
-            qDebug() << "Room list download error :" << err;
+            qInfo() << "Room list download error :" << err;
           });
   connect(mRoomListModel, &Czateria::RoomListModel::jsonError, [=](auto err) {
     networkErrorMessageBox(this, ui, tr("Message parse error"));
-    qDebug() << "Could not parse JSON :" << err.errorString();
+    qInfo() << "Could not parse JSON :" << err.errorString();
   });
   connect(mRoomListModel, &Czateria::RoomListModel::replyParseError,
           [=](auto &&str) {
             networkErrorMessageBox(this, ui, tr("Message format error"));
-            qDebug() << "Unexpected format :" << str;
+            qInfo() << "Unexpected format :" << str;
           });
   connect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
     blockUi(ui, false);

@@ -70,6 +70,7 @@ void LoginSession::setCaptchaReply(const QString &reply) {
 }
 
 void LoginSession::onReplyReceived(const QByteArray &data) {
+  qDebug().noquote() << data;
   QJsonParseError err;
   auto json = QJsonDocument::fromJson(data, &err);
   if (json.isNull()) {
@@ -89,7 +90,7 @@ void LoginSession::onReplyReceived(const QByteArray &data) {
     auto code = obj[QLatin1String("code")].toInt();
     LoginFailReason why = LoginFailReason::Unknown;
     if (!loginCodeToFailReason(code, why)) {
-      qDebug() << "unknown login reply" << json;
+      qInfo() << "Unknown login reply" << code;
     }
     emit loginFailed(why, login_data.toString());
     return;
@@ -104,8 +105,9 @@ void LoginSession::sendPostData(const QUrl &address,
   auto request = QNetworkRequest(address);
   request.setHeader(QNetworkRequest::ContentTypeHeader,
                     QLatin1String("application/x-www-form-urlencoded"));
-  auto postRequest =
-      mNAM->post(request, postData.toString(QUrl::FullyEncoded).toUtf8());
+  auto postDataEncoded = postData.toString(QUrl::FullyEncoded);
+  qDebug() << address << postDataEncoded;
+  auto postRequest = mNAM->post(request, postDataEncoded.toUtf8());
   connect(postRequest, &QNetworkReply::finished, [=]() {
     auto content = postRequest->readAll();
     postRequest->deleteLater();

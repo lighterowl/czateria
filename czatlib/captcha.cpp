@@ -14,10 +14,12 @@ Captcha::Captcha(QNetworkAccessManager *nam, QObject *parent)
 void Captcha::get() {
   auto callbackName = QString(QLatin1String("jQuery16202627191567764926_%1"))
                           .arg(QDateTime::currentMSecsSinceEpoch());
-  auto captchaRequest = mNAM->get(QNetworkRequest(
-      QUrl(QString(QLatin1String("https://czateria-api.interia.pl/captcha/"
-                                 "getEnigmaJS?type=1&ctime=300&callback=%1"))
-               .arg(callbackName))));
+  auto requestAddr =
+      QString(QLatin1String("https://czateria-api.interia.pl/captcha/"
+                            "getEnigmaJS?type=1&ctime=300&callback=%1"))
+          .arg(callbackName);
+  qDebug() << requestAddr;
+  auto captchaRequest = mNAM->get(QNetworkRequest(QUrl(requestAddr)));
   connect(captchaRequest, &QNetworkReply::finished, [=]() {
     auto content = captchaRequest->readAll();
     captchaRequest->deleteLater();
@@ -27,6 +29,7 @@ void Captcha::get() {
 
 void Captcha::onRequestFinished(const QString &content,
                                 const QString &callbackName) {
+  qDebug().noquote() << content;
   auto js = content.simplified();
   js.remove(QString(QLatin1String("%1(")).arg(callbackName));
   js.remove(QLatin1Char(')'));
@@ -41,6 +44,7 @@ void Captcha::onRequestFinished(const QString &content,
       url = res;
     }
   }
+  qDebug() << url << uid;
   auto imgRequest = mNAM->get(QNetworkRequest(QUrl(url)));
   connect(imgRequest, &QNetworkReply::finished, [=]() {
     auto imgRawContent = imgRequest->readAll();

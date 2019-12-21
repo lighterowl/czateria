@@ -146,6 +146,16 @@ bool privSubcodeToState(int subcode, Czateria::ConversationState &state) {
        {17, s::NoFreePrivs}}};
   return CzateriaUtil::convert(subcode, state, subcodeToState);
 }
+
+void reportUnhandled(const QString &message) {
+  qInfo().noquote() << "Unhandled WebSocket message :\n" << message;
+}
+
+#define SendTextMessage(webSocket, message)                                    \
+  do {                                                                         \
+    qDebug().noquote() << message;                                             \
+    webSocket->sendTextMessage(message);                                       \
+  } while (0)
 } // namespace
 
 namespace Czateria {
@@ -170,7 +180,7 @@ ChatSession::ChatSession(const LoginSession &login,
 }
 
 ChatSession::~ChatSession() {
-  mWebSocket->sendTextMessage(QLatin1String("{\"code\":80}"));
+  SendTextMessage(mWebSocket, QLatin1String("{\"code\":80}"));
   mWebSocket->close();
 }
 
@@ -194,29 +204,29 @@ void ChatSession::acceptPrivateConversation(const QString &nickname) {
 }
 
 void ChatSession::rejectPrivateConversation(const QString &nickname) {
-  mWebSocket->sendTextMessage(QString::fromUtf8(privRejectMsg(nickname)));
+  SendTextMessage(mWebSocket, QString::fromUtf8(privRejectMsg(nickname)));
 }
 
 void ChatSession::notifyPrivateConversationClosed(const QString &nickname) {
-  mWebSocket->sendTextMessage(QString::fromUtf8(privClosedMsg(nickname)));
+  SendTextMessage(mWebSocket, QString::fromUtf8(privClosedMsg(nickname)));
   mCurrentPrivate.remove(nickname);
 }
 
 void ChatSession::sendRoomMessage(const QString &message) {
-  mWebSocket->sendTextMessage(QString::fromUtf8(messageMsg(message)));
+  SendTextMessage(mWebSocket, QString::fromUtf8(messageMsg(message)));
 }
 
 void ChatSession::sendPrivateMessage(const QString &nickname,
                                      const QString &message) {
   auto it = mCurrentPrivate.find(nickname);
   if (it == std::end(mCurrentPrivate)) {
-    mWebSocket->sendTextMessage(
-        QString::fromUtf8(privInviteMsg(message, nickname)));
+    SendTextMessage(mWebSocket,
+                    QString::fromUtf8(privInviteMsg(message, nickname)));
     mCurrentPrivate[nickname] = ConversationState::InviteSent;
   } else if (*it == ConversationState::Active ||
              *it == ConversationState::InviteSent) {
-    mWebSocket->sendTextMessage(
-        QString::fromUtf8(privMessageMsg(message, nickname)));
+    SendTextMessage(mWebSocket,
+                    QString::fromUtf8(privMessageMsg(message, nickname)));
   } else {
     Q_ASSERT(false && "unknown private conversation state");
   }
@@ -230,25 +240,22 @@ void ChatSession::sendImage(const QString &nickname, const QImage &image) {
     sentImage =
         image.scaled(600, 600, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   }
-  mWebSocket->sendTextMessage(
-      QString::fromUtf8(privImageMsg(nickname, sentImage)));
+  SendTextMessage(mWebSocket,
+                  QString::fromUtf8(privImageMsg(nickname, sentImage)));
 }
 
 void ChatSession::timerEvent(QTimerEvent *ev) {
   Q_ASSERT(ev->timerId() == mKeepaliveTimerId);
-  mWebSocket->sendTextMessage(QLatin1String("{\"code\":1003}"));
+  SendTextMessage(mWebSocket, QLatin1String("{\"code\":1003}"));
 }
 
 void ChatSession::onTextMessageReceived(const QString &text) {
+  qDebug().noquote() << text;
   QJsonParseError err;
   QJsonDocument json = QJsonDocument::fromJson(text.toUtf8(), &err);
-  if (json.isNull()) {
-    qDebug() << err.errorString() << err.offset;
-    return;
-  }
-
-  if (!json.isObject()) {
-    qDebug() << QLatin1String("not a json object");
+  if (json.isNull() || !json.isObject()) {
+    qInfo() << "Could not parse message" << err.errorString() << err.offset;
+    qInfo().noquote() << text;
     return;
   }
 
@@ -256,11 +263,11 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   auto code = obj[QLatin1String("code")].toInt();
   if (!mHelloReceived) {
     if (code != 138) {
-      qDebug() << QLatin1String("waiting for hello, received") << code;
+      qInfo() << "Received code" << code << "message while waiting for hello";
       return;
     }
-    mWebSocket->sendTextMessage(
-        QString::fromUtf8(loginMsg(mSessionId, mChannel, mNickname)));
+    SendTextMessage(mWebSocket, QString::fromUtf8(
+                                    loginMsg(mSessionId, mChannel, mNickname)));
     mHelloReceived = true;
     return;
   }
@@ -287,7 +294,7 @@ void ChatSession::onTextMessageReceived(const QString &text) {
 
   case 97:
     if (!handlePrivateMessage(obj)) {
-      qDebug() << text;
+      reportUnhandled(text);
     }
     break;
 
@@ -321,8 +328,9 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   case 134: /* userlist emoticon change :
                {emoId:1,code:134,login:"foobar"} */
   case 140: /* ?! {"user":"foobar","permission":65,"code":140} */
+    break;
   default:
-    qDebug() << text;
+    reportUnhandled(text);
     break;
   }
 }
@@ -355,12 +363,12 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
   } else if (subcode == 25) {
     auto b64img = json[QLatin1String("data")].toString();
     if (b64img.isNull()) {
-      qDebug() << "received subcode 25 without a 'data' element";
+      qInfo() << "Received subcode 25 without a 'data' element";
       return false;
     }
     auto img = QImage::fromData(QByteArray::fromBase64(b64img.toLatin1()));
     if (img.isNull()) {
-      qDebug() << "could not decode base64 content as image";
+      qInfo() << "Could not decode base64 content as image";
       return false;
     }
     emit imageReceived(user, img);
@@ -396,7 +404,7 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
 } // namespace Czateria
 
 void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
-  qDebug() << QLatin1String("socketError") << err << mWebSocket->errorString();
+  qInfo() << "Socket error" << err << mWebSocket->errorString();
 }
 
 } // namespace Czateria
