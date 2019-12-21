@@ -41,8 +41,6 @@ private:
   QNetworkReply *mReply;
 
   QVector<Room> jsonToChannels(const QJsonArray &json);
-
-private slots:
   void onDownloadFinished();
 };
 } // namespace Czateria
