@@ -78,7 +78,7 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
 }
 
 using namespace std::literals::chrono_literals;
-constexpr auto channelListRefreshInterval = 1min;
+constexpr auto channelListRefreshInterval = 5min;
 } // namespace
 
 MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
