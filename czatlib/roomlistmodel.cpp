@@ -22,8 +22,6 @@ RoomListModel::RoomListModel(QObject *parent, QNetworkAccessManager *nam)
 }
 
 void RoomListModel::download() {
-  beginResetModel();
-  mRooms.clear();
   mReply = mNAM->get(QNetworkRequest(
       QUrl(QLatin1String("https://czateria.interia.pl/rooms-list"))));
   connect(mReply, &QNetworkReply::finished, this,
@@ -31,7 +29,6 @@ void RoomListModel::download() {
   void (QNetworkReply::*errSignal)(QNetworkReply::NetworkError) =
       &QNetworkReply::error;
   connect(mReply, errSignal, this, &RoomListModel::downloadError);
-  endResetModel();
 }
 
 int RoomListModel::rowCount(const QModelIndex &) const { return mRooms.size(); }
@@ -63,40 +60,6 @@ QVariant RoomListModel::headerData(int section, Qt::Orientation orientation,
   } else {
     return QAbstractTableModel::headerData(section, orientation, role);
   }
-}
-
-template <typename ContainerT, typename MemberT, typename SortFn>
-void sortByMember(ContainerT &v, MemberT ContainerT::value_type::*p, SortFn x) {
-  std::stable_sort(std::begin(v), std::end(v),
-                   [=](auto &&a, auto &&b) { return x(a.*p, b.*p); });
-}
-
-template <typename SortFn>
-void sortByColumn(QVector<Czateria::Room> &v, int col, SortFn x) {
-  using room = std::remove_reference<decltype(v)>::type::value_type;
-  switch (col) {
-  case 0:
-    sortByMember(v, &room::name, x);
-    break;
-  case 1:
-    sortByMember(v, &room::num_users, x);
-    break;
-  }
-}
-
-void RoomListModel::sort(int column, Qt::SortOrder order) {
-  emit layoutAboutToBeChanged(QList<QPersistentModelIndex>(),
-                              QAbstractItemModel::VerticalSortHint);
-  switch (order) {
-  case Qt::AscendingOrder:
-    sortByColumn(mRooms, column, std::less<>{});
-    break;
-  case Qt::DescendingOrder:
-    sortByColumn(mRooms, column, std::greater<>{});
-    break;
-  }
-  emit layoutChanged(QList<QPersistentModelIndex>(),
-                     QAbstractItemModel::VerticalSortHint);
 }
 
 QVector<Room> RoomListModel::jsonToChannels(const QJsonArray &arr) {

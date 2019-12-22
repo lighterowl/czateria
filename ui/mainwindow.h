@@ -13,6 +13,7 @@ class QNetworkReply;
 class CaptchaDialog;
 struct AppSettings;
 class MainChatWindow;
+class QSortFilterProxyModel;
 
 namespace Ui {
 class MainWindow;
@@ -37,7 +38,8 @@ protected:
 private:
   Ui::MainWindow *ui;
   QNetworkAccessManager *const mNAM;
-  Czateria::RoomListModel *mRoomListModel;
+  Czateria::RoomListModel *const mRoomListModel;
+  QSortFilterProxyModel *const mRoomSortModel;
   Czateria::AvatarHandler mAvatarHandler;
   QHash<QString, QString> mSavedLogins;
   QStringListModel mSavedLoginsModel;

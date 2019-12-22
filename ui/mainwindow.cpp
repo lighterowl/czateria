@@ -12,6 +12,7 @@
 #include <QCompleter>
 #include <QMessageBox>
 #include <QSettings>
+#include <QSortFilterProxyModel>
 
 #include <chrono>
 
@@ -84,7 +85,8 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
                        QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mNAM(nam),
       mRoomListModel(new Czateria::RoomListModel(this, nam)),
-      mAvatarHandler(nam), mAppSettings(settings) {
+      mRoomSortModel(new QSortFilterProxyModel(this)), mAvatarHandler(nam),
+      mAppSettings(settings) {
   ui->setupUi(this);
 
   auto refreshAct =
@@ -95,7 +97,9 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   connect(refreshAct, &QAction::triggered, this, &MainWindow::refreshRoomList);
   ui->mainToolBar->addAction(refreshAct);
 
-  ui->tableView->setModel(mRoomListModel);
+  mRoomSortModel->setSourceModel(mRoomListModel);
+  ui->tableView->setModel(mRoomSortModel);
+  ui->tableView->sortByColumn(1, Qt::DescendingOrder);
 
   connect(ui->tableView, &QTableView::doubleClicked, this,
           &MainWindow::onChannelDoubleClicked);
@@ -116,7 +120,6 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
           });
   connect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
     blockUi(ui, false);
-    ui->tableView->horizontalHeader()->setSortIndicator(1, Qt::DescendingOrder);
     ui->tableView->resizeColumnsToContents();
   });
 
@@ -149,7 +152,8 @@ void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
                              QObject::tr("Enter your credentials first"));
     return;
   }
-  startLogin(mRoomListModel->room(idx.row()));
+  auto srcIdx = mRoomSortModel->mapToSource(idx);
+  startLogin(mRoomListModel->room(srcIdx.row()));
 }
 
 bool MainWindow::isLoginDataEntered() {
@@ -162,7 +166,6 @@ bool MainWindow::isLoginDataEntered() {
 }
 
 void MainWindow::refreshRoomList() {
-  ui->tableView->horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
   mRoomListModel->download();
   blockUi(ui, true);
 }
@@ -178,7 +181,8 @@ void MainWindow::onLoginFailed(Czateria::LoginFailReason why,
                                  "suggested nickname %1?")
                                   .arg(loginData));
     if (rv == QMessageBox::Yes) {
-      startLogin(mRoomListModel->room(ui->tableView->currentIndex().row()));
+      auto idx = mRoomSortModel->mapToSource(ui->tableView->currentIndex());
+      startLogin(mRoomListModel->room(idx.row()));
     }
   }
 }
