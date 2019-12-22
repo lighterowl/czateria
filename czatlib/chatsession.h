@@ -64,6 +64,7 @@ private:
   void onTextMessageReceived(const QString &);
   bool handlePrivateMessage(const QJsonObject &json);
   void onSocketError(QAbstractSocket::SocketError);
+  void sendKeepalive();
 
   QWebSocket *const mWebSocket;
   QString mNickname;

@@ -11,6 +11,7 @@
 #include <QWebSocket>
 
 #include <array>
+#include <chrono>
 
 #include "icons.h"
 #include "loginsession.h"
@@ -19,6 +20,9 @@
 #include "util.h"
 
 namespace {
+using namespace std::literals::chrono_literals;
+constexpr auto keepaliveInterval = 40s;
+
 QByteArray loginMsg(const QString &sessionId, const QString &channelName,
                     const QString &nickname) {
   QJsonObject obj;
@@ -186,7 +190,7 @@ ChatSession::~ChatSession() {
 
 void ChatSession::start() {
   mWebSocket->open(QUrl(mHost));
-  mKeepaliveTimerId = startTimer(40000);
+  mKeepaliveTimerId = startTimer(keepaliveInterval);
 }
 
 void ChatSession::acceptPrivateConversation(const QString &nickname) {
@@ -246,7 +250,7 @@ void ChatSession::sendImage(const QString &nickname, const QImage &image) {
 
 void ChatSession::timerEvent(QTimerEvent *ev) {
   Q_ASSERT(ev->timerId() == mKeepaliveTimerId);
-  SendTextMessage(mWebSocket, QLatin1String("{\"code\":1003}"));
+  sendKeepalive();
 }
 
 void ChatSession::onTextMessageReceived(const QString &text) {
@@ -318,6 +322,14 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   case 200: /* nick assigned : {"code":200,"username":"gość_15929765"} */
     mNickname = obj[QLatin1String("username")].toString();
     emit nicknameAssigned(mNickname);
+    break;
+
+  case 1003:
+    // server-sent keepalive request (every 4 minutes). reply immediately and
+    // reset the timer to fire every 40s from this point in time.
+    killTimer(mKeepaliveTimerId);
+    mKeepaliveTimerId = startTimer(keepaliveInterval);
+    sendKeepalive();
     break;
 
   case 135: /* advertisement / global message */
@@ -405,6 +417,10 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
 
 void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
   qInfo() << "Socket error" << err << mWebSocket->errorString();
+}
+
+void ChatSession::sendKeepalive() {
+  SendTextMessage(mWebSocket, QLatin1String("{\"code\":1003}"));
 }
 
 } // namespace Czateria
