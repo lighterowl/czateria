@@ -13,16 +13,8 @@ jobs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
       
-    - name: Enter gcc build directory
-      run: mkdir -p build_gcc && cd build_gcc
-    - name: qmake
-      run: qmake ../czateria.pro -spec linux-g++ CONFIG+=debug
-    - name: make
-      run: make
+    - name: Build with gcc
+      run: ./workflow_build.sh g++
       
-    - name: Enter gcc build directory
-      run: mkdir -p build_clang && cd build_clang
-    - name: qmake
-      run: qmake ../czateria.pro -spec linux-clang CONFIG+=debug
-    - name: make
-      run: make
+    - name: Build with clang
+      run: ./workflow_build.sh clang
