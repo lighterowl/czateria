@@ -84,8 +84,8 @@ QString getImageFilter() {
   auto rv = QObject::tr("Images (");
   auto formats = QImageReader::supportedImageFormats();
   for (auto &&format : formats) {
-    rv.append(QLatin1String("*.%1")
-                  .arg(QString::fromUtf8(format.constData()).toLower()));
+    rv.append(QString(QLatin1String("*.%1")).arg(
+        QString::fromUtf8(format.constData()).toLower()));
     if (&format != &formats.back()) {
       rv.append(QLatin1Char(' '));
     }
