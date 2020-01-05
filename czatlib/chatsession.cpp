@@ -372,6 +372,11 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
       }
     }
     return true;
+  } else if (subcode == 14) {
+    // conversation request cancelled before accepting.
+    mPendingPrivateMsgs.remove(user);
+    mCurrentPrivate.remove(user);
+    emit privateConversationCancelled(user);
   } else if (subcode == 25) {
     auto b64img = json[QLatin1String("data")].toString();
     if (b64img.isNull()) {
