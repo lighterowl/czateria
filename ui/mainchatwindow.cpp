@@ -186,6 +186,8 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
           ui->tabWidget, &ChatWindowTabWidget::displayRoomMessage);
   connect(mChatSession, &Czateria::ChatSession::privateMessageReceived,
           ui->tabWidget, &ChatWindowTabWidget::displayPrivateMessage);
+  connect(mChatSession, &Czateria::ChatSession::privateMessageReceived, this,
+          &MainChatWindow::notifyActivity);
   connect(mChatSession, &Czateria::ChatSession::newPrivateConversation, this,
           &MainChatWindow::onNewPrivateConversation);
   connect(mChatSession, &Czateria::ChatSession::privateConversationCancelled,
@@ -220,7 +222,7 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
                       .arg(QDateTime::currentDateTime().toString(
                           QLatin1String("HH:mm:ss"))));
             }
-            QApplication::alert(this);
+            notifyActivity();
           });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
@@ -229,6 +231,7 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
   connect(ui->tabWidget, &ChatWindowTabWidget::currentChanged, [=](int tabIdx) {
     // disable completer for private conversations
     ui->lineEdit->setCompleter(tabIdx == 0 ? mNicknameCompleter : nullptr);
+    updateWindowTitle();
   });
 
   connect(ui->lineEdit, &QLineEdit::returnPressed, this,
@@ -308,5 +311,21 @@ void MainChatWindow::doAcceptPrivateConversation(const QString &nickname) {
   mChatSession->acceptPrivateConversation(nickname);
   ui->tabWidget->openPrivateMessageTab(nickname);
   ui->lineEdit->setFocus(Qt::OtherFocusReason);
+  notifyActivity();
+}
+
+void MainChatWindow::notifyActivity() {
   QApplication::alert(this);
+  updateWindowTitle();
+}
+
+void MainChatWindow::updateWindowTitle() {
+  auto unreadPrivs = ui->tabWidget->countUnreadPrivateTabs();
+  auto channelName = mChatSession->channel();
+  auto windowTitle = channelName;
+  if (unreadPrivs) {
+    windowTitle =
+        QString(QLatin1String("[%1] %2")).arg(unreadPrivs).arg(channelName);
+  }
+  setWindowTitle(windowTitle);
 }

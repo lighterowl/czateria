@@ -21,6 +21,8 @@ QPlainTextEdit *createTextWidget(QWidget *parent) {
   rv->setReadOnly(true);
   return rv;
 }
+
+const QColor unreadTabColor = QColor(Qt::red);
 } // namespace
 
 ChatWindowTabWidget::ChatWindowTabWidget(QWidget *parent) : QTabWidget(parent) {
@@ -30,7 +32,7 @@ ChatWindowTabWidget::ChatWindowTabWidget(QWidget *parent) : QTabWidget(parent) {
   connect(this, &QTabWidget::tabCloseRequested, this,
           &ChatWindowTabWidget::onTabCloseRequested);
   connect(this, &QTabWidget::currentChanged, this,
-          &ChatWindowTabWidget::clearTabActivity);
+          &ChatWindowTabWidget::updateTabActivity);
 }
 
 void ChatWindowTabWidget::displayRoomMessage(const Czateria::Message &msg) {
@@ -43,7 +45,6 @@ void ChatWindowTabWidget::displayPrivateMessage(const Czateria::Message &msg) {
   privMsgTab->appendPlainText(formatMessage(msg));
   indicateTabActivity(privMsgTab,
                       QIcon(QLatin1String(":/icons/transmit_blue.png")));
-  QApplication::alert(this);
 }
 
 void ChatWindowTabWidget::openPrivateMessageTab(const QString &nickname) {
@@ -61,11 +62,22 @@ ChatWindowTabWidget::privateMessageTab(const QString &nickname) {
   return it.value();
 }
 
+int ChatWindowTabWidget::countUnreadPrivateTabs() const {
+  int rv = 0;
+  auto bar = tabBar();
+  for (int i = 1; i < bar->count(); ++i) {
+    if (bar->tabTextColor(i) == unreadTabColor) {
+      ++rv;
+    }
+  }
+  return rv;
+}
+
 void ChatWindowTabWidget::indicateTabActivity(int idx, const QIcon &icon) {
   if (idx == currentIndex()) {
     return;
   }
-  tabBar()->setTabTextColor(idx, QColor(Qt::red));
+  tabBar()->setTabTextColor(idx, unreadTabColor);
   tabBar()->setTabIcon(idx, icon);
 }
 
@@ -74,7 +86,7 @@ void ChatWindowTabWidget::indicateTabActivity(QPlainTextEdit *tab,
   indicateTabActivity(indexOf(tab), icon);
 }
 
-void ChatWindowTabWidget::clearTabActivity(int idx) {
+void ChatWindowTabWidget::updateTabActivity(int idx) {
   tabBar()->setTabTextColor(idx, QColor());
   tabBar()->setTabIcon(idx, QIcon());
 }
