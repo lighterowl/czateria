@@ -27,6 +27,7 @@ public:
   void addMessageToCurrent(const Czateria::Message &msg);
   void addMessageToCurrent(const QString &str);
   QPlainTextEdit *privateMessageTab(const QString &nickname);
+  int countUnreadPrivateTabs() const;
 
 signals:
   void privateConversationClosed(const QString &nickname);
@@ -37,7 +38,7 @@ private:
                         const QIcon &icon);
   void indicateTabActivity(int idx, const QIcon &icon);
   void indicateTabActivity(QPlainTextEdit *tab, const QIcon &icon);
-  void clearTabActivity(int idx);
+  void updateTabActivity(int idx);
 
   QHash<QString, QPlainTextEdit *> mPrivateTabs;
 };

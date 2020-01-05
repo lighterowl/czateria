@@ -36,6 +36,8 @@ private:
   void onUserNameDoubleClicked(const QModelIndex &idx);
   void onUserNameMiddleClicked();
   void doAcceptPrivateConversation(const QString &nickname);
+  void notifyActivity();
+  void updateWindowTitle();
 
   Ui::ChatWidget *ui;
   Czateria::ChatSession *const mChatSession;
