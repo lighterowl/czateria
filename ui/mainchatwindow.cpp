@@ -84,8 +84,8 @@ QString getImageFilter() {
   auto rv = QObject::tr("Images (");
   auto formats = QImageReader::supportedImageFormats();
   for (auto &&format : formats) {
-    rv.append(QString(QLatin1String("*.%1")).arg(
-        QString::fromUtf8(format.constData()).toLower()));
+    rv.append(QString(QLatin1String("*.%1"))
+                  .arg(QString::fromUtf8(format.constData()).toLower()));
     if (&format != &formats.back()) {
       rv.append(QLatin1Char(' '));
     }
@@ -188,6 +188,14 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
           ui->tabWidget, &ChatWindowTabWidget::displayPrivateMessage);
   connect(mChatSession, &Czateria::ChatSession::newPrivateConversation, this,
           &MainChatWindow::onNewPrivateConversation);
+  connect(mChatSession, &Czateria::ChatSession::privateConversationCancelled,
+          this, [=](const QString &nickname) {
+            auto msgbox = mPendingPrivRequests.value(nickname, nullptr);
+            if (msgbox) {
+              msgbox->reject();
+              delete msgbox;
+            }
+          });
   connect(mChatSession, &Czateria::ChatSession::privateConversationStateChanged,
           ui->tabWidget,
           &ChatWindowTabWidget::onPrivateConversationStateChanged);
@@ -241,21 +249,27 @@ MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
 MainChatWindow::~MainChatWindow() { delete ui; }
 
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
-  auto question =
-      QObject::tr("%1 wants to talk in private.\nDo you accept?").arg(nickname);
-  QMessageBox msgbox(QMessageBox::Question,
-                     QObject::tr("New private conversation"), question,
-                     QMessageBox::Yes | QMessageBox::No, this);
-  msgbox.setDefaultButton(QMessageBox::Yes);
-  msgbox.button(QMessageBox::Yes)->setShortcut(QKeySequence());
-  msgbox.button(QMessageBox::No)->setShortcut(QKeySequence());
-  if (mAutoAcceptPrivs->isChecked() || msgbox.exec() == QMessageBox::Yes) {
-    mChatSession->acceptPrivateConversation(nickname);
-    ui->tabWidget->openPrivateMessageTab(nickname);
-    ui->lineEdit->setFocus(Qt::OtherFocusReason);
-    QApplication::alert(this);
+  if (mAutoAcceptPrivs->isChecked()) {
+    doAcceptPrivateConversation(nickname);
   } else {
-    mChatSession->rejectPrivateConversation(nickname);
+    auto question = QObject::tr("%1 wants to talk in private.\nDo you accept?")
+                        .arg(nickname);
+    auto msgbox = new QMessageBox(
+        QMessageBox::Question, QObject::tr("New private conversation"),
+        question, QMessageBox::Yes | QMessageBox::No, this);
+    mPendingPrivRequests[nickname] = msgbox;
+    msgbox->setDefaultButton(QMessageBox::Yes);
+    msgbox->button(QMessageBox::Yes)->setShortcut(QKeySequence());
+    msgbox->button(QMessageBox::No)->setShortcut(QKeySequence());
+    connect(msgbox, &QDialog::rejected,
+            [=]() { mChatSession->rejectPrivateConversation(nickname); });
+    connect(msgbox, &QDialog::accepted,
+            [=]() { doAcceptPrivateConversation(nickname); });
+    connect(msgbox, &QObject::destroyed,
+            [=]() { mPendingPrivRequests.remove(nickname); });
+    msgbox->show();
+    msgbox->raise();
+    msgbox->activateWindow();
   }
 }
 
@@ -288,4 +302,11 @@ void MainChatWindow::onUserNameMiddleClicked() {
       mSortProxy->mapToSource(ui->listView->selectionModel()->currentIndex());
   auto nickname = mChatSession->userListModel()->data(idx).toString();
   ui->lineEdit->insert(nickname);
+}
+
+void MainChatWindow::doAcceptPrivateConversation(const QString &nickname) {
+  mChatSession->acceptPrivateConversation(nickname);
+  ui->tabWidget->openPrivateMessageTab(nickname);
+  ui->lineEdit->setFocus(Qt::OtherFocusReason);
+  QApplication::alert(this);
 }

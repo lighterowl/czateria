@@ -1,10 +1,12 @@
 #ifndef MAINCHATWINDOW_H
 #define MAINCHATWINDOW_H
 
+#include <QHash>
 #include <QMainWindow>
 
 class QSortFilterProxyModel;
 class QCompleter;
+class QMessageBox;
 struct AppSettings;
 class MainWindow;
 
@@ -33,6 +35,7 @@ private:
   void onReturnPressed();
   void onUserNameDoubleClicked(const QModelIndex &idx);
   void onUserNameMiddleClicked();
+  void doAcceptPrivateConversation(const QString &nickname);
 
   Ui::ChatWidget *ui;
   Czateria::ChatSession *const mChatSession;
@@ -43,6 +46,7 @@ private:
   QAction *const mAutoAcceptPrivs;
   QAction *const mSendImageAction;
   QAction *const mShowChannelListAction;
+  QHash<QString, QMessageBox*> mPendingPrivRequests;
 };
 
 #endif // MAINCHATWINDOW_H

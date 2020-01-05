@@ -50,6 +50,7 @@ signals:
   void nicknameAssigned(const QString &nickname);
   void roomMessageReceived(const Message &msg);
   void newPrivateConversation(const QString &nickname);
+  void privateConversationCancelled(const QString &nickname);
   void privateConversationStateChanged(const QString &nickname,
                                        ConversationState state);
   void privateMessageReceived(const Message &msg);
