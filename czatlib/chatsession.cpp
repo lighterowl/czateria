@@ -424,7 +424,18 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
 } // namespace Czateria
 
 void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
-  qInfo() << "Socket error" << err << mWebSocket->errorString();
+  if (err == QAbstractSocket::RemoteHostClosedError) {
+    if (mHelloReceived) {
+      mHelloReceived = false;
+      killTimer(mKeepaliveTimerId);
+      mCurrentPrivate.clear();
+      mPendingPrivateMsgs.clear();
+      qInfo() << "Connection closed by server, trying to reconnect";
+      start();
+    }
+  } else {
+    qInfo() << "Socket error" << err << mWebSocket->errorString();
+  }
 }
 
 void ChatSession::sendKeepalive() {
