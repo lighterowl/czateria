@@ -25,7 +25,7 @@ class MainChatWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  explicit MainChatWindow(const Czateria::LoginSession &login,
+  explicit MainChatWindow(Czateria::LoginSession &login,
                           Czateria::AvatarHandler &avatars,
                           const AppSettings &settings, MainWindow *mainWin);
   ~MainChatWindow();

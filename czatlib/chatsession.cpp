@@ -164,15 +164,15 @@ void reportUnhandled(const QString &message) {
 
 namespace Czateria {
 
-ChatSession::ChatSession(const LoginSession &login,
-                         const AvatarHandler &avatars, QObject *parent)
+ChatSession::ChatSession(LoginSession &login, const AvatarHandler &avatars,
+                         QObject *parent)
     : QObject(parent), mWebSocket(new QWebSocket(
                            QString(), QWebSocketProtocol::VersionLatest, this)),
-      mNickname(login.nickname()), mSessionId(login.sessionId()),
-      mChannel(login.room().name),
+      mNickname(login.nickname()),
       mHost(QString(QLatin1String("wss://%1-proxy-czateria.interia.pl"))
                 .arg(login.room().port)),
-      mHelloReceived(false), mUserListModel(new UserListModel(avatars, this)) {
+      mHelloReceived(false), mUserListModel(new UserListModel(avatars, this)),
+      mLoginSession(login) {
   connect(this, &ChatSession::userLeft, mUserListModel,
           &UserListModel::removeUser);
   connect(mWebSocket, &QWebSocket::textMessageReceived, this,
@@ -181,6 +181,9 @@ ChatSession::ChatSession(const LoginSession &login,
                                                   : Qt::AutoConnection);
   void (QWebSocket::*errSig)(QAbstractSocket::SocketError) = &QWebSocket::error;
   connect(mWebSocket, errSig, this, &ChatSession::onSocketError);
+  mLoginSession.setParent(this);
+  connect(&mLoginSession, &LoginSession::loginSuccessful, this,
+          &ChatSession::start);
 }
 
 ChatSession::~ChatSession() {
@@ -270,8 +273,9 @@ void ChatSession::onTextMessageReceived(const QString &text) {
       qInfo() << "Received code" << code << "message while waiting for hello";
       return;
     }
-    SendTextMessage(mWebSocket, QString::fromUtf8(
-                                    loginMsg(mSessionId, mChannel, mNickname)));
+    SendTextMessage(mWebSocket,
+                    QString::fromUtf8(loginMsg(mLoginSession.sessionId(),
+                                               channel(), mNickname)));
     mHelloReceived = true;
     return;
   }
@@ -426,12 +430,15 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
 void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
   if (err == QAbstractSocket::RemoteHostClosedError) {
     if (mHelloReceived) {
-      mHelloReceived = false;
-      killTimer(mKeepaliveTimerId);
-      mCurrentPrivate.clear();
-      mPendingPrivateMsgs.clear();
-      qInfo() << "Connection closed by server, trying to reconnect";
-      start();
+      if (mLoginSession.restart()) {
+        mHelloReceived = false;
+        qInfo() << "Connection closed by server, trying to reconnect";
+        killTimer(mKeepaliveTimerId);
+        mCurrentPrivate.clear();
+        mPendingPrivateMsgs.clear();
+      } else {
+        qInfo() << "Session expired, please login again";
+      }
     }
   } else {
     qInfo() << "Socket error" << err << mWebSocket->errorString();

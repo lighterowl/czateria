@@ -200,17 +200,23 @@ void MainWindow::startLogin(const Czateria::Room &room) {
               blockUi(ui, false);
             }
           });
-  connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
-    blockUi(ui, false);
-    // we keep our own list of this instead of using parenting due to having
-    // these windows as children of MainWindow causes QApplication::alert not to
-    // work properly.
-    auto win = new MainChatWindow(*session, mAvatarHandler, mAppSettings, this);
-    mChatWindows.push_back(win);
-    connect(win, &QObject::destroyed, [=]() { mChatWindows.removeAll(win); });
-    win->show();
-    session->deleteLater();
-  });
+  auto conn = std::make_unique<QMetaObject::Connection>();
+  auto pconn = conn.get();
+  *pconn = connect(session, &Czateria::LoginSession::loginSuccessful,
+                   [=, c = std::move(conn)]() {
+                     disconnect(*c);
+                     blockUi(ui, false);
+                     // we keep our own list of this instead of using
+                     // parenting due to having these windows as children
+                     // of MainWindow causes QApplication::alert not to
+                     // work properly.
+                     auto win = new MainChatWindow(*session, mAvatarHandler,
+                                                   mAppSettings, this);
+                     mChatWindows.push_back(win);
+                     connect(win, &QObject::destroyed,
+                             [=]() { mChatWindows.removeAll(win); });
+                     win->show();
+                   });
   connect(session, &Czateria::LoginSession::loginFailed,
           [=](auto why, auto loginData) {
             session->deleteLater();

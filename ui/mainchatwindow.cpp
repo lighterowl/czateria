@@ -96,7 +96,7 @@ QString getImageFilter() {
 }
 } // namespace
 
-MainChatWindow::MainChatWindow(const Czateria::LoginSession &login,
+MainChatWindow::MainChatWindow(Czateria::LoginSession &login,
                                Czateria::AvatarHandler &avatars,
                                const AppSettings &settings, MainWindow *mainWin)
     : QMainWindow(nullptr), ui(new Ui::ChatWidget),

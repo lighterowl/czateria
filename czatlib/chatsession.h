@@ -7,6 +7,7 @@
 #include <QString>
 
 #include "conversationstate.h"
+#include "loginsession.h"
 
 class QImage;
 class QWebSocket;
@@ -22,7 +23,7 @@ class AvatarHandler;
 class ChatSession : public QObject {
   Q_OBJECT
 public:
-  ChatSession(const LoginSession &login, const AvatarHandler &avatars,
+  ChatSession(LoginSession &login, const AvatarHandler &avatars,
               QObject *parent = nullptr);
   virtual ~ChatSession() override;
 
@@ -42,7 +43,7 @@ public:
   void sendPrivateMessage(const QString &nickname, const QString &message);
   void sendImage(const QString &nickname, const QImage &image);
 
-  const QString &channel() const { return mChannel; }
+  const QString &channel() const { return mLoginSession.room().name; }
   const QString &nickname() const { return mNickname; }
   UserListModel *userListModel() const { return mUserListModel; }
 
@@ -69,14 +70,13 @@ private:
 
   QWebSocket *const mWebSocket;
   QString mNickname;
-  const QString mSessionId;
-  const QString mChannel;
   const QString mHost;
   bool mHelloReceived;
   int mKeepaliveTimerId;
   QHash<QString, ConversationState> mCurrentPrivate;
   QHash<QString, QVector<Message>> mPendingPrivateMsgs;
   UserListModel *const mUserListModel;
+  Czateria::LoginSession &mLoginSession;
 };
 
 } // namespace Czateria
