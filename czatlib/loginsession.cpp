@@ -48,11 +48,22 @@ void LoginSession::login(const QString &nickname) {
 
 void LoginSession::login(const QString &nickname, const QString &password) {
   mNickname = nickname;
+  mPassword = password;
   auto postData = getBasicPostData();
   postData.addQueryItem(QLatin1String("password"), password);
   sendPostData(
       QUrl(QLatin1String("https://czateria-api.interia.pl/scp/user/login")),
       postData);
+}
+
+bool LoginSession::restart() {
+  if (mPassword.isEmpty()) {
+    // only registered users can restart seamlessly due to no captcha being
+    // needed
+    return false;
+  }
+  login(mNickname, mPassword);
+  return true;
 }
 
 void LoginSession::setCaptchaReply(const QString &reply) {

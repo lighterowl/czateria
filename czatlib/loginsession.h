@@ -23,6 +23,7 @@ public:
   void login();
   void login(const QString &nickname);
   void login(const QString &nickname, const QString &password);
+  bool restart();
 
   void setCaptchaReply(const QString &reply);
 
@@ -39,6 +40,7 @@ signals:
 private:
   QNetworkAccessManager *const mNAM;
   QString mNickname;
+  QString mPassword;
   QString mSessionId;
   QString mCaptchaUid;
   const Room mLoginRoom;
