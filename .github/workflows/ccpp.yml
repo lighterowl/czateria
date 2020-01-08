@@ -18,6 +18,7 @@ jobs:
       
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
+      version: 5.9.5
       
     - name: Build with gcc
       run: ./workflow_build_linux.sh g++
