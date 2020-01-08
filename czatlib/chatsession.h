@@ -58,6 +58,7 @@ signals:
   void imageReceived(const QString &nickname, const QImage &image);
   void userJoined(const QString &nickname);
   void userLeft(const QString &nickname);
+  void sessionExpired();
 
 protected:
   void timerEvent(QTimerEvent *) override;

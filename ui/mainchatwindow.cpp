@@ -224,6 +224,11 @@ MainChatWindow::MainChatWindow(Czateria::LoginSession &login,
             }
             notifyActivity();
           });
+  connect(mChatSession, &Czateria::ChatSession::sessionExpired, [=]() {
+    QMessageBox::information(
+        this, tr("Session expired"),
+        tr("Your session has expired.\nPlease log back in."));
+  });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
           mChatSession,

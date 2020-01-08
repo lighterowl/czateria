@@ -437,7 +437,7 @@ void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
         mCurrentPrivate.clear();
         mPendingPrivateMsgs.clear();
       } else {
-        qInfo() << "Session expired, please login again";
+        emit sessionExpired();
       }
     }
   } else {
