@@ -201,11 +201,11 @@ void MainWindow::startLogin(const Czateria::Room &room) {
               blockUi(ui, false);
             }
           });
-  auto conn = std::make_unique<QMetaObject::Connection>();
-  auto pconn = conn.get();
-  *pconn = connect(session, &Czateria::LoginSession::loginSuccessful,
-                   [=, c = std::move(conn)]() {
-                     disconnect(*c);
+  auto conn = new QMetaObject::Connection;
+  *conn = connect(session, &Czateria::LoginSession::loginSuccessful,
+                   [=]() {
+                     disconnect(*conn);
+                     delete conn;
                      blockUi(ui, false);
                      // we keep our own list of this instead of using
                      // parenting due to having these windows as children
