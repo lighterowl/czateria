@@ -18,8 +18,8 @@ jobs:
       
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
-        with:
-          version: 5.9.5
+      with:
+        version: "5.9.5"
       
     - name: Build with MSVC
       shell: cmd
