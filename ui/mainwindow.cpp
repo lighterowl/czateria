@@ -15,6 +15,7 @@
 #include <QSortFilterProxyModel>
 
 #include <chrono>
+#include <memory>
 
 namespace {
 template <typename F1, typename F2, typename F3>
