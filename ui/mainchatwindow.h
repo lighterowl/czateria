@@ -48,7 +48,7 @@ private:
   QAction *const mAutoAcceptPrivs;
   QAction *const mSendImageAction;
   QAction *const mShowChannelListAction;
-  QHash<QString, QMessageBox*> mPendingPrivRequests;
+  QHash<QString, QMessageBox *> mPendingPrivRequests;
 };
 
 #endif // MAINCHATWINDOW_H

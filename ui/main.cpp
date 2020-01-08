@@ -19,12 +19,11 @@ void msgOutput(QtMsgType type, const QMessageLogContext &context,
 } // namespace
 
 int main(int argc, char **argv) {
-  qSetMessagePattern(
-      QLatin1String("[%{time process}] %{type} "
+  qSetMessagePattern(QLatin1String("[%{time process}] %{type} "
 #ifdef QT_MESSAGELOGCONTEXT
-                    "%{file}:%{line} %{function} "
+                                   "%{file}:%{line} %{function} "
 #endif
-                    "%{message}"));
+                                   "%{message}"));
   qInstallMessageHandler(msgOutput);
   QCoreApplication::setOrganizationName(QLatin1String("xavery"));
   QCoreApplication::setOrganizationDomain(QLatin1String("github.com"));
