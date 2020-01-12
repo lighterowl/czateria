@@ -24,6 +24,15 @@ bool loginCodeToFailReason(int code, Czateria::LoginFailReason &why) {
        {-10, r::NaughtyNick}}};
   return CzateriaUtil::convert(code, why, codeToFailReason);
 }
+
+QString sanitiseNickname(const QString &nickname) {
+    auto sanitised = nickname;
+    // the website automatically converts spaces to underscores. trying to login
+    // with a nickname containing spaces ends in an error message sent by the
+    // server after hello.
+    sanitised.replace(QLatin1Char(' '), QLatin1Char('_'));
+    return sanitised;
+}
 } // namespace
 
 namespace Czateria {
@@ -35,7 +44,7 @@ LoginSession::LoginSession(QNetworkAccessManager *nam, const Room &room,
 void LoginSession::login() { login(QString()); }
 
 void LoginSession::login(const QString &nickname) {
-  mNickname = nickname;
+  mNickname = sanitiseNickname(nickname);
   auto c = new Captcha(mNAM);
   connect(c, &Captcha::downloaded,
           [=](const QImage &image, const QString &uid) {
@@ -47,7 +56,7 @@ void LoginSession::login(const QString &nickname) {
 }
 
 void LoginSession::login(const QString &nickname, const QString &password) {
-  mNickname = nickname;
+  mNickname = sanitiseNickname(nickname);
   mPassword = password;
   auto postData = getBasicPostData();
   postData.addQueryItem(QLatin1String("password"), password);

@@ -59,6 +59,7 @@ signals:
   void userJoined(const QString &nickname);
   void userLeft(const QString &nickname);
   void sessionExpired();
+  void sessionError();
 
 protected:
   void timerEvent(QTimerEvent *) override;

@@ -336,6 +336,17 @@ void ChatSession::onTextMessageReceived(const QString &text) {
     sendKeepalive();
     break;
 
+  case 150: {
+    auto subcode = json[QLatin1String("subcode")].toInt();
+    // the exact meaning isn't known, but this is seemingly caused by a somehow
+    // invalid nickname. the server stops processing any further messages after
+    // this, so there's no point in keeping the session alive.
+    if (subcode == 1) {
+      emit sessionError();
+    }
+    break;
+  }
+
   case 135: /* advertisement / global message */
     // {"code":135,"sender":"Redakcja","message":"foobar","url":"foobar\u0000"}
   case 131: /* welcome / channel topic */
@@ -442,6 +453,7 @@ void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
     }
   } else {
     qInfo() << "Socket error" << err << mWebSocket->errorString();
+    emit sessionError();
   }
 }
 
