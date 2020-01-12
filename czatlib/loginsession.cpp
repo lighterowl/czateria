@@ -26,12 +26,12 @@ bool loginCodeToFailReason(int code, Czateria::LoginFailReason &why) {
 }
 
 QString sanitiseNickname(const QString &nickname) {
-    auto sanitised = nickname;
-    // the website automatically converts spaces to underscores. trying to login
-    // with a nickname containing spaces ends in an error message sent by the
-    // server after hello.
-    sanitised.replace(QLatin1Char(' '), QLatin1Char('_'));
-    return sanitised;
+  auto sanitised = nickname;
+  // the website automatically converts spaces to underscores. trying to login
+  // with a nickname containing spaces ends in an error message sent by the
+  // server after hello.
+  sanitised.replace(QLatin1Char(' '), QLatin1Char('_'));
+  return sanitised;
 }
 } // namespace
 
