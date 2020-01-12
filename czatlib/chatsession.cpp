@@ -337,14 +337,14 @@ void ChatSession::onTextMessageReceived(const QString &text) {
     break;
 
   case 150: {
-    auto subcode = json[QLatin1String("subcode")].toInt();
+    auto subcode = obj[QLatin1String("subcode")].toInt();
     // the exact meaning isn't known, but this is seemingly caused by a somehow
     // invalid nickname. the server stops processing any further messages after
     // this, so there's no point in keeping the session alive.
     if (subcode == 1) {
       emit sessionError();
+      break;
     }
-    break;
   }
 
   case 135: /* advertisement / global message */
