@@ -229,6 +229,12 @@ MainChatWindow::MainChatWindow(Czateria::LoginSession &login,
         this, tr("Session expired"),
         tr("Your session has expired.\nPlease log back in."));
   });
+  connect(mChatSession, &Czateria::ChatSession::sessionError, [=]() {
+    QMessageBox::critical(
+        this, tr("Communication error"),
+        tr("An unknown error has occurred.\nPlease try logging in again, "
+           "perhaps with a different nickname."));
+  });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
           mChatSession,

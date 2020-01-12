@@ -11,6 +11,7 @@
 #include <QCloseEvent>
 #include <QCompleter>
 #include <QMessageBox>
+#include <QRegExpValidator>
 #include <QSettings>
 #include <QSortFilterProxyModel>
 
@@ -77,6 +78,13 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
                         QObject::tr("Login failed : %1").arg(message));
 }
 
+// this should really be placed somewhere in czatlib, but QValidator lives
+// inside Qt's gui module that we don't want czatlib to depend on.
+const QValidator *getNicknameValidator() {
+  static const QRegExpValidator validator(QRegExp(QLatin1String("[^'@\\$]+")));
+  return &validator;
+}
+
 using namespace std::literals::chrono_literals;
 constexpr auto channelListRefreshInterval = 5min;
 } // namespace
@@ -133,6 +141,7 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
           });
   ui->nicknameLineEdit->setCompleter(completer);
   ui->nicknameLineEdit->installEventFilter(this);
+  ui->nicknameLineEdit->setValidator(getNicknameValidator());
 
   ui->actionSave_pictures_automatically->setChecked(
       mAppSettings.savePicturesAutomatically);
@@ -201,22 +210,19 @@ void MainWindow::startLogin(const Czateria::Room &room) {
             }
           });
   auto conn = new QMetaObject::Connection;
-  *conn = connect(session, &Czateria::LoginSession::loginSuccessful,
-                   [=]() {
-                     disconnect(*conn);
-                     delete conn;
-                     blockUi(ui, false);
-                     // we keep our own list of this instead of using
-                     // parenting due to having these windows as children
-                     // of MainWindow causes QApplication::alert not to
-                     // work properly.
-                     auto win = new MainChatWindow(*session, mAvatarHandler,
-                                                   mAppSettings, this);
-                     mChatWindows.push_back(win);
-                     connect(win, &QObject::destroyed,
-                             [=]() { mChatWindows.removeAll(win); });
-                     win->show();
-                   });
+  *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
+    disconnect(*conn);
+    delete conn;
+    blockUi(ui, false);
+    // we keep our own list of this instead of using
+    // parenting due to having these windows as children
+    // of MainWindow causes QApplication::alert not to
+    // work properly.
+    auto win = new MainChatWindow(*session, mAvatarHandler, mAppSettings, this);
+    mChatWindows.push_back(win);
+    connect(win, &QObject::destroyed, [=]() { mChatWindows.removeAll(win); });
+    win->show();
+  });
   connect(session, &Czateria::LoginSession::loginFailed,
           [=](auto why, auto loginData) {
             session->deleteLater();
