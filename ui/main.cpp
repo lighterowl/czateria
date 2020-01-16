@@ -36,8 +36,8 @@ int main(int argc, char **argv) {
       QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
   nam.setCache(cache);
   AppSettings settings;
-  auto w = new MainWindow(&nam, settings);
-  w->show();
+  MainWindow w(&nam, settings);
+  w.show();
 
   return a.exec();
 }
