@@ -132,12 +132,12 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   });
 
   refreshRoomList();
-  readSettings();
+  mSavedLoginsModel.setStringList(mAppSettings.logins.keys());
 
   auto completer = new QCompleter(&mSavedLoginsModel, this);
   connect(completer, QOverload<const QString &>::of(&QCompleter::activated),
           [this](auto &&text) {
-            ui->passwordLineEdit->setText(mSavedLogins[text]);
+            ui->passwordLineEdit->setText(mAppSettings.logins[text].toString());
           });
   ui->nicknameLineEdit->setCompleter(completer);
   ui->nicknameLineEdit->installEventFilter(this);
@@ -242,32 +242,10 @@ void MainWindow::startLogin(const Czateria::Room &room) {
   blockUi(ui, true);
 }
 
-void MainWindow::readSettings() {
-  QSettings settings;
-  auto logins = settings.value(QLatin1String("logins"));
-  if (logins.isValid() && logins.type() == QVariant::Hash) {
-    auto loginsHash = logins.toHash();
-    for (auto it = loginsHash.cbegin(); it != loginsHash.cend(); ++it) {
-      mSavedLogins[it.key()] = it.value().toString();
-    }
-  }
-
-  mSavedLoginsModel.setStringList(mSavedLogins.keys());
-}
-
-void MainWindow::saveSettings() const {
-  QHash<QString, QVariant> logins;
-  for (auto it = mSavedLogins.cbegin(); it != mSavedLogins.cend(); ++it) {
-    logins[it.key()] = it.value();
-  }
-  QSettings settings;
-  settings.setValue(QLatin1String("logins"), logins);
-}
-
 void MainWindow::saveLoginData(const QString &username,
                                const QString &password) {
-  mSavedLogins[username] = password;
-  mSavedLoginsModel.setStringList(mSavedLogins.keys());
+  mAppSettings.logins[username] = password;
+  mSavedLoginsModel.setStringList(mAppSettings.logins.keys());
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
@@ -283,10 +261,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
 
 void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
-MainWindow::~MainWindow() {
-  saveSettings();
-  delete ui;
-}
+MainWindow::~MainWindow() { delete ui; }
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
   if (mChatWindows.empty()) {
