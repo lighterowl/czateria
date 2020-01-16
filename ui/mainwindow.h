@@ -41,7 +41,6 @@ private:
   Czateria::RoomListModel *const mRoomListModel;
   QSortFilterProxyModel *const mRoomSortModel;
   Czateria::AvatarHandler mAvatarHandler;
-  QHash<QString, QString> mSavedLogins;
   QStringListModel mSavedLoginsModel;
   AppSettings &mAppSettings;
   QList<MainChatWindow *> mChatWindows;
@@ -51,8 +50,6 @@ private:
   void refreshRoomList();
   void onLoginFailed(Czateria::LoginFailReason, const QString &);
   void startLogin(const Czateria::Room &);
-  void readSettings();
-  void saveSettings() const;
   void saveLoginData(const QString &, const QString &);
 
   bool eventFilter(QObject *, QEvent *) override;
