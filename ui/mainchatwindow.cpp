@@ -195,7 +195,8 @@ MainChatWindow::MainChatWindow(Czateria::LoginSession &login,
             auto msgbox = mPendingPrivRequests.value(nickname, nullptr);
             if (msgbox) {
               msgbox->reject();
-              delete msgbox;
+              msgbox->deleteLater();
+              mPendingPrivRequests.remove(nickname);
             }
           });
   connect(mChatSession, &Czateria::ChatSession::privateConversationStateChanged,
@@ -279,8 +280,6 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
             [=]() { mChatSession->rejectPrivateConversation(nickname); });
     connect(msgbox, &QDialog::accepted,
             [=]() { doAcceptPrivateConversation(nickname); });
-    connect(msgbox, &QObject::destroyed,
-            [=]() { mPendingPrivRequests.remove(nickname); });
     msgbox->show();
     msgbox->raise();
     msgbox->activateWindow();
