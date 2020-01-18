@@ -195,7 +195,8 @@ MainChatWindow::MainChatWindow(Czateria::LoginSession &login,
             auto msgbox = mPendingPrivRequests.value(nickname, nullptr);
             if (msgbox) {
               msgbox->reject();
-              delete msgbox;
+              msgbox->deleteLater();
+              mPendingPrivRequests.remove(nickname);
             }
           });
   connect(mChatSession, &Czateria::ChatSession::privateConversationStateChanged,
@@ -275,12 +276,18 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
     msgbox->setDefaultButton(QMessageBox::Yes);
     msgbox->button(QMessageBox::Yes)->setShortcut(QKeySequence());
     msgbox->button(QMessageBox::No)->setShortcut(QKeySequence());
-    connect(msgbox, &QDialog::rejected,
-            [=]() { mChatSession->rejectPrivateConversation(nickname); });
-    connect(msgbox, &QDialog::accepted,
-            [=]() { doAcceptPrivateConversation(nickname); });
-    connect(msgbox, &QObject::destroyed,
-            [=]() { mPendingPrivRequests.remove(nickname); });
+    connect(msgbox, &QDialog::finished, [=](int result) {
+      switch (result) {
+      case QMessageBox::Yes:
+        doAcceptPrivateConversation(nickname);
+        break;
+      case QMessageBox::No:
+        mChatSession->rejectPrivateConversation(nickname);
+        break;
+      default:
+        Q_ASSERT(0);
+      }
+    });
     msgbox->show();
     msgbox->raise();
     msgbox->activateWindow();
