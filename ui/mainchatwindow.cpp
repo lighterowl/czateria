@@ -276,10 +276,18 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
     msgbox->setDefaultButton(QMessageBox::Yes);
     msgbox->button(QMessageBox::Yes)->setShortcut(QKeySequence());
     msgbox->button(QMessageBox::No)->setShortcut(QKeySequence());
-    connect(msgbox, &QDialog::rejected,
-            [=]() { mChatSession->rejectPrivateConversation(nickname); });
-    connect(msgbox, &QDialog::accepted,
-            [=]() { doAcceptPrivateConversation(nickname); });
+    connect(msgbox, &QDialog::finished, [=](int result) {
+      switch (result) {
+      case QMessageBox::Yes:
+        doAcceptPrivateConversation(nickname);
+        break;
+      case QMessageBox::No:
+        mChatSession->rejectPrivateConversation(nickname);
+        break;
+      default:
+        Q_ASSERT(0);
+      }
+    });
     msgbox->show();
     msgbox->raise();
     msgbox->activateWindow();
