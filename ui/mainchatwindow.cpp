@@ -291,7 +291,6 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
     msgbox->show();
     msgbox->raise();
     msgbox->activateWindow();
-    qDebug() << nickname << "message box shown";
   }
 }
 
@@ -327,7 +326,6 @@ void MainChatWindow::onUserNameMiddleClicked() {
 }
 
 void MainChatWindow::doAcceptPrivateConversation(const QString &nickname) {
-    qDebug() << nickname << "private conv accepted";
   mChatSession->acceptPrivateConversation(nickname);
   ui->tabWidget->openPrivateMessageTab(nickname);
   ui->lineEdit->setFocus(Qt::OtherFocusReason);
