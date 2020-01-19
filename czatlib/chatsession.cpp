@@ -7,6 +7,7 @@
 #include <QJsonObject>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QTimer>
 #include <QTimerEvent>
 #include <QWebSocket>
 
@@ -441,15 +442,17 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
 void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
   if (err == QAbstractSocket::RemoteHostClosedError) {
     if (mHelloReceived) {
-      if (mLoginSession.restart()) {
-        mHelloReceived = false;
-        qInfo() << "Connection closed by server, trying to reconnect";
-        killTimer(mKeepaliveTimerId);
-        mCurrentPrivate.clear();
-        mPendingPrivateMsgs.clear();
-      } else {
-        emit sessionExpired();
-      }
+      mHelloReceived = false;
+      qInfo() << "Connection closed by server, trying to reconnect";
+      QTimer::singleShot(std::chrono::seconds(10), [=]() {
+        if (mLoginSession.restart()) {
+          killTimer(mKeepaliveTimerId);
+          mCurrentPrivate.clear();
+          mPendingPrivateMsgs.clear();
+        } else {
+          emit sessionExpired();
+        }
+      });
     }
   } else {
     qInfo() << "Socket error" << err << mWebSocket->errorString();
