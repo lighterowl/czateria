@@ -212,6 +212,7 @@ void ChatSession::acceptPrivateConversation(const QString &nickname) {
 
 void ChatSession::rejectPrivateConversation(const QString &nickname) {
   SendTextMessage(mWebSocket, QString::fromUtf8(privRejectMsg(nickname)));
+  mCurrentPrivate.remove(nickname);
 }
 
 void ChatSession::notifyPrivateConversationClosed(const QString &nickname) {
