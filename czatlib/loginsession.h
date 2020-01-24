@@ -5,7 +5,6 @@
 #include <QString>
 
 #include "loginfailreason.h"
-#include "room.h"
 
 class QImage;
 class QNetworkAccessManager;
@@ -13,23 +12,22 @@ class QUrl;
 class QUrlQuery;
 
 namespace Czateria {
-
+struct Room;
 class LoginSession : public QObject {
   Q_OBJECT
 public:
-  LoginSession(QNetworkAccessManager *nam, const Room &room,
-               QObject *parent = nullptr);
+  LoginSession(QNetworkAccessManager *nam, QObject *parent = nullptr);
 
-  void login();
-  void login(const QString &nickname);
-  void login(const QString &nickname, const QString &password);
+  void login(const QString &nickname = QString());
+  void login(const Room &room, const QString &nickname,
+             const QString &password);
   bool restart();
 
-  void setCaptchaReply(const QString &reply);
+  void setCaptchaReply(const Room &room, const QString &reply);
 
   const QString &sessionId() const { return mSessionId; }
   const QString &nickname() const { return mNickname; }
-  const Room &room() const { return mLoginRoom; }
+  void setNickname(const QString &nickname) { mNickname = nickname; }
 
 signals:
   void loginSuccessful();
@@ -43,11 +41,10 @@ private:
   QString mPassword;
   QString mSessionId;
   QString mCaptchaUid;
-  const Room mLoginRoom;
 
   void onReplyReceived(const QByteArray &content);
   void sendPostData(const QUrl &address, const QUrlQuery &postData);
-  QUrlQuery getBasicPostData() const;
+  QUrlQuery getBasicPostData(const Room &room) const;
 };
 
 } // namespace Czateria
