@@ -227,7 +227,7 @@ void ChatSession::sendRoomMessage(const QString &message) {
 void ChatSession::sendPrivateMessage(const QString &nickname,
                                      const QString &message) {
   auto it = mCurrentPrivate.find(nickname);
-  if (it == std::end(mCurrentPrivate)) {
+  if (it == std::end(mCurrentPrivate) || *it == ConversationState::Rejected) {
     SendTextMessage(mWebSocket,
                     QString::fromUtf8(privInviteMsg(message, nickname)));
     mCurrentPrivate[nickname] = ConversationState::InviteSent;

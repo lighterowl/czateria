@@ -32,11 +32,12 @@ public:
   void acceptPrivateConversation(const QString &nickname);
   void rejectPrivateConversation(const QString &nickname);
   void notifyPrivateConversationClosed(const QString &nickname);
-  bool canSendMessage(const QString &nickname) {
+  bool canSendMessage(const QString &nickname) const {
     auto it = mCurrentPrivate.find(nickname);
     return it == std::end(mCurrentPrivate) ||
            (*it == ConversationState::InviteSent ||
-            *it == ConversationState::Active);
+            *it == ConversationState::Active ||
+            *it == ConversationState::Rejected);
   }
 
   void sendRoomMessage(const QString &message);
