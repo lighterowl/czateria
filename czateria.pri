@@ -4,7 +4,7 @@ CONFIG += c++14 strict_c++
   QMAKE_CXXFLAGS += -WX
 }
 *-g++ {
-  QMAKE_CXXFLAGS += -Wextra -Werror
+  QMAKE_CXXFLAGS += -Wextra -Werror -Wno-deprecated-copy
 }
 *-clang {
   QMAKE_CXXFLAGS += -Wextra -Wmismatched-tags -Werror
