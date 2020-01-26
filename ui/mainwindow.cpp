@@ -194,7 +194,8 @@ void MainWindow::refreshRoomList() {
 void MainWindow::onLoginFailed(Czateria::LoginFailReason why,
                                const QString &loginData) {
   loginErrorMessageBox(this, ui, why);
-  if (why == Czateria::LoginFailReason::NickRegistered) {
+  if (why == Czateria::LoginFailReason::NickRegistered &&
+      !loginData.isEmpty()) {
     ui->nicknameLineEdit->setText(loginData);
     auto rv =
         QMessageBox::question(this, tr("Use suggested nickname?"),
