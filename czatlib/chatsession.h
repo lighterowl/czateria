@@ -27,7 +27,7 @@ class ChatSession : public QObject {
 public:
   ChatSession(QSharedPointer<LoginSession> login, const AvatarHandler &avatars,
               const Room &room, QObject *parent = nullptr);
-  virtual ~ChatSession() override;
+  ~ChatSession() override;
 
   void start();
 

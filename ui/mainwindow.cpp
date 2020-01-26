@@ -234,9 +234,9 @@ void MainWindow::startLogin(const Czateria::Room &room) {
   connect(session.data(), &Czateria::LoginSession::loginFailed, this,
           &MainWindow::onLoginFailed);
   inspectRadioButtons(
-      ui, [=]() { session->login(); },
-      [=](auto &&nickname) { session->login(nickname); },
-      [=](auto &&nickname, auto &&password) {
+      ui, [&]() { session->login(); },
+      [&](auto &&nickname) { session->login(nickname); },
+      [&](auto &&nickname, auto &&password) {
         session->login(room, nickname, password);
         connect(session.data(), &Czateria::LoginSession::loginSuccessful,
                 [=]() {
