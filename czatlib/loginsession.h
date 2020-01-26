@@ -21,7 +21,7 @@ public:
   void login(const QString &nickname = QString());
   void login(const Room &room, const QString &nickname,
              const QString &password);
-  bool restart();
+  bool restart(const Room &room);
 
   void setCaptchaReply(const Room &room, const QString &reply);
 
@@ -41,6 +41,7 @@ private:
   QString mPassword;
   QString mSessionId;
   QString mCaptchaUid;
+  bool mLoginOngoing;
 
   void onReplyReceived(const QByteArray &content);
   void sendPostData(const QUrl &address, const QUrlQuery &postData);

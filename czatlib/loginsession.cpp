@@ -64,17 +64,16 @@ void LoginSession::login(const Room &room, const QString &nickname,
       postData);
 }
 
-bool LoginSession::restart() {
-  return false;
-#if 0
+bool LoginSession::restart(const Room &room) {
   if (mPassword.isEmpty()) {
     // only registered users can restart seamlessly due to no captcha being
     // needed
     return false;
   }
-  login(mNickname, mPassword);
+  if (!mLoginOngoing) {
+    login(room, mNickname, mPassword);
+  }
   return true;
-#endif
 }
 
 void LoginSession::setCaptchaReply(const Room &room, const QString &reply) {
@@ -92,6 +91,7 @@ void LoginSession::setCaptchaReply(const Room &room, const QString &reply) {
 }
 
 void LoginSession::onReplyReceived(const QByteArray &data) {
+  mLoginOngoing = false;
   qDebug().noquote() << data;
   QJsonParseError err;
   auto json = QJsonDocument::fromJson(data, &err);
@@ -135,6 +135,7 @@ void LoginSession::sendPostData(const QUrl &address,
     postRequest->deleteLater();
     onReplyReceived(content);
   });
+  mLoginOngoing = true;
 }
 
 QUrlQuery LoginSession::getBasicPostData(const Room &room) const {

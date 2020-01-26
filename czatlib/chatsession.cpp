@@ -444,7 +444,7 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
 void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
   if (err == QAbstractSocket::RemoteHostClosedError) {
     if (mHelloReceived) {
-      if (mLoginSession->restart()) {
+      if (mLoginSession->restart(mRoom)) {
         mHelloReceived = false;
         qInfo() << "Connection closed by server, trying to reconnect";
         killTimer(mKeepaliveTimerId);
