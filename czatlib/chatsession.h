@@ -37,7 +37,8 @@ public:
     return it == std::end(mCurrentPrivate) ||
            (*it == ConversationState::InviteSent ||
             *it == ConversationState::Active ||
-            *it == ConversationState::Rejected);
+            *it == ConversationState::Rejected ||
+            *it == ConversationState::Closed);
   }
 
   void sendRoomMessage(const QString &message);
