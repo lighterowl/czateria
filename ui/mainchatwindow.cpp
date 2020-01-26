@@ -96,11 +96,12 @@ QString getImageFilter() {
 }
 } // namespace
 
-MainChatWindow::MainChatWindow(Czateria::LoginSession &login,
+MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                                Czateria::AvatarHandler &avatars,
+                               const Czateria::Room &room,
                                const AppSettings &settings, MainWindow *mainWin)
     : QMainWindow(nullptr), ui(new Ui::ChatWidget),
-      mChatSession(new Czateria::ChatSession(login, avatars, this)),
+      mChatSession(new Czateria::ChatSession(login, avatars, room, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)),

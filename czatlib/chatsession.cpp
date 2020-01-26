@@ -164,15 +164,16 @@ void reportUnhandled(const QString &message) {
 
 namespace Czateria {
 
-ChatSession::ChatSession(LoginSession &login, const AvatarHandler &avatars,
+ChatSession::ChatSession(QSharedPointer<LoginSession> login,
+                         const AvatarHandler &avatars, const Room &room,
                          QObject *parent)
     : QObject(parent), mWebSocket(new QWebSocket(
                            QString(), QWebSocketProtocol::VersionLatest, this)),
-      mNickname(login.nickname()),
+      mNickname(login->nickname()),
       mHost(QString(QLatin1String("wss://%1-proxy-czateria.interia.pl"))
-                .arg(login.room().port)),
+                .arg(room.port)),
       mHelloReceived(false), mUserListModel(new UserListModel(avatars, this)),
-      mLoginSession(login) {
+      mLoginSession(login), mRoom(room) {
   connect(this, &ChatSession::userLeft, mUserListModel,
           &UserListModel::removeUser);
   connect(mWebSocket, &QWebSocket::textMessageReceived, this,
@@ -181,8 +182,7 @@ ChatSession::ChatSession(LoginSession &login, const AvatarHandler &avatars,
                                                   : Qt::AutoConnection);
   void (QWebSocket::*errSig)(QAbstractSocket::SocketError) = &QWebSocket::error;
   connect(mWebSocket, errSig, this, &ChatSession::onSocketError);
-  mLoginSession.setParent(this);
-  connect(&mLoginSession, &LoginSession::loginSuccessful, this,
+  connect(mLoginSession.data(), &LoginSession::loginSuccessful, this,
           &ChatSession::start);
 }
 
@@ -276,7 +276,7 @@ void ChatSession::onTextMessageReceived(const QString &text) {
       return;
     }
     SendTextMessage(mWebSocket,
-                    QString::fromUtf8(loginMsg(mLoginSession.sessionId(),
+                    QString::fromUtf8(loginMsg(mLoginSession->sessionId(),
                                                channel(), mNickname)));
     mHelloReceived = true;
     return;
@@ -327,6 +327,7 @@ void ChatSession::onTextMessageReceived(const QString &text) {
 
   case 200: /* nick assigned : {"code":200,"username":"gość_15929765"} */
     mNickname = obj[QLatin1String("username")].toString();
+    mLoginSession->setNickname(mNickname);
     emit nicknameAssigned(mNickname);
     break;
 
@@ -443,7 +444,7 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
 void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
   if (err == QAbstractSocket::RemoteHostClosedError) {
     if (mHelloReceived) {
-      if (mLoginSession.restart()) {
+      if (mLoginSession->restart(mRoom)) {
         mHelloReceived = false;
         qInfo() << "Connection closed by server, trying to reconnect";
         killTimer(mKeepaliveTimerId);

@@ -13,6 +13,7 @@
 #include <QMessageBox>
 #include <QRegExpValidator>
 #include <QSettings>
+#include <QSharedPointer>
 #include <QSortFilterProxyModel>
 
 #include <chrono>
@@ -161,8 +162,19 @@ void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
                              QObject::tr("Enter your credentials first"));
     return;
   }
-  auto srcIdx = mRoomSortModel->mapToSource(idx);
-  startLogin(mRoomListModel->room(srcIdx.row()));
+  bool newSessionNeeded = true;
+  auto &&room = mRoomListModel->room(mRoomSortModel->mapToSource(idx).row());
+  if (ui->nicknameOnlyRadioButton->isChecked() ||
+      ui->nickAndPassRadioButton->isChecked()) {
+    auto nickname = ui->nicknameLineEdit->text();
+    if (auto session = mCurrentSessions.value(nickname).toStrongRef()) {
+      createChatWindow(session, room);
+      newSessionNeeded = false;
+    }
+  }
+  if (newSessionNeeded) {
+    startLogin(room);
+  }
 }
 
 bool MainWindow::isLoginDataEntered() {
@@ -182,7 +194,8 @@ void MainWindow::refreshRoomList() {
 void MainWindow::onLoginFailed(Czateria::LoginFailReason why,
                                const QString &loginData) {
   loginErrorMessageBox(this, ui, why);
-  if (why == Czateria::LoginFailReason::NickRegistered) {
+  if (why == Czateria::LoginFailReason::NickRegistered &&
+      !loginData.isEmpty()) {
     ui->nicknameLineEdit->setText(loginData);
     auto rv =
         QMessageBox::question(this, tr("Use suggested nickname?"),
@@ -197,47 +210,41 @@ void MainWindow::onLoginFailed(Czateria::LoginFailReason why,
 }
 
 void MainWindow::startLogin(const Czateria::Room &room) {
-  auto session = new Czateria::LoginSession(mNAM, room);
-  connect(session, &Czateria::LoginSession::captchaRequired,
+  auto session = QSharedPointer<Czateria::LoginSession>::create(mNAM);
+  auto sessionPtr = session.data();
+  connect(sessionPtr, &Czateria::LoginSession::captchaRequired,
           [=](const QImage &image) {
             QApplication::restoreOverrideCursor();
             CaptchaDialog dialog(image, this);
             if (dialog.exec() == QDialog::Accepted) {
-              session->setCaptchaReply(dialog.response());
+              sessionPtr->setCaptchaReply(room, dialog.response());
             } else {
-              session->deleteLater();
               blockUi(ui, false);
             }
           });
   auto conn = new QMetaObject::Connection;
-  *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
+  *conn = connect(sessionPtr, &Czateria::LoginSession::loginSuccessful, [=]() {
     disconnect(*conn);
     delete conn;
     blockUi(ui, false);
-    // we keep our own list of this instead of using
-    // parenting due to having these windows as children
-    // of MainWindow causes QApplication::alert not to
-    // work properly.
-    auto win = new MainChatWindow(*session, mAvatarHandler, mAppSettings, this);
-    mChatWindows.push_back(win);
-    connect(win, &QObject::destroyed, [=]() { mChatWindows.removeAll(win); });
-    win->show();
+    if (ui->nicknameLineEdit->isEnabled()) {
+      ui->nicknameLineEdit->setText(session->nickname());
+    }
+    createChatWindow(std::move(session), room);
   });
-  connect(session, &Czateria::LoginSession::loginFailed,
-          [=](auto why, auto loginData) {
-            session->deleteLater();
-            onLoginFailed(why, loginData);
-          });
+  connect(session.data(), &Czateria::LoginSession::loginFailed, this,
+          &MainWindow::onLoginFailed);
   inspectRadioButtons(
-      ui, [=]() { session->login(); },
-      [=](auto &&nickname) { session->login(nickname); },
-      [=](auto &&nickname, auto &&password) {
-        session->login(nickname, password);
-        connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
-          if (ui->saveCredentialsCheckBox) {
-            saveLoginData(nickname, password);
-          }
-        });
+      ui, [&]() { session->login(); },
+      [&](auto &&nickname) { session->login(nickname); },
+      [&](auto &&nickname, auto &&password) {
+        session->login(room, nickname, password);
+        connect(session.data(), &Czateria::LoginSession::loginSuccessful,
+                [=]() {
+                  if (ui->saveCredentialsCheckBox) {
+                    saveLoginData(nickname, password);
+                  }
+                });
       });
   blockUi(ui, true);
 }
@@ -246,6 +253,22 @@ void MainWindow::saveLoginData(const QString &username,
                                const QString &password) {
   mAppSettings.logins[username] = password;
   mSavedLoginsModel.setStringList(mAppSettings.logins.keys());
+}
+
+void MainWindow::createChatWindow(
+    QSharedPointer<Czateria::LoginSession> session,
+    const Czateria::Room &room) {
+  // we keep our own list of this instead of using parenting because
+  // having these windows as children of MainWindow causes
+  // QApplication::alert not to work properly.
+  auto win =
+      new MainChatWindow(session, mAvatarHandler, room, mAppSettings, this);
+  mChatWindows.push_back(win);
+  if (!session->nickname().isEmpty()) {
+    mCurrentSessions[session->nickname()] = session.toWeakRef();
+  }
+  connect(win, &QObject::destroyed, [=]() { mChatWindows.removeAll(win); });
+  win->show();
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {

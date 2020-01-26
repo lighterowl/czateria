@@ -4,6 +4,7 @@
 #include <QHash>
 #include <QMainWindow>
 #include <QStringListModel>
+#include <QWeakPointer>
 
 #include <czatlib/avatarhandler.h>
 #include <czatlib/loginfailreason.h>
@@ -21,6 +22,7 @@ class MainWindow;
 
 namespace Czateria {
 class RoomListModel;
+class LoginSession;
 struct Room;
 } // namespace Czateria
 
@@ -44,6 +46,7 @@ private:
   QStringListModel mSavedLoginsModel;
   AppSettings &mAppSettings;
   QList<MainChatWindow *> mChatWindows;
+  QHash<QString, QWeakPointer<Czateria::LoginSession>> mCurrentSessions;
 
   void onChannelDoubleClicked(const QModelIndex &);
   bool isLoginDataEntered();
@@ -51,6 +54,8 @@ private:
   void onLoginFailed(Czateria::LoginFailReason, const QString &);
   void startLogin(const Czateria::Room &);
   void saveLoginData(const QString &, const QString &);
+  void createChatWindow(QSharedPointer<Czateria::LoginSession>,
+                        const Czateria::Room &);
 
   bool eventFilter(QObject *, QEvent *) override;
   void timerEvent(QTimerEvent *) override;

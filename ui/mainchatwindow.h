@@ -3,6 +3,7 @@
 
 #include <QHash>
 #include <QMainWindow>
+#include <QSharedPointer>
 
 class QSortFilterProxyModel;
 class QCompleter;
@@ -19,14 +20,16 @@ class LoginSession;
 class ChatSession;
 class Message;
 class AvatarHandler;
+struct Room;
 } // namespace Czateria
 
 class MainChatWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  explicit MainChatWindow(Czateria::LoginSession &login,
+  explicit MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                           Czateria::AvatarHandler &avatars,
+                          const Czateria::Room &room,
                           const AppSettings &settings, MainWindow *mainWin);
   ~MainChatWindow();
 

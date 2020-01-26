@@ -11,6 +11,7 @@
 #include <QUrlQuery>
 
 #include "captcha.h"
+#include "room.h"
 #include "util.h"
 
 namespace {
@@ -37,11 +38,8 @@ QString sanitiseNickname(const QString &nickname) {
 
 namespace Czateria {
 
-LoginSession::LoginSession(QNetworkAccessManager *nam, const Room &room,
-                           QObject *parent)
-    : QObject(parent), mNAM(nam), mLoginRoom(room) {}
-
-void LoginSession::login() { login(QString()); }
+LoginSession::LoginSession(QNetworkAccessManager *nam, QObject *parent)
+    : QObject(parent), mNAM(nam) {}
 
 void LoginSession::login(const QString &nickname) {
   mNickname = sanitiseNickname(nickname);
@@ -55,28 +53,31 @@ void LoginSession::login(const QString &nickname) {
   c->get();
 }
 
-void LoginSession::login(const QString &nickname, const QString &password) {
+void LoginSession::login(const Room &room, const QString &nickname,
+                         const QString &password) {
   mNickname = sanitiseNickname(nickname);
   mPassword = password;
-  auto postData = getBasicPostData();
+  auto postData = getBasicPostData(room);
   postData.addQueryItem(QLatin1String("password"), password);
   sendPostData(
       QUrl(QLatin1String("https://czateria-api.interia.pl/scp/user/login")),
       postData);
 }
 
-bool LoginSession::restart() {
+bool LoginSession::restart(const Room &room) {
   if (mPassword.isEmpty()) {
     // only registered users can restart seamlessly due to no captcha being
     // needed
     return false;
   }
-  login(mNickname, mPassword);
+  if (!mLoginOngoing) {
+    login(room, mNickname, mPassword);
+  }
   return true;
 }
 
-void LoginSession::setCaptchaReply(const QString &reply) {
-  auto postData = getBasicPostData();
+void LoginSession::setCaptchaReply(const Room &room, const QString &reply) {
+  auto postData = getBasicPostData(room);
   postData.addQueryItem(QLatin1String("rulesAccept"), QLatin1String("1"));
   postData.addQueryItem(QLatin1String("captchaUid"), mCaptchaUid);
   postData.addQueryItem(QLatin1String("captchaResponse"), reply);
@@ -90,6 +91,7 @@ void LoginSession::setCaptchaReply(const QString &reply) {
 }
 
 void LoginSession::onReplyReceived(const QByteArray &data) {
+  mLoginOngoing = false;
   qDebug().noquote() << data;
   QJsonParseError err;
   auto json = QJsonDocument::fromJson(data, &err);
@@ -133,14 +135,14 @@ void LoginSession::sendPostData(const QUrl &address,
     postRequest->deleteLater();
     onReplyReceived(content);
   });
+  mLoginOngoing = true;
 }
 
-QUrlQuery LoginSession::getBasicPostData() const {
+QUrlQuery LoginSession::getBasicPostData(const Room &room) const {
   QUrlQuery postData;
   postData.addQueryItem(QLatin1String("nickname"), mNickname);
-  postData.addQueryItem(QLatin1String("roomName"), mLoginRoom.name);
-  postData.addQueryItem(QLatin1String("roomId"),
-                        QString::number(mLoginRoom.id));
+  postData.addQueryItem(QLatin1String("roomName"), room.name);
+  postData.addQueryItem(QLatin1String("roomId"), QString::number(room.id));
   return postData;
 }
 
