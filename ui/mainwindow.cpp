@@ -226,6 +226,9 @@ void MainWindow::startLogin(const Czateria::Room &room) {
     disconnect(*conn);
     delete conn;
     blockUi(ui, false);
+    if (ui->nicknameLineEdit->isEnabled()) {
+      ui->nicknameLineEdit->setText(session->nickname());
+    }
     createChatWindow(std::move(session), room);
   });
   connect(session.data(), &Czateria::LoginSession::loginFailed, this,
