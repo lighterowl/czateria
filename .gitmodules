@@ -1,0 +1,3 @@
+[submodule "googletest"]
+	path = czatlibtest/googletest
+	url = https://github.com/google/googletest.git
