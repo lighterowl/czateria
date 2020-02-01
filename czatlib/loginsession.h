@@ -12,10 +12,11 @@ class QUrlQuery;
 
 namespace Czateria {
 struct Room;
+struct HttpSocketFactory;
 class LoginSession : public QObject {
   Q_OBJECT
 public:
-  LoginSession(QNetworkAccessManager *nam, QObject *parent = nullptr);
+  LoginSession(HttpSocketFactory *factory, QObject *parent = nullptr);
 
   void login(const QString &nickname = QString());
   void login(const Room &room, const QString &nickname,
@@ -35,7 +36,7 @@ signals:
   void captchaRequired(const QImage &captcha);
 
 private:
-  QNetworkAccessManager *const mNAM;
+  HttpSocketFactory *const mSocketFactory;
   QString mNickname;
   QString mPassword;
   QString mSessionId;

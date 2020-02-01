@@ -2,7 +2,9 @@
 #define HTTPSOCKET_H
 
 #include <QObject>
-#include <QUrl>
+
+class QUrl;
+class QUrlQuery;
 
 namespace Czateria {
 
@@ -19,6 +21,7 @@ signals:
 struct HttpSocketFactory {
   virtual HttpSocket *get(const QUrl &) = 0;
   virtual HttpSocket *getCached(const QUrl &) = 0;
+  virtual HttpSocket *post(const QUrl &, const QUrlQuery &) = 0;
 };
 
 } // namespace Czateria

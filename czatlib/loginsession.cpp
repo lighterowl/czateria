@@ -1,6 +1,7 @@
 #include "loginsession.h"
 
 #include <QDateTime>
+#include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonParseError>
@@ -8,6 +9,7 @@
 #include <QUrlQuery>
 
 #include "captcha.h"
+#include "httpsocket.h"
 #include "room.h"
 #include "util.h"
 
@@ -35,12 +37,12 @@ QString sanitiseNickname(const QString &nickname) {
 
 namespace Czateria {
 
-LoginSession::LoginSession(QNetworkAccessManager *nam, QObject *parent)
-    : QObject(parent), mNAM(nam) {}
+LoginSession::LoginSession(HttpSocketFactory *factory, QObject *parent)
+    : QObject(parent), mSocketFactory(factory) {}
 
 void LoginSession::login(const QString &nickname) {
   mNickname = sanitiseNickname(nickname);
-  auto c = new Captcha(mNAM);
+  auto c = new Captcha(mSocketFactory);
   connect(c, &Captcha::downloaded,
           [=](const QImage &image, const QString &uid) {
             c->deleteLater();
@@ -121,13 +123,9 @@ void LoginSession::onReplyReceived(const QByteArray &data) {
 
 void LoginSession::sendPostData(const QUrl &address,
                                 const QUrlQuery &postData) {
-  auto request = QNetworkRequest(address);
-  request.setHeader(QNetworkRequest::ContentTypeHeader,
-                    QLatin1String("application/x-www-form-urlencoded"));
-  auto postDataEncoded = postData.toString(QUrl::FullyEncoded);
-  qDebug() << address << postDataEncoded;
-  auto postRequest = mNAM->post(request, postDataEncoded.toUtf8());
-  connect(postRequest, &QNetworkReply::finished, [=]() {
+  qDebug() << address << postData.toString(QUrl::PrettyDecoded);
+  auto postRequest = mSocketFactory->post(address, postData);
+  connect(postRequest, &HttpSocket::finished, [=]() {
     auto content = postRequest->readAll();
     postRequest->deleteLater();
     onReplyReceived(content);

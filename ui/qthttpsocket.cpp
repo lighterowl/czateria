@@ -1,6 +1,7 @@
 #include "qthttpsocket.h"
 
 #include <QNetworkReply>
+#include <QUrlQuery>
 
 namespace {
 class QtHttpSocket : public Czateria::HttpSocket {
@@ -27,4 +28,13 @@ Czateria::HttpSocket *QtHttpSocketFactory::getCached(const QUrl &address) {
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                        QNetworkRequest::PreferCache);
   return new QtHttpSocket(mNAM.get(request));
+}
+
+Czateria::HttpSocket *QtHttpSocketFactory::post(const QUrl &address,
+                                                const QUrlQuery &postData) {
+  auto request = QNetworkRequest(address);
+  request.setHeader(QNetworkRequest::ContentTypeHeader,
+                    QLatin1String("application/x-www-form-urlencoded"));
+  return new QtHttpSocket(
+      mNAM.post(request, postData.toString(QUrl::FullyEncoded).toUtf8()));
 }
