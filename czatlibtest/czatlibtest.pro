@@ -19,7 +19,8 @@ CONFIG += console thread
 CONFIG -= app_bundle
 
 HEADERS += \
-        tst_bar.h
+        mocks.h \
+        tst_captcha.h
 
 SOURCES += \
         main.cpp
