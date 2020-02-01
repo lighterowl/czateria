@@ -8,7 +8,7 @@ class QUrlQuery;
 
 namespace Czateria {
 
-struct HttpSocket : public QObject {
+class HttpSocket : public QObject {
   Q_OBJECT
 public:
   virtual QByteArray readAll() = 0;
@@ -16,6 +16,7 @@ public:
   virtual int /* fixme */ error() const = 0;
 signals:
   void finished();
+  void downloadError(int);
 };
 
 struct HttpSocketFactory {

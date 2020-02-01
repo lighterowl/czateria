@@ -3,11 +3,9 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
+#include <QUrl>
 
-#include <algorithm>
-#include <type_traits>
+#include "httpsocket.h"
 
 namespace {
 const QStringList model_columns = {QObject::tr("Room name"),
@@ -16,19 +14,18 @@ const QStringList model_columns = {QObject::tr("Room name"),
 
 namespace Czateria {
 
-RoomListModel::RoomListModel(QObject *parent, QNetworkAccessManager *nam)
-    : QAbstractTableModel(parent), mNAM(nam), mReply(nullptr) {
-  Q_ASSERT(nam);
+RoomListModel::RoomListModel(QObject *parent, HttpSocketFactory *factory)
+    : QAbstractTableModel(parent), mSocketFactory(factory), mSocket(nullptr) {
+  Q_ASSERT(factory);
 }
 
 void RoomListModel::download() {
-  mReply = mNAM->get(QNetworkRequest(
-      QUrl(QLatin1String("https://czateria.interia.pl/rooms-list"))));
-  connect(mReply, &QNetworkReply::finished, this,
+  mSocket = mSocketFactory->get(
+      QUrl(QLatin1String("https://czateria.interia.pl/rooms-list")));
+  connect(mSocket, &HttpSocket::finished, this,
           &RoomListModel::onDownloadFinished);
-  void (QNetworkReply::*errSignal)(QNetworkReply::NetworkError) =
-      &QNetworkReply::error;
-  connect(mReply, errSignal, this, &RoomListModel::downloadError);
+  connect(mSocket, &HttpSocket::downloadError, this,
+          &RoomListModel::downloadError);
 }
 
 int RoomListModel::rowCount(const QModelIndex &) const { return mRooms.size(); }
@@ -91,15 +88,15 @@ QVector<Room> RoomListModel::jsonToChannels(const QJsonArray &arr) {
 }
 
 void RoomListModel::onDownloadFinished() {
-  if (mReply->error() != QNetworkReply::NoError) {
-    mReply->deleteLater();
-    mReply = nullptr;
+  if (mSocket->error()) {
+    mSocket->deleteLater();
+    mSocket = nullptr;
     return;
   }
   QJsonParseError err;
-  auto chanList = QJsonDocument::fromJson(mReply->readAll(), &err);
-  mReply->deleteLater();
-  mReply = nullptr;
+  auto chanList = QJsonDocument::fromJson(mSocket->readAll(), &err);
+  mSocket->deleteLater();
+  mSocket = nullptr;
 
   if (chanList.isNull()) {
     emit jsonError(err);

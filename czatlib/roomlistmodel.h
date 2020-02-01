@@ -3,21 +3,20 @@
 
 #include <QAbstractTableModel>
 #include <QJsonParseError>
-#include <QNetworkReply>
 #include <QVector>
 
 #include "room.h"
 
-class QNetworkAccessManager;
-class QNetworkReply;
 class QJsonArray;
 class QJsonObject;
 
 namespace Czateria {
+struct HttpSocketFactory;
+class HttpSocket;
 class RoomListModel : public QAbstractTableModel {
   Q_OBJECT
 public:
-  RoomListModel(QObject *parent, QNetworkAccessManager *nam);
+  RoomListModel(QObject *parent, HttpSocketFactory *factory);
   void download();
   const Room &room(int idx) const { return mRooms[idx]; }
 
@@ -30,14 +29,14 @@ public:
 
 signals:
   void finished();
-  void downloadError(QNetworkReply::NetworkError error);
+  void downloadError(int error);
   void jsonError(QJsonParseError error);
   void replyParseError(QLatin1String what);
 
 private:
   QVector<Room> mRooms;
-  QNetworkAccessManager *mNAM;
-  QNetworkReply *mReply;
+  HttpSocketFactory *mSocketFactory;
+  HttpSocket *mSocket;
 
   QVector<Room> jsonToChannels(const QJsonArray &json);
   void onDownloadFinished();

@@ -9,6 +9,9 @@ public:
   QtHttpSocket(QNetworkReply *reply) : mReply(reply) {
     mReply->setParent(this);
     connect(mReply, &QNetworkReply::finished, this, &HttpSocket::finished);
+    void (QNetworkReply::*errSignal)(QNetworkReply::NetworkError) =
+        &QNetworkReply::error;
+    connect(mReply, errSignal, [=](auto err) { emit downloadError(err); });
   }
   QByteArray readAll() override { return mReply->readAll(); }
   int error() const override { return mReply->error(); }
