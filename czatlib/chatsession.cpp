@@ -1,6 +1,7 @@
 #include "chatsession.h"
 
 #include <QBuffer>
+#include <QDebug>
 #include <QImage>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -8,7 +9,7 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 #include <QTimerEvent>
-#include <QWebSocket>
+#include <QUrl>
 
 #include <array>
 #include <chrono>
@@ -18,6 +19,7 @@
 #include "message.h"
 #include "userlistmodel.h"
 #include "util.h"
+#include "websocket.h"
 
 namespace {
 using namespace std::literals::chrono_literals;
@@ -166,9 +168,8 @@ namespace Czateria {
 
 ChatSession::ChatSession(QSharedPointer<LoginSession> login,
                          const AvatarHandler &avatars, const Room &room,
-                         QObject *parent)
-    : QObject(parent), mWebSocket(new QWebSocket(
-                           QString(), QWebSocketProtocol::VersionLatest, this)),
+                         WebSocketFactory *wsFactory, QObject *parent)
+    : QObject(parent), mWebSocket(wsFactory->create(this)),
       mNickname(login->nickname()),
       mHost(QString(QLatin1String("wss://%1-proxy-czateria.interia.pl"))
                 .arg(room.port)),
@@ -176,12 +177,11 @@ ChatSession::ChatSession(QSharedPointer<LoginSession> login,
       mLoginSession(login), mRoom(room) {
   connect(this, &ChatSession::userLeft, mUserListModel,
           &UserListModel::removeUser);
-  connect(mWebSocket, &QWebSocket::textMessageReceived, this,
+  connect(mWebSocket, &WebSocket::textMessageReceived, this,
           &ChatSession::onTextMessageReceived,
           shouldUseQueuedConnectionForWebSocket() ? Qt::QueuedConnection
                                                   : Qt::AutoConnection);
-  void (QWebSocket::*errSig)(QAbstractSocket::SocketError) = &QWebSocket::error;
-  connect(mWebSocket, errSig, this, &ChatSession::onSocketError);
+  connect(mWebSocket, &WebSocket::error, this, &ChatSession::onSocketError);
   connect(mLoginSession.data(), &LoginSession::loginSuccessful, this,
           &ChatSession::start);
 }
@@ -441,8 +441,8 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
   return ok;
 } // namespace Czateria
 
-void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
-  if (err == QAbstractSocket::RemoteHostClosedError) {
+void ChatSession::onSocketError(int err) {
+  if (err == 1) {
     if (mHelloReceived) {
       if (mLoginSession->restart(mRoom)) {
         mHelloReceived = false;

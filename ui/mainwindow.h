@@ -15,6 +15,7 @@ class CaptchaDialog;
 struct AppSettings;
 class MainChatWindow;
 class QSortFilterProxyModel;
+struct QtHttpSocketFactory;
 
 namespace Ui {
 class MainWindow;
@@ -30,7 +31,7 @@ class MainWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  explicit MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
+  explicit MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
                       QWidget *parent = nullptr);
   ~MainWindow() override;
 
@@ -39,7 +40,7 @@ protected:
 
 private:
   Ui::MainWindow *ui;
-  QNetworkAccessManager *const mNAM;
+  QtHttpSocketFactory *const mSocketFactory;
   Czateria::RoomListModel *const mRoomListModel;
   QSortFilterProxyModel *const mRoomSortModel;
   Czateria::AvatarHandler mAvatarHandler;

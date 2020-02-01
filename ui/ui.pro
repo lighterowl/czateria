@@ -14,6 +14,7 @@ SOURCES += \
     mainchatwindow.cpp \
     chatwindowtabwidget.cpp \
   qthttpsocket.cpp \
+  qtwebsocket.cpp \
     userlistview.cpp
 
 HEADERS += \
@@ -23,6 +24,7 @@ HEADERS += \
     mainchatwindow.h \
     chatwindowtabwidget.h \
   qthttpsocket.h \
+  qtwebsocket.h \
     userlistview.h
 
 FORMS += \

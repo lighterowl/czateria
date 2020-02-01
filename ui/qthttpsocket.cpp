@@ -15,7 +15,6 @@ public:
   }
   QByteArray readAll() override { return mReply->readAll(); }
   int error() const override { return mReply->error(); }
-  QString errorString() const override { return mReply->errorString(); }
 
 private:
   QNetworkReply *const mReply;

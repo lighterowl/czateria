@@ -34,4 +34,5 @@ HEADERS += room.h \
     icons.h \
     conversationstate.h \
     util.h \
-    avatarhandler.h
+    avatarhandler.h \
+  websocket.h

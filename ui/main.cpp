@@ -1,5 +1,6 @@
 #include "appsettings.h"
 #include "mainwindow.h"
+#include "qthttpsocket.h"
 #include <QApplication>
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
@@ -30,13 +31,13 @@ int main(int argc, char **argv) {
   QCoreApplication::setApplicationName(QLatin1String("czateria"));
   QApplication a(argc, argv);
   QNetworkProxyFactory::setUseSystemConfiguration(true);
-  QNetworkAccessManager nam;
+  QtHttpSocketFactory socketFactory;
   auto cache = new QNetworkDiskCache;
   cache->setCacheDirectory(
       QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
-  nam.setCache(cache);
+  socketFactory.mNAM.setCache(cache);
   AppSettings settings;
-  MainWindow w(&nam, settings);
+  MainWindow w(&socketFactory, settings);
   w.show();
 
   return a.exec();

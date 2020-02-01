@@ -6,7 +6,7 @@
 class QImage;
 
 namespace Czateria {
-class HttpSocketFactory;
+struct HttpSocketFactory;
 
 class Captcha : public QObject {
   Q_OBJECT

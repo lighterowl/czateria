@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QImage>
 #include <QRegularExpression>
+#include <QUrl>
 
 namespace Czateria {
 Captcha::Captcha(HttpSocketFactory *factory, QObject *parent)

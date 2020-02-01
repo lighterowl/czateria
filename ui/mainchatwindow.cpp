@@ -1,6 +1,7 @@
 #include "mainchatwindow.h"
 #include "appsettings.h"
 #include "mainwindow.h"
+#include "qtwebsocket.h"
 #include "ui_chatwidget.h"
 
 #include <QAction>
@@ -94,6 +95,7 @@ QString getImageFilter() {
   cached_result = rv;
   return rv;
 }
+QtWebSocketFactory webSocketFactory;
 } // namespace
 
 MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
@@ -101,7 +103,8 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                                const Czateria::Room &room,
                                const AppSettings &settings, MainWindow *mainWin)
     : QMainWindow(nullptr), ui(new Ui::ChatWidget),
-      mChatSession(new Czateria::ChatSession(login, avatars, room, this)),
+      mChatSession(new Czateria::ChatSession(login, avatars, room,
+                                             &webSocketFactory, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)),

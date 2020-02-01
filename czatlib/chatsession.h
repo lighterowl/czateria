@@ -1,7 +1,6 @@
 #ifndef CHATSESSION_H
 #define CHATSESSION_H
 
-#include <QAbstractSocket>
 #include <QHash>
 #include <QObject>
 #include <QSharedPointer>
@@ -12,7 +11,6 @@
 #include "room.h"
 
 class QImage;
-class QWebSocket;
 class QTimerEvent;
 
 namespace Czateria {
@@ -21,12 +19,15 @@ class LoginSession;
 class Message;
 class UserListModel;
 class AvatarHandler;
+struct WebSocketFactory;
+class WebSocket;
 
 class ChatSession : public QObject {
   Q_OBJECT
 public:
   ChatSession(QSharedPointer<LoginSession> login, const AvatarHandler &avatars,
-              const Room &room, QObject *parent = nullptr);
+              const Room &room, WebSocketFactory *wsFactory,
+              QObject *parent = nullptr);
   ~ChatSession() override;
 
   void start();
@@ -71,10 +72,10 @@ protected:
 private:
   void onTextMessageReceived(const QString &);
   bool handlePrivateMessage(const QJsonObject &json);
-  void onSocketError(QAbstractSocket::SocketError);
+  void onSocketError(int);
   void sendKeepalive();
 
-  QWebSocket *const mWebSocket;
+  WebSocket *const mWebSocket;
   QString mNickname;
   const QString mHost;
   bool mHelloReceived;

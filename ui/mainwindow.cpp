@@ -4,6 +4,7 @@
 #include "appsettings.h"
 #include "captchadialog.h"
 #include "mainchatwindow.h"
+#include "qthttpsocket.h"
 
 #include <czatlib/loginsession.h>
 #include <czatlib/roomlistmodel.h>
@@ -84,11 +85,11 @@ using namespace std::literals::chrono_literals;
 constexpr auto channelListRefreshInterval = 5min;
 } // namespace
 
-MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
+MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
                        QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), mNAM(nam),
-      mRoomListModel(new Czateria::RoomListModel(this, nam)),
-      mRoomSortModel(new QSortFilterProxyModel(this)), mAvatarHandler(nam),
+    : QMainWindow(parent), ui(new Ui::MainWindow), mSocketFactory(factory),
+      mRoomListModel(new Czateria::RoomListModel(this, factory)),
+      mRoomSortModel(new QSortFilterProxyModel(this)), mAvatarHandler(factory),
       mAppSettings(settings) {
   ui->setupUi(this);
 
@@ -204,7 +205,7 @@ void MainWindow::onLoginFailed(Czateria::LoginFailReason why,
 }
 
 void MainWindow::startLogin(const Czateria::Room &room) {
-  auto session = QSharedPointer<Czateria::LoginSession>::create(mNAM);
+  auto session = QSharedPointer<Czateria::LoginSession>::create(mSocketFactory);
   auto sessionPtr = session.data();
   connect(sessionPtr, &Czateria::LoginSession::captchaRequired,
           [=](const QImage &image) {

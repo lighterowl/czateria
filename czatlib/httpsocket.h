@@ -12,7 +12,6 @@ class HttpSocket : public QObject {
   Q_OBJECT
 public:
   virtual QByteArray readAll() = 0;
-  virtual QString errorString() const = 0;
   virtual int /* fixme */ error() const = 0;
 signals:
   void finished();
