@@ -1,10 +1,9 @@
 TEMPLATE = app
 
 include(../czateria.pri)
+include(../czatlib.pri)
 
-QT       += core gui network widgets websockets
-
-INCLUDEPATH += ..
+QT       += network widgets websockets
 
 SOURCES += \
   appsettings.cpp \
@@ -31,12 +30,6 @@ FORMS += \
   chatwidget.ui \
         mainwindow.ui \
     captchadialog.ui
-
-win32:CONFIG (release, debug|release): LIBS += -L../czatlib/release -lczatlib
-else:win32:CONFIG (debug, debug|release): LIBS += -L../czatlib/debug -lczatlib
-else:unix: LIBS += -L../czatlib -lczatlib
-
-unix: PRE_TARGETDEPS += ../czatlib/libczatlib.a
 
 RESOURCES += \
     rsrc.qrc

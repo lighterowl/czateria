@@ -12,11 +12,11 @@ INCLUDEPATH *= \
 SOURCES += $$GTEST_SRCDIR/src/gtest-all.cc $$GMOCK_SRCDIR/src/gmock-all.cc
 
 include(../czateria.pri)
+include(../czatlib.pri)
 
 TEMPLATE = app
 CONFIG += console thread
 CONFIG -= app_bundle
-QT = core gui
 
 HEADERS += \
         tst_bar.h
