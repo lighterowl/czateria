@@ -1,15 +1,14 @@
 #include "captcha.h"
+#include "httpsocket.h"
 
 #include <QDateTime>
+#include <QDebug>
 #include <QImage>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
 #include <QRegularExpression>
 
 namespace Czateria {
-Captcha::Captcha(QNetworkAccessManager *nam, QObject *parent)
-    : QObject(parent), mNAM(nam) {}
+Captcha::Captcha(HttpSocketFactory *factory, QObject *parent)
+    : QObject(parent), mSocketFactory(factory) {}
 
 void Captcha::get() {
   auto callbackName = QString(QLatin1String("jQuery16202627191567764926_%1"))
@@ -19,8 +18,8 @@ void Captcha::get() {
                             "getEnigmaJS?type=1&ctime=300&callback=%1"))
           .arg(callbackName);
   qDebug() << requestAddr;
-  auto captchaRequest = mNAM->get(QNetworkRequest(QUrl(requestAddr)));
-  connect(captchaRequest, &QNetworkReply::finished, [=]() {
+  auto captchaRequest = mSocketFactory->get(QUrl(requestAddr));
+  connect(captchaRequest, &HttpSocket::finished, [=]() {
     auto content = captchaRequest->readAll();
     captchaRequest->deleteLater();
     onRequestFinished(QString::fromUtf8(content), callbackName);
@@ -45,8 +44,8 @@ void Captcha::onRequestFinished(const QString &content,
     }
   }
   qDebug() << url << uid;
-  auto imgRequest = mNAM->get(QNetworkRequest(QUrl(url)));
-  connect(imgRequest, &QNetworkReply::finished, [=]() {
+  auto imgRequest = mSocketFactory->get(QUrl(url));
+  connect(imgRequest, &HttpSocket::finished, [=]() {
     auto imgRawContent = imgRequest->readAll();
     imgRequest->deleteLater();
     emit downloaded(QImage::fromData(imgRawContent), uid);

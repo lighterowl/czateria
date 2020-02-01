@@ -22,6 +22,7 @@ SOURCES += room.cpp \
   util.cpp
 
 HEADERS += room.h \
+  httpsocket.h \
   roomlistmodel.h \
     loginfailreason.h \
     captcha.h \

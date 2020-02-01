@@ -3,22 +3,22 @@
 
 #include <QObject>
 
-class QNetworkAccessManager;
 class QImage;
 
 namespace Czateria {
+class HttpSocketFactory;
 
 class Captcha : public QObject {
   Q_OBJECT
 public:
-  Captcha(QNetworkAccessManager *nam, QObject *parent = nullptr);
+  Captcha(HttpSocketFactory *fac, QObject *parent = nullptr);
   void get();
 
 signals:
   void downloaded(const QImage &image, const QString &uid);
 
 private:
-  QNetworkAccessManager *const mNAM;
+  HttpSocketFactory *const mSocketFactory;
 
   void onRequestFinished(const QString &content, const QString &callbackName);
   void onImageDownloaded();

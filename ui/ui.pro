@@ -13,6 +13,7 @@ SOURCES += \
     captchadialog.cpp \
     mainchatwindow.cpp \
     chatwindowtabwidget.cpp \
+  qthttpsocket.cpp \
     userlistview.cpp
 
 HEADERS += \
@@ -21,6 +22,7 @@ HEADERS += \
     captchadialog.h \
     mainchatwindow.h \
     chatwindowtabwidget.h \
+  qthttpsocket.h \
     userlistview.h
 
 FORMS += \

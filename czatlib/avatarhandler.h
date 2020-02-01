@@ -2,15 +2,12 @@
 #define AVATARHANDLER_H
 
 #include <QHash>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
+#include <QUrl>
 
 #include <array>
 
+#include "httpsocket.h"
 #include "user.h"
-
-class QNetworkAccessManager;
 
 namespace Czateria {
 
@@ -32,7 +29,8 @@ public:
     }
   };
 
-  explicit AvatarHandler(QNetworkAccessManager *nam) : mNAM(nam) {}
+  explicit AvatarHandler(HttpSocketFactory *factory)
+      : mSocketFactory(factory) {}
 
   template <typename FetchedFnT>
   void downloadAvatar(const User &user, FetchedFnT fetchedFn) {
@@ -87,17 +85,14 @@ public:
       fmt = Avatar::Format::JPG;
     }
 
-    auto request = QNetworkRequest(QUrl(address));
-    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
-                         QNetworkRequest::PreferCache);
-    auto reply = mNAM->get(request);
+    auto sock = mSocketFactory->getCached(QUrl(address));
     auto nickname = user.mLogin;
-    QObject::connect(reply, &QNetworkReply::finished, [=]() {
-      if (reply->error() == QNetworkReply::NoError) {
-        mAvatarCache[avatarId] = Avatar{fmt, reply->readAll()};
+    QObject::connect(sock, &HttpSocket::finished, [=]() {
+      if (sock->error() == 0) {
+        mAvatarCache[avatarId] = Avatar{fmt, sock->readAll()};
         fetchedFn();
       }
-      reply->deleteLater();
+      sock->deleteLater();
     });
   }
 
@@ -116,7 +111,7 @@ public:
   }
 
 private:
-  QNetworkAccessManager *const mNAM;
+  HttpSocketFactory *const mSocketFactory;
   QHash<QString, Avatar> mAvatarCache;
 };
 

@@ -7,7 +7,6 @@
 #include "loginfailreason.h"
 
 class QImage;
-class QNetworkAccessManager;
 class QUrl;
 class QUrlQuery;
 
