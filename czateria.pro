@@ -1,4 +1,5 @@
 TEMPLATE = subdirs
-SUBDIRS = czatlib ui
+SUBDIRS = czatlib ui \
+  untitled
 
 ui.depends = czatlib

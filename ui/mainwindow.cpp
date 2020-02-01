@@ -7,6 +7,7 @@
 
 #include <czatlib/loginsession.h>
 #include <czatlib/roomlistmodel.h>
+#include <czatlib/util.h>
 
 #include <QCloseEvent>
 #include <QCompleter>
@@ -79,13 +80,6 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
                         QObject::tr("Login failed : %1").arg(message));
 }
 
-// this should really be placed somewhere in czatlib, but QValidator lives
-// inside Qt's gui module that we don't want czatlib to depend on.
-const QValidator *getNicknameValidator() {
-  static const QRegExpValidator validator(QRegExp(QLatin1String("[^'@\\$]+")));
-  return &validator;
-}
-
 using namespace std::literals::chrono_literals;
 constexpr auto channelListRefreshInterval = 5min;
 } // namespace
@@ -142,7 +136,7 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
           });
   ui->nicknameLineEdit->setCompleter(completer);
   ui->nicknameLineEdit->installEventFilter(this);
-  ui->nicknameLineEdit->setValidator(getNicknameValidator());
+  ui->nicknameLineEdit->setValidator(CzateriaUtil::getNicknameValidator());
 
   ui->actionSave_pictures_automatically->setChecked(
       mAppSettings.savePicturesAutomatically);

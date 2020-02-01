@@ -5,6 +5,8 @@
 #include <array>
 #include <tuple>
 
+class QValidator;
+
 namespace CzateriaUtil {
 
 template <typename FromType, typename ToType, std::size_t N>
@@ -19,6 +21,8 @@ bool convert(FromType in, ToType &out,
   }
   return false;
 }
+
+const QValidator *getNicknameValidator();
 
 } // namespace CzateriaUtil
 
