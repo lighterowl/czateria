@@ -23,10 +23,21 @@ namespace {
 using namespace std::literals::chrono_literals;
 constexpr auto keepaliveInterval = 40s;
 
-QByteArray loginMsg(const QString &sessionId, const QString &channelName,
-                    const QString &nickname) {
+QJsonObject czateriaCodeMsg(int code) {
   QJsonObject obj;
-  obj.insert(QLatin1String("code"), 108);
+  obj.insert(QLatin1String("code"), code);
+  return obj;
+}
+
+QJsonObject czateriaSubcodeMsg(int code, int subcode) {
+  auto obj = czateriaCodeMsg(code);
+  obj.insert(QLatin1String("subcode"), subcode);
+  return obj;
+}
+
+QJsonObject loginMsg(const QString &sessionId, const QString &channelName,
+                     const QString &nickname) {
+  auto obj = czateriaCodeMsg(108);
   obj.insert(QLatin1String("login"), nickname);
   obj.insert(QLatin1String("cryptLogin"), QLatin1String(""));
   obj.insert(QLatin1String("slowLogin"), false);
@@ -45,62 +56,52 @@ QByteArray loginMsg(const QString &sessionId, const QString &channelName,
   obj.insert(QLatin1String("isHiddenMode"), 0);
   obj.insert(QLatin1String("lat"), 0);
   obj.insert(QLatin1String("lon"), 0);
-  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+  return obj;
 }
 
-QJsonObject messageCommon(const QString &message) {
-  QJsonObject obj;
+void messageCommon(QJsonObject &obj, const QString &message) {
   obj.insert(QLatin1String("msg"), Czateria::textIconsToTags(message));
   obj.insert(QLatin1String("msgColorId"), 0);
   obj.insert(QLatin1String("msgFontTypeId"), 0);
   obj.insert(QLatin1String("msgIsBold"), false);
   obj.insert(QLatin1String("msgIsItalic"), false);
   obj.insert(QLatin1String("msgIsUnderline"), false);
+}
+
+QJsonObject messageMsg(const QString &message) {
+  auto obj = czateriaCodeMsg(1);
+  messageCommon(obj, message);
   return obj;
 }
 
-QByteArray messageMsg(const QString &message) {
-  auto obj = messageCommon(message);
-  obj.insert(QLatin1String("code"), 1);
-  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
-}
-
-QByteArray privRejectMsg(const QString &nickname) {
-  QJsonObject obj;
-  obj.insert(QLatin1String("code"), 97);
-  obj.insert(QLatin1String("subcode"), 13);
+QJsonObject privRejectMsg(const QString &nickname) {
+  QJsonObject obj = czateriaSubcodeMsg(97, 13);
   obj.insert(QLatin1String("user"), nickname);
-  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+  return obj;
 }
 
-QByteArray privMessageMsg(const QString &message, const QString &nickname) {
-  auto obj = messageCommon(message);
-  obj.insert(QLatin1String("code"), 97);
-  obj.insert(QLatin1String("subcode"), 2);
+QJsonObject privMessageMsg(const QString &message, const QString &nickname) {
+  auto obj = czateriaSubcodeMsg(97, 2);
+  messageCommon(obj, message);
   obj.insert(QLatin1String("user"), nickname);
-  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+  return obj;
 }
 
-QByteArray privInviteMsg(const QString &message, const QString &nickname) {
-  auto obj = messageCommon(message);
-  obj.insert(QLatin1String("code"), 97);
-  obj.insert(QLatin1String("subcode"), 1);
+QJsonObject privInviteMsg(const QString &message, const QString &nickname) {
+  auto obj = czateriaSubcodeMsg(97, 1);
+  messageCommon(obj, message);
   obj.insert(QLatin1String("user"), nickname);
-  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+  return obj;
 }
 
-QByteArray privClosedMsg(const QString &nickname) {
-  QJsonObject obj;
-  obj.insert(QLatin1String("code"), 97);
-  obj.insert(QLatin1String("subcode"), 14);
+QJsonObject privClosedMsg(const QString &nickname) {
+  QJsonObject obj = czateriaSubcodeMsg(97, 14);
   obj.insert(QLatin1String("user"), nickname);
-  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+  return obj;
 }
 
-QByteArray privImageMsg(const QString &nickname, const QImage &image) {
-  QJsonObject obj;
-  obj.insert(QLatin1String("code"), 97);
-  obj.insert(QLatin1String("subcode"), 25);
+QJsonObject privImageMsg(const QString &nickname, const QImage &image) {
+  QJsonObject obj = czateriaSubcodeMsg(97, 25);
   obj.insert(QLatin1String("user"), nickname);
   obj.insert(QLatin1String("type"), 1);
   obj.insert(QLatin1String("imgWidth"), image.width());
@@ -110,8 +111,12 @@ QByteArray privImageMsg(const QString &nickname, const QImage &image) {
   buf.open(QIODevice::WriteOnly);
   image.save(&buf, "JPG", -1);
   obj.insert(QLatin1String("data"), QString::fromLatin1(imageData.toBase64()));
-  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+  return obj;
 }
+
+QJsonObject sessionEndMsg() { return czateriaCodeMsg(80); }
+
+QJsonObject keepaliveMsg() { return czateriaCodeMsg(1003); }
 
 bool shouldUseQueuedConnectionForWebSocket() {
   // QTBUG-55506
@@ -155,10 +160,23 @@ void reportUnhandled(const QString &message) {
   qInfo().noquote() << "Unhandled WebSocket message :\n" << message;
 }
 
-#define SendTextMessage(webSocket, message)                                    \
+#define emit_debug_line(obj, raw_msg, direction)                               \
   do {                                                                         \
-    qDebug().noquote() << message;                                             \
-    webSocket->sendTextMessage(message);                                       \
+    auto user_ = obj[QLatin1String("user")];                                   \
+    qDebug().noquote().nospace()                                               \
+        << QString(QLatin1String("[%1|%2] ")).arg(mNickname).arg(mRoom.name)   \
+        << (user_.isString() ? (QString(QLatin1String("[user: %1] "))          \
+                                    .arg(user_.toString()))                    \
+                             : QString())                                      \
+        << QLatin1String(direction " ") << raw_msg;                            \
+  } while (0)
+
+#define SendTextMessage(webSocket, json_obj)                                   \
+  do {                                                                         \
+    auto message_ = QString::fromUtf8(                                         \
+        QJsonDocument(json_obj).toJson(QJsonDocument::Compact));               \
+    emit_debug_line(json_obj, message_, ">");                                  \
+    webSocket->sendTextMessage(message_);                                      \
   } while (0)
 } // namespace
 
@@ -187,7 +205,7 @@ ChatSession::ChatSession(QSharedPointer<LoginSession> login,
 }
 
 ChatSession::~ChatSession() {
-  SendTextMessage(mWebSocket, QLatin1String("{\"code\":80}"));
+  SendTextMessage(mWebSocket, sessionEndMsg());
   mWebSocket->close();
 }
 
@@ -211,17 +229,17 @@ void ChatSession::acceptPrivateConversation(const QString &nickname) {
 }
 
 void ChatSession::rejectPrivateConversation(const QString &nickname) {
-  SendTextMessage(mWebSocket, QString::fromUtf8(privRejectMsg(nickname)));
+  SendTextMessage(mWebSocket, privRejectMsg(nickname));
   mCurrentPrivate.remove(nickname);
 }
 
 void ChatSession::notifyPrivateConversationClosed(const QString &nickname) {
-  SendTextMessage(mWebSocket, QString::fromUtf8(privClosedMsg(nickname)));
+  SendTextMessage(mWebSocket, privClosedMsg(nickname));
   mCurrentPrivate.remove(nickname);
 }
 
 void ChatSession::sendRoomMessage(const QString &message) {
-  SendTextMessage(mWebSocket, QString::fromUtf8(messageMsg(message)));
+  SendTextMessage(mWebSocket, messageMsg(message));
 }
 
 void ChatSession::sendPrivateMessage(const QString &nickname,
@@ -229,13 +247,11 @@ void ChatSession::sendPrivateMessage(const QString &nickname,
   auto it = mCurrentPrivate.find(nickname);
   if (it == std::end(mCurrentPrivate) || *it == ConversationState::Rejected ||
       *it == ConversationState::Closed) {
-    SendTextMessage(mWebSocket,
-                    QString::fromUtf8(privInviteMsg(message, nickname)));
+    SendTextMessage(mWebSocket, privInviteMsg(message, nickname));
     mCurrentPrivate[nickname] = ConversationState::InviteSent;
   } else if (*it == ConversationState::Active ||
              *it == ConversationState::InviteSent) {
-    SendTextMessage(mWebSocket,
-                    QString::fromUtf8(privMessageMsg(message, nickname)));
+    SendTextMessage(mWebSocket, privMessageMsg(message, nickname));
   } else {
     Q_ASSERT(false && "unknown private conversation state");
   }
@@ -249,8 +265,7 @@ void ChatSession::sendImage(const QString &nickname, const QImage &image) {
     sentImage =
         image.scaled(600, 600, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   }
-  SendTextMessage(mWebSocket,
-                  QString::fromUtf8(privImageMsg(nickname, sentImage)));
+  SendTextMessage(mWebSocket, privImageMsg(nickname, sentImage));
 }
 
 void ChatSession::timerEvent(QTimerEvent *ev) {
@@ -259,7 +274,6 @@ void ChatSession::timerEvent(QTimerEvent *ev) {
 }
 
 void ChatSession::onTextMessageReceived(const QString &text) {
-  qDebug().noquote() << text;
   QJsonParseError err;
   QJsonDocument json = QJsonDocument::fromJson(text.toUtf8(), &err);
   if (json.isNull() || !json.isObject()) {
@@ -269,6 +283,9 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   }
 
   auto obj = json.object();
+
+  emit_debug_line(obj, text, "<");
+
   auto code = obj[QLatin1String("code")].toInt();
   if (!mHelloReceived) {
     if (code != 138) {
@@ -276,8 +293,7 @@ void ChatSession::onTextMessageReceived(const QString &text) {
       return;
     }
     SendTextMessage(mWebSocket,
-                    QString::fromUtf8(loginMsg(mLoginSession->sessionId(),
-                                               channel(), mNickname)));
+                    loginMsg(mLoginSession->sessionId(), channel(), mNickname));
     mHelloReceived = true;
     return;
   }
@@ -461,7 +477,7 @@ void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
 }
 
 void ChatSession::sendKeepalive() {
-  SendTextMessage(mWebSocket, QLatin1String("{\"code\":1003}"));
+  SendTextMessage(mWebSocket, keepaliveMsg());
 }
 
 } // namespace Czateria
