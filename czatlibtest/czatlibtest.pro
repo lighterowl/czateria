@@ -20,7 +20,8 @@ CONFIG -= app_bundle
 
 HEADERS += \
         mocks.h \
-        tst_captcha.h
+        tst_captcha.h \
+        tst_sessions.h
 
 SOURCES += \
         main.cpp

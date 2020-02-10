@@ -1,4 +1,5 @@
 #include "tst_captcha.h"
+#include "tst_sessions.h"
 
 #include <gtest/gtest.h>
 
