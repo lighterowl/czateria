@@ -107,13 +107,13 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
           createNicknameCompleter(mChatSession->userListModel(), this)),
       mAppSettings(settings),
       mAutoAcceptPrivs(new QAction(
-          QObject::tr("Automatically accept private conversations"))),
+          QObject::tr("Automatically accept private conversations"), this)),
       mSendImageAction(
           new QAction(QIcon(QLatin1String(":/icons/file-picture-icon.png")),
-                      QObject::tr("Send an image"))),
+                      QObject::tr("Send an image"), this)),
       mShowChannelListAction(
           new QAction(QIcon(QLatin1String(":/icons/czateria.png")),
-                      QObject::tr("Show channel list"))) {
+                      QObject::tr("Show channel list"), this)) {
   QIcon icon;
   icon.addFile(QString::fromUtf8(":/icons/czateria.png"), QSize(),
                QIcon::Normal, QIcon::Off);
