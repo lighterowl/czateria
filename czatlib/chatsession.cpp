@@ -173,9 +173,10 @@ void reportUnhandled(const QString &message) {
 
 #define SendTextMessage(webSocket, json_obj)                                   \
   do {                                                                         \
+    auto json_obj_ = json_obj;                                                 \
     auto message_ = QString::fromUtf8(                                         \
-        QJsonDocument(json_obj).toJson(QJsonDocument::Compact));               \
-    emit_debug_line(json_obj, message_, ">");                                  \
+        QJsonDocument(json_obj_).toJson(QJsonDocument::Compact));              \
+    emit_debug_line(json_obj_, message_, ">");                                 \
     webSocket->sendTextMessage(message_);                                      \
   } while (0)
 } // namespace
