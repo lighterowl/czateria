@@ -11,7 +11,6 @@
 #include <QWebSocket>
 
 #include <array>
-#include <chrono>
 
 #include "icons.h"
 #include "loginsession.h"
@@ -20,8 +19,7 @@
 #include "util.h"
 
 namespace {
-using namespace std::literals::chrono_literals;
-constexpr auto keepaliveInterval = 40s;
+constexpr auto keepaliveInterval = 40000;
 
 QJsonObject czateriaCodeMsg(int code) {
   QJsonObject obj;

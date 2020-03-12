@@ -16,8 +16,6 @@
 #include <QSharedPointer>
 #include <QSortFilterProxyModel>
 
-#include <chrono>
-
 namespace {
 template <typename F1, typename F2, typename F3>
 auto inspectRadioButtons(Ui::MainWindow *ui, F1 noNicknameFn, F2 nicknameFn,
@@ -86,8 +84,7 @@ const QValidator *getNicknameValidator() {
   return &validator;
 }
 
-using namespace std::literals::chrono_literals;
-constexpr auto channelListRefreshInterval = 5min;
+constexpr auto channelListRefreshInterval = 5 * 60 * 1000;
 } // namespace
 
 MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
@@ -135,11 +132,11 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   refreshRoomList();
   mSavedLoginsModel.setStringList(mAppSettings.logins.keys());
 
+  void (QCompleter::*activatedFn)(const QString &) = &QCompleter::activated;
   auto completer = new QCompleter(&mSavedLoginsModel, this);
-  connect(completer, QOverload<const QString &>::of(&QCompleter::activated),
-          [this](auto &&text) {
-            ui->passwordLineEdit->setText(mAppSettings.logins[text].toString());
-          });
+  connect(completer, activatedFn, [this](auto &&text) {
+    ui->passwordLineEdit->setText(mAppSettings.logins[text].toString());
+  });
   ui->nicknameLineEdit->setCompleter(completer);
   ui->nicknameLineEdit->installEventFilter(this);
   ui->nicknameLineEdit->setValidator(getNicknameValidator());
