@@ -10,6 +10,7 @@
 
 #include <QCloseEvent>
 #include <QCompleter>
+#include <QDebug>
 #include <QMessageBox>
 #include <QRegExpValidator>
 #include <QSettings>
