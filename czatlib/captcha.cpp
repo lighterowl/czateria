@@ -1,6 +1,7 @@
 #include "captcha.h"
 
 #include <QDateTime>
+#include <QDebug>
 #include <QImage>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
