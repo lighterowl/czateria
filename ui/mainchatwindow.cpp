@@ -94,6 +94,36 @@ QString getImageFilter() {
   cached_result = rv;
   return rv;
 }
+
+QString explainBlockCause(Czateria::ChatSession::BlockCause why) {
+  using c = Czateria::ChatSession::BlockCause;
+  switch (why) {
+  case c::Nick:
+    return MainChatWindow::tr("nick");
+  case c::Avatar:
+    return MainChatWindow::tr("avatar");
+  case c::Behaviour:
+    return MainChatWindow::tr("behaviour");
+  default:
+    return QString();
+  }
+}
+
+QString getKickBanMsgStr(const QString &blockTypeStr,
+                         Czateria::ChatSession::BlockCause why,
+                         const QString &adminNick = QString()) {
+  auto bannedBy = adminNick.isEmpty()
+                      ? QString()
+                      : MainChatWindow::tr(" by %1").arg(adminNick);
+  auto causeStr = why == Czateria::ChatSession::BlockCause::Unknown
+                      ? QString()
+                      : MainChatWindow::tr(" for inappropriate %1")
+                            .arg(explainBlockCause(why));
+  return QString(QLatin1String("You were %1%2%3"))
+      .arg(blockTypeStr)
+      .arg(bannedBy)
+      .arg(causeStr);
+}
 } // namespace
 
 MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
@@ -245,6 +275,15 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
     // disable completer for private conversations
     ui->lineEdit->setCompleter(tabIdx == 0 ? mNicknameCompleter : nullptr);
     updateWindowTitle();
+  });
+  connect(mChatSession, &Czateria::ChatSession::banned,
+          [=](auto why, auto &&who) {
+            QMessageBox::information(this, tr("Banned"),
+                                     getKickBanMsgStr(tr("banned"), why, who));
+          });
+  connect(mChatSession, &Czateria::ChatSession::kicked, [=](auto why) {
+    QMessageBox::information(this, tr("Kicked"),
+                             getKickBanMsgStr(tr("kicked"), why));
   });
 
   connect(ui->lineEdit, &QLineEdit::returnPressed, this,

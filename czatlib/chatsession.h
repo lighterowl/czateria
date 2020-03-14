@@ -51,6 +51,8 @@ public:
   const QString &nickname() const { return mNickname; }
   UserListModel *userListModel() const { return mUserListModel; }
 
+  enum class BlockCause { Unknown, Nick, Behaviour, Avatar };
+
 signals:
   void nicknameAssigned(const QString &nickname);
   void roomMessageReceived(const Message &msg);
@@ -64,6 +66,8 @@ signals:
   void userLeft(const QString &nickname);
   void sessionExpired();
   void sessionError();
+  void banned(BlockCause why, const QString &adminNickname);
+  void kicked(BlockCause why);
 
 protected:
   void timerEvent(QTimerEvent *) override;
@@ -73,6 +77,7 @@ private:
   bool handlePrivateMessage(const QJsonObject &json);
   void onSocketError(QAbstractSocket::SocketError);
   void sendKeepalive();
+  void handleKickBan(const QJsonObject &json);
 
   QWebSocket *const mWebSocket;
   QString mNickname;
