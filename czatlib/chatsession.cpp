@@ -362,6 +362,9 @@ void ChatSession::onTextMessageReceived(const QString &text) {
     if (subcode == 1) {
       emit sessionError();
       break;
+    } else if (subcode == 26) {
+      handleKickBan(obj);
+      break;
     }
   }
 
@@ -477,6 +480,31 @@ void ChatSession::onSocketError(QAbstractSocket::SocketError err) {
 
 void ChatSession::sendKeepalive() {
   SendTextMessage(mWebSocket, keepaliveMsg());
+}
+
+void ChatSession::handleKickBan(const QJsonObject &json) {
+  auto adminNickname = json[QLatin1String("admin")].toString();
+  auto type = json[QLatin1String("type")].toInt();
+  switch (type) {
+  case 9:
+    emit kicked(BlockCause::Nick);
+    break;
+  case 12:
+    emit kicked(BlockCause::Avatar);
+    break;
+  case 17:
+    emit banned(BlockCause::Nick, adminNickname);
+    break;
+  case 18:
+    emit banned(BlockCause::Behaviour, adminNickname);
+    break;
+  case 20:
+    emit banned(BlockCause::Avatar, adminNickname);
+    break;
+  case 33:
+    emit kicked(BlockCause::Unknown);
+    break;
+  }
 }
 
 } // namespace Czateria
