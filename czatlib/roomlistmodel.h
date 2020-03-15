@@ -36,6 +36,8 @@ public:
                       int role = Qt::DisplayRole) const override;
 
   void disableAutologin(const QModelIndex &index);
+  void enableAutologin(const QModelIndex &index, QString &&user,
+                       QString &&password);
 
 signals:
   void finished();

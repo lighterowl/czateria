@@ -53,7 +53,8 @@ QVariant RoomListModel::data(const QModelIndex &index, int role) const {
   } else if (role == Qt::CheckStateRole && index.column() == 2) {
     auto &&channel = mRooms[index.row()];
     auto it = mAutologinData.find(channel.id);
-    return (it != mAutologinData.end() && it->isValid());
+    return (it != mAutologinData.end() && it->isValid()) ? Qt::Checked
+                                                         : Qt::Unchecked;
   }
   return QVariant();
 }
@@ -69,6 +70,14 @@ QVariant RoomListModel::headerData(int section, Qt::Orientation orientation,
 
 void RoomListModel::disableAutologin(const QModelIndex &index) {
   mAutologinData.remove(room(index.row()).id);
+  emit dataChanged(index, index, {Qt::CheckStateRole});
+}
+
+void RoomListModel::enableAutologin(const QModelIndex &index, QString &&user,
+                                    QString &&password) {
+  auto &&loginData = mAutologinData[room(index.row()).id];
+  loginData.username = user;
+  loginData.password = password;
   emit dataChanged(index, index, {Qt::CheckStateRole});
 }
 

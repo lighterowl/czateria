@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "appsettings.h"
+#include "autologindatadialog.h"
 #include "captchadialog.h"
 #include "mainchatwindow.h"
 
@@ -180,13 +181,14 @@ void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
 
 void MainWindow::onChannelClicked(const QModelIndex &proxyIdx) {
   auto idx = mRoomSortModel->mapToSource(proxyIdx);
-  qDebug() << idx;
   if (idx.column() != 2) {
     return;
   }
-  if (mRoomListModel->data(idx).toBool()) {
+  if (mRoomListModel->data(idx, Qt::CheckStateRole).toInt() == Qt::Checked) {
     mRoomListModel->disableAutologin(idx);
   } else {
+    AutologinDataDialog dlg(*mRoomListModel, idx, this);
+    dlg.exec();
   }
 }
 
