@@ -2,9 +2,9 @@
 #define APPSETTINGS_H
 
 #include <QHash>
+#include <QSettings>
 #include <QString>
 #include <QVariant>
-#include <QSettings>
 
 #include "czatlib/roomlistmodel.h"
 
