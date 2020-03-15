@@ -44,8 +44,8 @@ void networkErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
                             const QString &title) {
   blockUi(ui, false);
   QMessageBox::critical(parent, title,
-                        QObject::tr("Could not obtain the list of "
-                                    "rooms.\nPlease try again later."));
+                        MainWindow::tr("Could not obtain the list of "
+                                       "rooms.\nPlease try again later."));
 }
 
 void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
@@ -54,28 +54,28 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
   QString message;
   switch (why) {
   case Czateria::LoginFailReason::BadCaptcha:
-    message = QObject::tr("incorrect captcha reply");
+    message = MainWindow::tr("incorrect captcha reply");
     break;
   case Czateria::LoginFailReason::BadPassword:
-    message = QObject::tr("incorrect password");
+    message = MainWindow::tr("incorrect password");
     break;
   case Czateria::LoginFailReason::NickRegistered:
-    message = QObject::tr("nick already registered");
+    message = MainWindow::tr("nick already registered");
     break;
   case Czateria::LoginFailReason::NoSuchUser:
-    message = QObject::tr("no such user");
+    message = MainWindow::tr("no such user");
     break;
   case Czateria::LoginFailReason::NaughtyNick:
-    message =
-        QObject::tr("nick rejected by the server.\nYou probably have naughty "
-                    "words in it.");
+    message = MainWindow::tr(
+        "nick rejected by the server.\nYou probably have naughty "
+        "words in it.");
     break;
   case Czateria::LoginFailReason::Unknown:
-    message = QObject::tr("reason unknown");
+    message = MainWindow::tr("reason unknown");
     break;
   }
-  QMessageBox::critical(parent, QObject::tr("Login error"),
-                        QObject::tr("Login failed : %1").arg(message));
+  QMessageBox::critical(parent, MainWindow::tr("Login error"),
+                        MainWindow::tr("Login failed : %1").arg(message));
 }
 
 // this should really be placed somewhere in czatlib, but QValidator lives
@@ -156,8 +156,8 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
   if (!isLoginDataEntered()) {
-    QMessageBox::information(this, QObject::tr("Not so fast"),
-                             QObject::tr("Enter your credentials first"));
+    QMessageBox::information(this, MainWindow::tr("Not so fast"),
+                             MainWindow::tr("Enter your credentials first"));
     return;
   }
   bool newSessionNeeded = true;
