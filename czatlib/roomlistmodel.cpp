@@ -19,8 +19,8 @@ const QStringList model_columns = {RoomListModel::tr("Room name"),
 namespace Czateria {
 
 RoomListModel::RoomListModel(QObject *parent, QNetworkAccessManager *nam,
-                             LoginDataHash &autologinData)
-    : QAbstractTableModel(parent), mNAM(nam), mAutologinData(autologinData),
+                             LoginDataProvider &loginProvider)
+    : QAbstractTableModel(parent), mNAM(nam), mLoginProvider(loginProvider),
       mReply(nullptr) {
   Q_ASSERT(nam);
 }
@@ -51,10 +51,8 @@ QVariant RoomListModel::data(const QModelIndex &index, int role) const {
       return channel.num_users;
     }
   } else if (role == Qt::CheckStateRole && index.column() == 2) {
-    auto &&channel = mRooms[index.row()];
-    auto it = mAutologinData.find(channel.id);
-    return (it != mAutologinData.end() && it->isValid()) ? Qt::Checked
-                                                         : Qt::Unchecked;
+    auto data = mLoginProvider.getAutologin(mRooms[index.row()]);
+    return data.isValid() ? Qt::Checked : Qt::Unchecked;
   }
   return QVariant();
 }
@@ -66,19 +64,6 @@ QVariant RoomListModel::headerData(int section, Qt::Orientation orientation,
   } else {
     return QAbstractTableModel::headerData(section, orientation, role);
   }
-}
-
-void RoomListModel::disableAutologin(const QModelIndex &index) {
-  mAutologinData.remove(room(index.row()).id);
-  emit dataChanged(index, index, {Qt::CheckStateRole});
-}
-
-void RoomListModel::enableAutologin(const QModelIndex &index, QString &&user,
-                                    QString &&password) {
-  auto &&loginData = mAutologinData[room(index.row()).id];
-  loginData.username = user;
-  loginData.password = password;
-  emit dataChanged(index, index, {Qt::CheckStateRole});
 }
 
 QVector<Room> RoomListModel::jsonToChannels(const QJsonArray &arr) {

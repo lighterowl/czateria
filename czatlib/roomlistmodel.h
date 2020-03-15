@@ -22,9 +22,15 @@ public:
     QString password;
     bool isValid() const { return !(username.isEmpty() && username.isEmpty()); }
   };
-  using LoginDataHash = QHash<int, LoginData>;
+  struct LoginDataProvider {
+    virtual LoginData getAutologin(const Czateria::Room &index) const = 0;
+    virtual void disableAutologin(const Czateria::Room &index) = 0;
+    virtual void enableAutologin(const Czateria::Room &room, QString &&user,
+                                 QString &&password) = 0;
+  };
+
   RoomListModel(QObject *parent, QNetworkAccessManager *nam,
-                LoginDataHash &autologinData);
+                LoginDataProvider &loginProvider);
   void download();
   const Room &room(int idx) const { return mRooms[idx]; }
 
@@ -35,9 +41,19 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const override;
 
-  void disableAutologin(const QModelIndex &index);
+  void disableAutologin(const QModelIndex &index) {
+    mLoginProvider.disableAutologin(room(index.row()));
+    emit dataChanged(index, index, {Qt::CheckStateRole});
+  }
   void enableAutologin(const QModelIndex &index, QString &&user,
-                       QString &&password);
+                       QString &&password) {
+    mLoginProvider.enableAutologin(room(index.row()), std::move(user),
+                                   std::move(password));
+    emit dataChanged(index, index, {Qt::CheckStateRole});
+  }
+  LoginData getAutologin(const QModelIndex &index) const {
+    return mLoginProvider.getAutologin(room(index.row()));
+  }
 
 signals:
   void finished();
@@ -48,7 +64,7 @@ signals:
 private:
   QVector<Room> mRooms;
   QNetworkAccessManager *const mNAM;
-  LoginDataHash &mAutologinData;
+  LoginDataProvider &mLoginProvider;
   QNetworkReply *mReply;
 
   QVector<Room> jsonToChannels(const QJsonArray &json);

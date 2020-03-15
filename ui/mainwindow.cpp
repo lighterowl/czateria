@@ -92,8 +92,7 @@ constexpr auto channelListRefreshInterval = 5 * 60 * 1000;
 MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
                        QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mNAM(nam),
-      mRoomListModel(
-          new Czateria::RoomListModel(this, nam, settings.autologin)),
+      mRoomListModel(new Czateria::RoomListModel(this, nam, settings)),
       mRoomSortModel(new QSortFilterProxyModel(this)), mAvatarHandler(nam),
       mAppSettings(settings) {
   ui->setupUi(this);
