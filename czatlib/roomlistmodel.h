@@ -17,7 +17,14 @@ namespace Czateria {
 class RoomListModel : public QAbstractTableModel {
   Q_OBJECT
 public:
-  RoomListModel(QObject *parent, QNetworkAccessManager *nam);
+  struct LoginData {
+    QString username;
+    QString password;
+    bool isValid() const { return !(username.isEmpty() && username.isEmpty()); }
+  };
+  using LoginDataHash = QHash<int, LoginData>;
+  RoomListModel(QObject *parent, QNetworkAccessManager *nam,
+                LoginDataHash &autologinData);
   void download();
   const Room &room(int idx) const { return mRooms[idx]; }
 
@@ -36,7 +43,8 @@ signals:
 
 private:
   QVector<Room> mRooms;
-  QNetworkAccessManager *mNAM;
+  QNetworkAccessManager *const mNAM;
+  LoginDataHash &mAutologinData;
   QNetworkReply *mReply;
 
   QVector<Room> jsonToChannels(const QJsonArray &json);

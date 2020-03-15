@@ -12,13 +12,16 @@
 namespace {
 using namespace Czateria;
 const QStringList model_columns = {RoomListModel::tr("Room name"),
-                                   RoomListModel::tr("Users")};
+                                   RoomListModel::tr("Users"),
+                                   RoomListModel::tr("Autojoin")};
 } // namespace
 
 namespace Czateria {
 
-RoomListModel::RoomListModel(QObject *parent, QNetworkAccessManager *nam)
-    : QAbstractTableModel(parent), mNAM(nam), mReply(nullptr) {
+RoomListModel::RoomListModel(QObject *parent, QNetworkAccessManager *nam,
+                             LoginDataHash &autologinData)
+    : QAbstractTableModel(parent), mNAM(nam), mAutologinData(autologinData),
+      mReply(nullptr) {
   Q_ASSERT(nam);
 }
 
@@ -39,19 +42,20 @@ int RoomListModel::columnCount(const QModelIndex &) const {
 }
 
 QVariant RoomListModel::data(const QModelIndex &index, int role) const {
-  QVariant rv;
   if (role == Qt::DisplayRole) {
     auto &&channel = mRooms[index.row()];
     switch (index.column()) {
     case 0:
-      rv = channel.name;
-      break;
+      return channel.name;
     case 1:
-      rv = channel.num_users;
-      break;
+      return channel.num_users;
     }
+  } else if (role == Qt::CheckStateRole && index.column() == 2) {
+    auto &&channel = mRooms[index.row()];
+    auto it = mAutologinData.find(channel.id);
+    return (it != mAutologinData.end() && it->isValid());
   }
-  return rv;
+  return QVariant();
 }
 
 QVariant RoomListModel::headerData(int section, Qt::Orientation orientation,
