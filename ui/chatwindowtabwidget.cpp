@@ -28,7 +28,7 @@ const QColor unreadTabColor = QColor(Qt::red);
 ChatWindowTabWidget::ChatWindowTabWidget(QWidget *parent) : QTabWidget(parent) {
   setTabBarAutoHide(true);
   setTabsClosable(true);
-  addTab(createTextWidget(this), QObject::tr("Main chat"));
+  addTab(createTextWidget(this), tr("Main chat"));
   connect(this, &QTabWidget::tabCloseRequested, this,
           &ChatWindowTabWidget::onTabCloseRequested);
   connect(this, &QTabWidget::currentChanged, this,
@@ -98,20 +98,20 @@ void ChatWindowTabWidget::onPrivateConversationStateChanged(
   using s = decltype(state);
   switch (state) {
   case s::Rejected:
-    message = QObject::tr("User rejected the conversation request");
+    message = tr("User rejected the conversation request");
     break;
   case s::Closed:
-    message = QObject::tr("User closed the conversation window");
+    message = tr("User closed the conversation window");
     break;
   case s::UserLeft:
-    message = QObject::tr("User logged out");
+    message = tr("User logged out");
     icon = QIcon(QLatin1String(":/icons/door_out.png"));
     break;
   case s::NoPrivs:
-    message = QObject::tr("User has turned off private conversations");
+    message = tr("User has turned off private conversations");
     break;
   case s::NoFreePrivs:
-    message = QObject::tr("User has no free private conversation slots");
+    message = tr("User has no free private conversation slots");
     break;
   default:
     Q_ASSERT(false);

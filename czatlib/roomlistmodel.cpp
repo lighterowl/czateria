@@ -10,9 +10,10 @@
 #include <type_traits>
 
 namespace {
-const QStringList model_columns = {QObject::tr("Room name"),
-                                   QObject::tr("Users")};
-}
+using namespace Czateria;
+const QStringList model_columns = {RoomListModel::tr("Room name"),
+                                   RoomListModel::tr("Users")};
+} // namespace
 
 namespace Czateria {
 
