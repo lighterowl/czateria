@@ -111,6 +111,8 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
 
   connect(ui->tableView, &QTableView::doubleClicked, this,
           &MainWindow::onChannelDoubleClicked);
+  connect(ui->tableView, &QTableView::clicked, this,
+          &MainWindow::onChannelClicked);
 
   connect(mRoomListModel, &Czateria::RoomListModel::downloadError,
           [=](auto err) {
@@ -173,6 +175,18 @@ void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
   }
   if (newSessionNeeded) {
     startLogin(room);
+  }
+}
+
+void MainWindow::onChannelClicked(const QModelIndex &proxyIdx) {
+  auto idx = mRoomSortModel->mapToSource(proxyIdx);
+  qDebug() << idx;
+  if (idx.column() != 2) {
+    return;
+  }
+  if (mRoomListModel->data(idx).toBool()) {
+    mRoomListModel->disableAutologin(idx);
+  } else {
   }
 }
 

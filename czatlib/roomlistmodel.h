@@ -35,6 +35,8 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const override;
 
+  void disableAutologin(const QModelIndex &index);
+
 signals:
   void finished();
   void downloadError(QNetworkReply::NetworkError error);

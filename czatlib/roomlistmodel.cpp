@@ -67,6 +67,11 @@ QVariant RoomListModel::headerData(int section, Qt::Orientation orientation,
   }
 }
 
+void RoomListModel::disableAutologin(const QModelIndex &index) {
+  mAutologinData.remove(room(index.row()).id);
+  emit dataChanged(index, index, {Qt::CheckStateRole});
+}
+
 QVector<Room> RoomListModel::jsonToChannels(const QJsonArray &arr) {
   QVector<Room> rv;
   rv.reserve(arr.size());
