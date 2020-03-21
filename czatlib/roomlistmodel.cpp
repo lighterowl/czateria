@@ -91,6 +91,8 @@ QVector<Room> RoomListModel::jsonToChannels(const QJsonArray &arr) {
       rv.push_back(c);
     }
   }
+  std::sort(std::begin(rv), std::end(rv),
+            [](auto &&left, auto &&right) { return left.id < right.id; });
   return rv;
 }
 
