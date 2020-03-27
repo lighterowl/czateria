@@ -1,7 +1,5 @@
 #include "appsettings.h"
 
-#include <QSettings>
-
 AppSettings::AppSettings() {
   auto variant = mSettings.value(QLatin1String("auto_pic_save"));
   if (variant.isValid()) {
@@ -44,6 +42,21 @@ AppSettings::~AppSettings() {
     mSettings.endGroup();
   }
   mSettings.endGroup();
+}
+
+QMultiHash<Czateria::RoomListModel::LoginData, int>
+AppSettings::autologinHash() const {
+  // the autologin data is stored internally as a hash of channel IDs mapping to
+  // LoginData structures, because it's much easier to interact with the Qt
+  // models and the QSettings class this way. however, when actually
+  // establishing the connections and stuff, it's much easier to have a set of
+  // unique logins mapping to lists of channels which are supposed to be joined
+  // by using the given login.
+  QMultiHash<Czateria::RoomListModel::LoginData, int> rv;
+  for (auto it = mAutologinData.begin(); it != mAutologinData.end(); ++it) {
+    rv.insert(it.value(), it.key());
+  }
+  return rv;
 }
 
 Czateria::RoomListModel::LoginData

@@ -21,6 +21,9 @@ public:
     QString username;
     QString password;
     bool isValid() const { return !(username.isEmpty() && username.isEmpty()); }
+    bool operator==(const LoginData &other) const {
+      return username == other.username && password == other.password;
+    }
   };
   struct LoginDataProvider {
     virtual LoginData getAutologin(const Czateria::Room &index) const = 0;
@@ -70,6 +73,9 @@ private:
   QVector<Room> jsonToChannels(const QJsonArray &json);
   void onDownloadFinished();
 };
+inline uint qHash(const Czateria::RoomListModel::LoginData &data) {
+    return qHash(data.username) ^ qHash(data.password);
+}
 } // namespace Czateria
 
 #endif // RoomListModel_H

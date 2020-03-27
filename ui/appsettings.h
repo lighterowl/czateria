@@ -2,6 +2,7 @@
 #define APPSETTINGS_H
 
 #include <QHash>
+#include <QMultiHash>
 #include <QSettings>
 #include <QString>
 #include <QVariant>
@@ -18,6 +19,7 @@ struct AppSettings : public Czateria::RoomListModel::LoginDataProvider {
 
   bool savePicturesAutomatically = false;
   QHash<QString, QVariant> logins;
+  QMultiHash<Czateria::RoomListModel::LoginData, int> autologinHash() const;
 
 private:
   Czateria::RoomListModel::LoginData
