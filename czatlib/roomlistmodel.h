@@ -74,7 +74,7 @@ private:
   void onDownloadFinished();
 };
 inline uint qHash(const Czateria::RoomListModel::LoginData &data) {
-    return qHash(data.username) ^ qHash(data.password);
+  return qHash(data.username) ^ qHash(data.password);
 }
 } // namespace Czateria
 
