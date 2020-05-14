@@ -58,6 +58,9 @@ private:
   void createChatWindow(QSharedPointer<Czateria::LoginSession>,
                         const Czateria::Room &);
 
+  class AutologinState;
+  friend class AutologinState;
+
   bool eventFilter(QObject *, QEvent *) override;
   void timerEvent(QTimerEvent *) override;
 };

@@ -20,7 +20,7 @@ public:
   struct LoginData {
     QString username;
     QString password;
-    bool isValid() const { return !(username.isEmpty() && username.isEmpty()); }
+    bool isValid() const { return !(username.isEmpty() && password.isEmpty()); }
     bool operator==(const LoginData &other) const {
       return username == other.username && password == other.password;
     }
@@ -36,6 +36,7 @@ public:
                 LoginDataProvider &loginProvider);
   void download();
   const Room &room(int idx) const { return mRooms[idx]; }
+  const Room *roomFromId(int roomId) const;
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;

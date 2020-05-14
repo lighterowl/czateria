@@ -35,6 +35,16 @@ void RoomListModel::download() {
   connect(mReply, errSignal, this, &RoomListModel::downloadError);
 }
 
+const Room *RoomListModel::roomFromId(int roomId) const {
+  const auto it_end = std::end(mRooms);
+  Room key;
+  key.id = roomId;
+  auto it = std::lower_bound(
+      std::begin(mRooms), it_end, key,
+      [](auto &&left, auto &&right) { return left.id < right.id; });
+  return it != it_end ? &(*it) : nullptr;
+}
+
 int RoomListModel::rowCount(const QModelIndex &) const { return mRooms.size(); }
 
 int RoomListModel::columnCount(const QModelIndex &) const {
