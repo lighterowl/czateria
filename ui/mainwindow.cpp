@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "appsettings.h"
+#include "autologindatadialog.h"
 #include "captchadialog.h"
 #include "mainchatwindow.h"
 
@@ -88,10 +89,79 @@ const QValidator *getNicknameValidator() {
 constexpr auto channelListRefreshInterval = 5 * 60 * 1000;
 } // namespace
 
+class MainWindow::AutologinState {
+  // a helper class introduced in order not to clutter the MainWindow object
+  // with the state variables while performing autologin, mostly needed in order
+  // to display warning messages when a given channel cannot be joined.
+public:
+  AutologinState(MainWindow *mainWin,
+                 QMultiHash<Czateria::RoomListModel::LoginData, int> &&logins)
+      : mMainWindow(mainWin), mLoginHash(logins),
+        mUniqueLogins(mLoginHash.uniqueKeys()),
+        mLoginIter(std::begin(mUniqueLogins)) {
+    Q_ASSERT(!mLoginHash.empty());
+    blockUi(mMainWindow->ui, true);
+    createSession();
+  }
+  ~AutologinState() { blockUi(mMainWindow->ui, false); }
+
+private:
+  void createSession() {
+    auto session =
+        QSharedPointer<Czateria::LoginSession>::create(mMainWindow->mNAM);
+    auto sessionPtr = session.data();
+    auto rooms = mLoginHash.values(*mLoginIter);
+
+    connect(sessionPtr, &Czateria::LoginSession::loginSuccessful, [=]() {
+      for (auto roomId : rooms) {
+        if (auto room = mMainWindow->mRoomListModel->roomFromId(roomId)) {
+          mMainWindow->createChatWindow(std::move(session), *room);
+        }
+      }
+      nextSession();
+    });
+    connect(sessionPtr, &Czateria::LoginSession::loginFailed, [=]() {
+      QMessageBox::warning(mMainWindow, tr("Autologin failed"),
+                           tr("Autologin failed for username %1.\nRooms "
+                              "using this username will not be autojoined.")
+                               .arg(mLoginIter->username));
+      nextSession();
+    });
+
+    // an "initial" login room is needed in order to create a login session
+    // due to the server requiring a room parameter. that room still needs to
+    // be actually joined later on, and has no real significance, which is why
+    // the first one is simply used.
+    const auto loginRoom = rooms[0];
+    if (auto room = mMainWindow->mRoomListModel->roomFromId(loginRoom)) {
+      session->login(*room, mLoginIter->username, mLoginIter->password);
+    } else {
+      qWarning() << "Room" << loginRoom
+                 << "not found while performing initial login for"
+                 << mLoginIter->username;
+      nextSession();
+    }
+  }
+
+  void nextSession() {
+    ++mLoginIter;
+    if (mLoginIter != std::end(mUniqueLogins)) {
+      createSession();
+    } else {
+      delete this;
+    }
+  }
+
+  MainWindow *const mMainWindow;
+  const QMultiHash<Czateria::RoomListModel::LoginData, int> mLoginHash;
+  QList<Czateria::RoomListModel::LoginData> mUniqueLogins;
+  QList<Czateria::RoomListModel::LoginData>::const_iterator mLoginIter;
+};
+
 MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
                        QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mNAM(nam),
-      mRoomListModel(new Czateria::RoomListModel(this, nam)),
+      mRoomListModel(new Czateria::RoomListModel(this, nam, settings)),
       mRoomSortModel(new QSortFilterProxyModel(this)), mAvatarHandler(nam),
       mAppSettings(settings) {
   ui->setupUi(this);
@@ -110,6 +180,8 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
 
   connect(ui->tableView, &QTableView::doubleClicked, this,
           &MainWindow::onChannelDoubleClicked);
+  connect(ui->tableView, &QTableView::clicked, this,
+          &MainWindow::onChannelClicked);
 
   connect(mRoomListModel, &Czateria::RoomListModel::downloadError,
           [=](auto err) {
@@ -128,6 +200,15 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   connect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
     blockUi(ui, false);
     ui->tableView->resizeColumnsToContents();
+  });
+  auto conn = new QMetaObject::Connection;
+  *conn = connect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
+    disconnect(*conn);
+    delete conn;
+    auto logins = mAppSettings.autologinHash();
+    if (!logins.empty()) {
+      new AutologinState(this, std::move(logins)); // self-destructs when done.
+    }
   });
 
   refreshRoomList();
@@ -172,6 +253,19 @@ void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
   }
   if (newSessionNeeded) {
     startLogin(room);
+  }
+}
+
+void MainWindow::onChannelClicked(const QModelIndex &proxyIdx) {
+  auto idx = mRoomSortModel->mapToSource(proxyIdx);
+  if (idx.column() != 2) {
+    return;
+  }
+  if (mRoomListModel->data(idx, Qt::CheckStateRole).toInt() == Qt::Checked) {
+    mRoomListModel->disableAutologin(idx);
+  } else {
+    AutologinDataDialog dlg(*mRoomListModel, idx, this);
+    dlg.exec();
   }
 }
 

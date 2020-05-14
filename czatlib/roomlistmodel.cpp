@@ -12,13 +12,16 @@
 namespace {
 using namespace Czateria;
 const QStringList model_columns = {RoomListModel::tr("Room name"),
-                                   RoomListModel::tr("Users")};
+                                   RoomListModel::tr("Users"),
+                                   RoomListModel::tr("Autojoin")};
 } // namespace
 
 namespace Czateria {
 
-RoomListModel::RoomListModel(QObject *parent, QNetworkAccessManager *nam)
-    : QAbstractTableModel(parent), mNAM(nam), mReply(nullptr) {
+RoomListModel::RoomListModel(QObject *parent, QNetworkAccessManager *nam,
+                             LoginDataProvider &loginProvider)
+    : QAbstractTableModel(parent), mNAM(nam), mLoginProvider(loginProvider),
+      mReply(nullptr) {
   Q_ASSERT(nam);
 }
 
@@ -32,6 +35,16 @@ void RoomListModel::download() {
   connect(mReply, errSignal, this, &RoomListModel::downloadError);
 }
 
+const Room *RoomListModel::roomFromId(int roomId) const {
+  const auto it_end = std::end(mRooms);
+  Room key;
+  key.id = roomId;
+  auto it = std::lower_bound(
+      std::begin(mRooms), it_end, key,
+      [](auto &&left, auto &&right) { return left.id < right.id; });
+  return it != it_end ? &(*it) : nullptr;
+}
+
 int RoomListModel::rowCount(const QModelIndex &) const { return mRooms.size(); }
 
 int RoomListModel::columnCount(const QModelIndex &) const {
@@ -39,19 +52,19 @@ int RoomListModel::columnCount(const QModelIndex &) const {
 }
 
 QVariant RoomListModel::data(const QModelIndex &index, int role) const {
-  QVariant rv;
   if (role == Qt::DisplayRole) {
     auto &&channel = mRooms[index.row()];
     switch (index.column()) {
     case 0:
-      rv = channel.name;
-      break;
+      return channel.name;
     case 1:
-      rv = channel.num_users;
-      break;
+      return channel.num_users;
     }
+  } else if (role == Qt::CheckStateRole && index.column() == 2) {
+    auto data = mLoginProvider.getAutologin(mRooms[index.row()]);
+    return data.isValid() ? Qt::Checked : Qt::Unchecked;
   }
-  return rv;
+  return QVariant();
 }
 
 QVariant RoomListModel::headerData(int section, Qt::Orientation orientation,
@@ -88,6 +101,8 @@ QVector<Room> RoomListModel::jsonToChannels(const QJsonArray &arr) {
       rv.push_back(c);
     }
   }
+  std::sort(std::begin(rv), std::end(rv),
+            [](auto &&left, auto &&right) { return left.id < right.id; });
   return rv;
 }
 
