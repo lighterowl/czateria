@@ -137,6 +137,11 @@ void ChatWindowTabWidget::askAcceptPrivateMessage(const QString &nickname) {
   addTab(widget, nickname);
 }
 
+void ChatWindowTabWidget::addMessageToPrivateChat(const QString &nickname,
+                                                  const QString &str) {
+  privateMessageTab(nickname)->appendPlainText(str);
+}
+
 void ChatWindowTabWidget::indicateTabActivity(int idx, const QIcon &icon) {
   if (idx == currentIndex()) {
     return;

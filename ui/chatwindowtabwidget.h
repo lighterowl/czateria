@@ -14,8 +14,6 @@ class QPlainTextEdit;
 
 class ChatWindowTabWidget : public QTabWidget {
   Q_OBJECT
-  class PrivateChatTab;
-
 public:
   ChatWindowTabWidget(QWidget *parent = nullptr);
 
@@ -28,9 +26,9 @@ public:
 
   void addMessageToCurrent(const Czateria::Message &msg);
   void addMessageToCurrent(const QString &str);
-  PrivateChatTab *privateMessageTab(const QString &nickname);
   int countUnreadPrivateTabs() const;
   void askAcceptPrivateMessage(const QString &nickname);
+  void addMessageToPrivateChat(const QString &nickname, const QString &str);
 
 signals:
   void privateConversationAccepted(const QString &nickname);
@@ -44,6 +42,9 @@ private:
   void indicateTabActivity(int idx, const QIcon &icon);
   void indicateTabActivity(QWidget *tab, const QIcon &icon);
   void updateTabActivity(int idx);
+
+  class PrivateChatTab;
+  PrivateChatTab *privateMessageTab(const QString &nickname);
 
   QPlainTextEdit *const mMainChatTab;
   QHash<QString, PrivateChatTab *> mPrivateTabs;

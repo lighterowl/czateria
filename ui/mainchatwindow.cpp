@@ -236,22 +236,21 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
           ui->nicknameLabel, &QLabel::setText);
   connect(mChatSession, &Czateria::ChatSession::imageReceived,
           [=](auto &&nickname, auto &&image) {
-            auto textedit = ui->tabWidget->privateMessageTab(nickname);
             if (mAppSettings.savePicturesAutomatically) {
               auto defaultPath =
                   imageDefaultPath(mChatSession->channel(), nickname);
               image.save(defaultPath);
-              textedit->appendPlainText(
-                  tr("[%1] Image saved as %2")
-                      .arg(QDateTime::currentDateTime().toString(
-                          QLatin1String("HH:mm:ss")))
-                      .arg(defaultPath));
+              ui->tabWidget->addMessageToPrivateChat(
+                  nickname, tr("[%1] Image saved as %2")
+                                .arg(QDateTime::currentDateTime().toString(
+                                    QLatin1String("HH:mm:ss")))
+                                .arg(defaultPath));
             } else {
               showImageDialog(this, nickname, mChatSession->channel(), image);
-              textedit->appendPlainText(
-                  tr("[%1] Image received")
-                      .arg(QDateTime::currentDateTime().toString(
-                          QLatin1String("HH:mm:ss"))));
+              ui->tabWidget->addMessageToPrivateChat(
+                  nickname, tr("[%1] Image received")
+                                .arg(QDateTime::currentDateTime().toString(
+                                    QLatin1String("HH:mm:ss"))));
             }
             notifyActivity();
           });
