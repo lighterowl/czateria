@@ -34,8 +34,22 @@ class ChatWindowTabWidget::PrivateChatTab : public QStackedWidget {
   PrivateChatTab(ChatWindowTabWidget *parent, const QString &nickname)
       : QStackedWidget(parent), mNickname(nickname) {}
 
+  void addTextWidget() {
+    Q_ASSERT(!mTextWidget);
+    mTextWidget = createTextWidget(this);
+    addWidget(mTextWidget);
+  }
+
+  void onConversationRejected() { deleteLater(); }
+
+  const QString mNickname;
+  QPlainTextEdit *mTextWidget = nullptr;
+
+public:
+  friend struct PendingAcceptWidget;
   struct PendingAcceptWidget : public QWidget {
-    PendingAcceptWidget(ChatWindowTabWidget *chatWindow,
+    PendingAcceptWidget(PrivateChatTab *chatTab,
+                        ChatWindowTabWidget *chatWindow,
                         const QString &nickname) {
       auto layout = new QVBoxLayout;
       layout->addWidget(
@@ -50,35 +64,33 @@ class ChatWindowTabWidget::PrivateChatTab : public QStackedWidget {
       });
       connect(buttons, &QDialogButtonBox::rejected, [=]() {
         emit chatWindow->privateConversationRejected(nickname);
-        // TODO delete the parent StackedWidget to remove it from the TabWidget
+        chatTab->onConversationRejected();
       });
       layout->addWidget(buttons);
       setLayout(layout);
     }
   };
 
-  const QString mNickname;
-
-public:
   const QString &nickname() const { return mNickname; }
 
   static PrivateChatTab *createAccepted(ChatWindowTabWidget *parent,
                                         const QString &nickname) {
     auto rv = new PrivateChatTab(parent, nickname);
-    rv->addWidget(createTextWidget(rv));
+    rv->addTextWidget();
     return rv;
   }
 
   static PrivateChatTab *create(ChatWindowTabWidget *parent,
                                 const QString &nickname) {
     auto rv = new PrivateChatTab(parent, nickname);
-    rv->addWidget(new PendingAcceptWidget(parent, nickname));
-    rv->addWidget(createTextWidget(rv));
+    auto pendingWidget = new PendingAcceptWidget(rv, parent, nickname);
+    rv->addWidget(pendingWidget);
+    rv->addTextWidget();
     return rv;
   }
 
-  void appendPlainText(const QString &) {
-    // todo
+  void appendPlainText(const QString &text) {
+    mTextWidget->appendPlainText(text);
   }
 };
 
@@ -200,7 +212,11 @@ void ChatWindowTabWidget::addMessageToCurrent(const Czateria::Message &msg) {
 }
 
 void ChatWindowTabWidget::addMessageToCurrent(const QString &str) {
-  static_cast<PrivateChatTab *>(currentWidget())->appendPlainText(str);
+  if (currentWidget() == mMainChatTab) {
+    mMainChatTab->appendPlainText(str);
+  } else {
+    static_cast<PrivateChatTab *>(currentWidget())->appendPlainText(str);
+  }
 }
 
 void ChatWindowTabWidget::onTabCloseRequested(int index) {
