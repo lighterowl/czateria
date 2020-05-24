@@ -1,7 +1,12 @@
 #include "chatwindowtabwidget.h"
 
 #include <QApplication>
+#include <QDebug>
+#include <QDialogButtonBox>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QPlainTextEdit>
+#include <QStackedWidget>
 #include <QTabBar>
 
 #include <czatlib/message.h>
@@ -25,10 +30,60 @@ QPlainTextEdit *createTextWidget(QWidget *parent) {
 const QColor unreadTabColor = QColor(Qt::red);
 } // namespace
 
-ChatWindowTabWidget::ChatWindowTabWidget(QWidget *parent) : QTabWidget(parent) {
+class ChatWindowTabWidget::PrivateChatTab : public QStackedWidget {
+  PrivateChatTab(ChatWindowTabWidget *parent, const QString &nickname)
+      : QStackedWidget(parent), mNickname(nickname) {}
+
+  struct PendingAcceptWidget : public QWidget {
+    PendingAcceptWidget(ChatWindowTabWidget *chatWindow,
+                        const QString &nickname) {
+      auto layout = new QHBoxLayout;
+      layout->addWidget(
+          new QLabel(tr("<b>%1</b> wants to talk in private.\nDo you accept?")
+                         .arg(nickname)));
+      auto buttons = new QDialogButtonBox(
+          QDialogButtonBox::Yes | QDialogButtonBox::No, Qt::Horizontal);
+      connect(buttons, &QDialogButtonBox::accepted, [=]() {
+        emit chatWindow->privateConversationAccepted(nickname);
+      });
+      connect(buttons, &QDialogButtonBox::rejected, [=]() {
+        emit chatWindow->privateConversationRejected(nickname);
+      });
+      layout->addWidget(buttons);
+      setLayout(layout);
+    }
+  };
+
+  const QString mNickname;
+
+public:
+  const QString &nickname() const { return mNickname; }
+
+  static PrivateChatTab *createAccepted(ChatWindowTabWidget *parent,
+                                        const QString &nickname) {
+    auto rv = new PrivateChatTab(parent, nickname);
+    rv->addWidget(createTextWidget(rv));
+    return rv;
+  }
+
+  static PrivateChatTab *create(ChatWindowTabWidget *parent,
+                                const QString &nickname) {
+    auto rv = new PrivateChatTab(parent, nickname);
+    rv->addWidget(new PendingAcceptWidget(parent, nickname));
+    rv->addWidget(createTextWidget(rv));
+    return rv;
+  }
+
+  void appendPlainText(const QString &) {
+    // todo
+  }
+};
+
+ChatWindowTabWidget::ChatWindowTabWidget(QWidget *parent)
+    : QTabWidget(parent), mMainChatTab(createTextWidget(this)) {
   setTabBarAutoHide(true);
   setTabsClosable(true);
-  addTab(createTextWidget(this), tr("Main chat"));
+  addTab(mMainChatTab, tr("Main chat"));
   connect(this, &QTabWidget::tabCloseRequested, this,
           &ChatWindowTabWidget::onTabCloseRequested);
   connect(this, &QTabWidget::currentChanged, this,
@@ -36,7 +91,7 @@ ChatWindowTabWidget::ChatWindowTabWidget(QWidget *parent) : QTabWidget(parent) {
 }
 
 void ChatWindowTabWidget::displayRoomMessage(const Czateria::Message &msg) {
-  static_cast<QPlainTextEdit *>(widget(0))->appendPlainText(formatMessage(msg));
+  mMainChatTab->appendPlainText(formatMessage(msg));
   indicateTabActivity(0, QIcon(QLatin1String(":/icons/transmit_blue.png")));
 }
 
@@ -55,11 +110,11 @@ QPlainTextEdit *
 ChatWindowTabWidget::privateMessageTab(const QString &nickname) {
   auto it = mPrivateTabs.find(nickname);
   if (it == std::end(mPrivateTabs)) {
-    auto plaintext = createTextWidget(this);
-    it = mPrivateTabs.insert(nickname, plaintext);
-    addTab(plaintext, nickname);
+    auto widget = PrivateChatTab::createAccepted(this, nickname);
+    it = mPrivateTabs.insert(nickname, widget);
+    addTab(widget, nickname);
   }
-  return it.value();
+  return static_cast<QPlainTextEdit *>(it.value()->currentWidget());
 }
 
 int ChatWindowTabWidget::countUnreadPrivateTabs() const {
@@ -73,6 +128,12 @@ int ChatWindowTabWidget::countUnreadPrivateTabs() const {
   return rv;
 }
 
+void ChatWindowTabWidget::askAcceptPrivateMessage(const QString &nickname) {
+  auto widget = PrivateChatTab::create(this, nickname);
+  mPrivateTabs.insert(nickname, widget);
+  addTab(widget, nickname);
+}
+
 void ChatWindowTabWidget::indicateTabActivity(int idx, const QIcon &icon) {
   if (idx == currentIndex()) {
     return;
@@ -81,8 +142,7 @@ void ChatWindowTabWidget::indicateTabActivity(int idx, const QIcon &icon) {
   tabBar()->setTabIcon(idx, icon);
 }
 
-void ChatWindowTabWidget::indicateTabActivity(QPlainTextEdit *tab,
-                                              const QIcon &icon) {
+void ChatWindowTabWidget::indicateTabActivity(QWidget *tab, const QIcon &icon) {
   indicateTabActivity(indexOf(tab), icon);
 }
 
@@ -121,8 +181,10 @@ void ChatWindowTabWidget::onPrivateConversationStateChanged(
 }
 
 QString ChatWindowTabWidget::getCurrentNickname() const {
-  auto curIdx = currentIndex();
-  return curIdx == 0 ? QString() : tabText(curIdx);
+  auto curWidget = currentWidget();
+  return curWidget == mMainChatTab
+             ? QString()
+             : static_cast<PrivateChatTab *>(curWidget)->nickname();
 }
 
 void ChatWindowTabWidget::addMessageToCurrent(const Czateria::Message &msg) {
@@ -130,15 +192,15 @@ void ChatWindowTabWidget::addMessageToCurrent(const Czateria::Message &msg) {
 }
 
 void ChatWindowTabWidget::addMessageToCurrent(const QString &str) {
-  static_cast<QPlainTextEdit *>(currentWidget())->appendPlainText(str);
+  static_cast<PrivateChatTab *>(currentWidget())->appendPlainText(str);
 }
 
 void ChatWindowTabWidget::onTabCloseRequested(int index) {
   if (index == 0) {
     return;
   }
-  auto w = widget(index);
-  auto nickname = tabText(index);
+  auto w = static_cast<PrivateChatTab *>(widget(index));
+  auto nickname = w->nickname();
   removeTab(index);
   delete w;
   mPrivateTabs.remove(nickname);

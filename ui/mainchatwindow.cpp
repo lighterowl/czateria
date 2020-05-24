@@ -296,6 +296,12 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
 
   connect(ui->tabWidget, &QTabWidget::currentChanged,
           [=](auto idx) { mSendImageAction->setEnabled(idx != 0); });
+  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationAccepted,
+          [=](auto &&nickname) { doAcceptPrivateConversation(nickname); });
+  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationRejected,
+          [=](auto &&nickname) {
+            mChatSession->rejectPrivateConversation(nickname);
+          });
 
   mChatSession->start();
 }
@@ -304,32 +310,10 @@ MainChatWindow::~MainChatWindow() { delete ui; }
 
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
   if (mAutoAcceptPrivs->isChecked()) {
+    ui->tabWidget->openPrivateMessageTab(nickname);
     doAcceptPrivateConversation(nickname);
   } else {
-    auto question =
-        tr("%1 wants to talk in private.\nDo you accept?").arg(nickname);
-    auto msgbox =
-        new QMessageBox(QMessageBox::Question, tr("New private conversation"),
-                        question, QMessageBox::Yes | QMessageBox::No, this);
-    mPendingPrivRequests[nickname] = msgbox;
-    msgbox->setDefaultButton(QMessageBox::Yes);
-    msgbox->button(QMessageBox::Yes)->setShortcut(QKeySequence());
-    msgbox->button(QMessageBox::No)->setShortcut(QKeySequence());
-    connect(msgbox, &QDialog::finished, [=](int result) {
-      switch (result) {
-      case QMessageBox::Yes:
-        doAcceptPrivateConversation(nickname);
-        break;
-      case QMessageBox::No:
-        mChatSession->rejectPrivateConversation(nickname);
-        break;
-      default:
-        Q_ASSERT(0);
-      }
-    });
-    msgbox->show();
-    msgbox->raise();
-    msgbox->activateWindow();
+    ui->tabWidget->askAcceptPrivateMessage(nickname);
   }
 }
 
@@ -366,7 +350,6 @@ void MainChatWindow::onUserNameMiddleClicked() {
 
 void MainChatWindow::doAcceptPrivateConversation(const QString &nickname) {
   mChatSession->acceptPrivateConversation(nickname);
-  ui->tabWidget->openPrivateMessageTab(nickname);
   ui->lineEdit->setFocus(Qt::OtherFocusReason);
   notifyActivity();
 }

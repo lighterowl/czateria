@@ -28,8 +28,11 @@ public:
   void addMessageToCurrent(const QString &str);
   QPlainTextEdit *privateMessageTab(const QString &nickname);
   int countUnreadPrivateTabs() const;
+  void askAcceptPrivateMessage(const QString &nickname);
 
 signals:
+  void privateConversationAccepted(const QString &nickname);
+  void privateConversationRejected(const QString &nickname);
   void privateConversationClosed(const QString &nickname);
 
 private:
@@ -37,10 +40,12 @@ private:
   void writePrivateInfo(const QString &nickname, const QString &message,
                         const QIcon &icon);
   void indicateTabActivity(int idx, const QIcon &icon);
-  void indicateTabActivity(QPlainTextEdit *tab, const QIcon &icon);
+  void indicateTabActivity(QWidget *tab, const QIcon &icon);
   void updateTabActivity(int idx);
 
-  QHash<QString, QPlainTextEdit *> mPrivateTabs;
+  QPlainTextEdit *const mMainChatTab;
+  class PrivateChatTab;
+  QHash<QString, PrivateChatTab *> mPrivateTabs;
 };
 
 #endif // CHATWINDOWTABWIDGET_H
