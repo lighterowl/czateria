@@ -53,7 +53,7 @@ public:
                         const QString &nickname) {
       auto layout = new QVBoxLayout;
       layout->addWidget(
-          new QLabel(tr("<b>%1</b> wants to talk in private.\nDo you accept?")
+          new QLabel(tr("<b>%1</b> wants to talk in private.<br>Do you accept?")
                          .arg(nickname)));
       auto buttons = new QDialogButtonBox(
           QDialogButtonBox::Yes | QDialogButtonBox::No, Qt::Horizontal);
