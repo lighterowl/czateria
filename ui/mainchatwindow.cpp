@@ -130,7 +130,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                                Czateria::AvatarHandler &avatars,
                                const Czateria::Room &room,
                                const AppSettings &settings, MainWindow *mainWin)
-    : QMainWindow(nullptr), ui(new Ui::ChatWidget),
+    : QMainWindow(nullptr), ui(new Ui::ChatWidget), mMainWindow(mainWin),
       mChatSession(new Czateria::ChatSession(login, avatars, room, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
@@ -159,7 +159,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   mShowChannelListAction->setToolTip(tr("Show channel list"));
   mShowChannelListAction->setStatusTip(tr("Shows the channel list window"));
   connect(mShowChannelListAction, &QAction::triggered,
-          [=](auto) { mainWin->show(); });
+          [=](auto) { mMainWindow->show(); });
   toolbar->addAction(mShowChannelListAction);
 
   connect(mSendImageAction, &QAction::triggered, [=](auto) {
@@ -313,6 +313,7 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
     doAcceptPrivateConversation(nickname);
   } else {
     ui->tabWidget->askAcceptPrivateMessage(nickname);
+    mMainWindow->displayNotification();
   }
 }
 

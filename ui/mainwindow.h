@@ -33,6 +33,7 @@ public:
   explicit MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
                       QWidget *parent = nullptr);
   ~MainWindow() override;
+  void displayNotification();
 
 protected:
   void closeEvent(QCloseEvent *ev) override;
@@ -63,6 +64,9 @@ private:
 
   bool eventFilter(QObject *, QEvent *) override;
   void timerEvent(QTimerEvent *) override;
+
+private slots:
+  void onNotificationActionInvoked(quint32, QString);
 };
 
 #endif // MAINWINDOW_H

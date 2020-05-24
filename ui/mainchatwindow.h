@@ -43,6 +43,7 @@ private:
   void updateWindowTitle();
 
   Ui::ChatWidget *ui;
+  MainWindow *const mMainWindow;
   Czateria::ChatSession *const mChatSession;
   QSortFilterProxyModel *const mSortProxy;
   QCompleter *const mNicknameCompleter;

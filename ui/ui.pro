@@ -4,6 +4,8 @@ include(../czateria.pri)
 
 QT       += core gui network widgets websockets
 
+unix:qtHaveModule(dbus): QT += dbus
+
 INCLUDEPATH += ..
 
 SOURCES += \

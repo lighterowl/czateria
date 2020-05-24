@@ -18,7 +18,17 @@
 #include <QSharedPointer>
 #include <QSortFilterProxyModel>
 
+#ifndef QT_NO_DBUS
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusReply>
+#endif
+
 namespace {
+QLatin1String const dbusServiceName("org.freedesktop.Notifications");
+QLatin1String const dbusInterfaceName("org.freedesktop.Notifications");
+QLatin1String const dbusPath("/org/freedesktop/Notifications");
+
 template <typename F1, typename F2, typename F3>
 auto inspectRadioButtons(Ui::MainWindow *ui, F1 noNicknameFn, F2 nicknameFn,
                          F3 nickAndPassFn) {
@@ -233,6 +243,15 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
          "displaying them"));
 
   startTimer(channelListRefreshInterval);
+
+#ifndef QT_NO_DBUS
+  auto bus = QDBusConnection::sessionBus();
+  if (bus.isConnected()) {
+    bus.connect(dbusServiceName, dbusPath, dbusInterfaceName,
+                QLatin1String("ActionInvoked"), this,
+                SLOT(onNotificationActionInvoked(quint32, QString)));
+  }
+#endif
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
@@ -376,7 +395,40 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
 
 void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
+void MainWindow::onNotificationActionInvoked(quint32 notificationId,
+                                             QString action) {
+  qDebug() << notificationId << action;
+}
+
 MainWindow::~MainWindow() { delete ui; }
+
+void MainWindow::displayNotification() {
+#ifndef QT_NO_DBUS
+  auto bus = QDBusConnection::sessionBus();
+
+  if (bus.isConnected()) {
+    auto m = QDBusMessage::createMethodCall(
+        dbusServiceName, dbusPath, dbusInterfaceName, QLatin1String("Notify"));
+    QVariantList args;
+    args.append(QLatin1String("Czateria"));
+    args.append(0U);
+    args.append(QLatin1String("czateria"));
+    args.append(QLatin1String("Incoming private conversation"));
+    args.append(QLatin1String("foobar"));
+    args.append(QStringList()
+                << QLatin1String("accept_priv_conv") << tr("Accept")
+                << QLatin1String("reject_priv_conv") << tr("Reject"));
+    args.append(QVariantMap());
+    args.append(static_cast<int32_t>(-1));
+    m.setArguments(args);
+    auto replyMsg = bus.call(m);
+
+    /*if (replyMsg.isValid() && replyMsg.value() > 0) {
+      return true;
+    }*/
+  }
+#endif
+}
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
   if (mChatWindows.empty()) {
