@@ -45,9 +45,12 @@ class ChatWindowTabWidget::PrivateChatTab : public QStackedWidget {
           QDialogButtonBox::Yes | QDialogButtonBox::No, Qt::Horizontal);
       connect(buttons, &QDialogButtonBox::accepted, [=]() {
         emit chatWindow->privateConversationAccepted(nickname);
+        this->deleteLater(); // remove self in order to have StackedWidget
+                             // switch to TextEdit
       });
       connect(buttons, &QDialogButtonBox::rejected, [=]() {
         emit chatWindow->privateConversationRejected(nickname);
+        // TODO delete the parent StackedWidget to remove it from the TabWidget
       });
       layout->addWidget(buttons);
       setLayout(layout);
@@ -106,7 +109,7 @@ void ChatWindowTabWidget::openPrivateMessageTab(const QString &nickname) {
   setCurrentWidget(privateMessageTab(nickname));
 }
 
-QPlainTextEdit *
+ChatWindowTabWidget::PrivateChatTab *
 ChatWindowTabWidget::privateMessageTab(const QString &nickname) {
   auto it = mPrivateTabs.find(nickname);
   if (it == std::end(mPrivateTabs)) {
@@ -114,7 +117,7 @@ ChatWindowTabWidget::privateMessageTab(const QString &nickname) {
     it = mPrivateTabs.insert(nickname, widget);
     addTab(widget, nickname);
   }
-  return static_cast<QPlainTextEdit *>(it.value()->currentWidget());
+  return it.value();
 }
 
 int ChatWindowTabWidget::countUnreadPrivateTabs() const {
