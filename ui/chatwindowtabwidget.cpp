@@ -3,11 +3,11 @@
 #include <QApplication>
 #include <QDebug>
 #include <QDialogButtonBox>
-#include <QHBoxLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
 #include <QStackedWidget>
 #include <QTabBar>
+#include <QVBoxLayout>
 
 #include <czatlib/message.h>
 
@@ -37,7 +37,7 @@ class ChatWindowTabWidget::PrivateChatTab : public QStackedWidget {
   struct PendingAcceptWidget : public QWidget {
     PendingAcceptWidget(ChatWindowTabWidget *chatWindow,
                         const QString &nickname) {
-      auto layout = new QHBoxLayout;
+      auto layout = new QVBoxLayout;
       layout->addWidget(
           new QLabel(tr("<b>%1</b> wants to talk in private.\nDo you accept?")
                          .arg(nickname)));
