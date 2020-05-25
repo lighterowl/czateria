@@ -33,6 +33,8 @@ public:
                           const AppSettings &settings, MainWindow *mainWin);
   ~MainChatWindow();
 
+  void onPrivateConvNotificationAccepted(const QString &nickname);
+
 private:
   void onNewPrivateConversation(const QString &nickname);
   void onReturnPressed();

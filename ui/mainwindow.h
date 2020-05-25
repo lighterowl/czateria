@@ -33,7 +33,7 @@ public:
   explicit MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
                       QWidget *parent = nullptr);
   ~MainWindow() override;
-  void displayNotification();
+  void displayNotification(MainChatWindow *chatWin, const QString &nickname);
 
 protected:
   void closeEvent(QCloseEvent *ev) override;
@@ -48,6 +48,13 @@ private:
   AppSettings &mAppSettings;
   QList<MainChatWindow *> mChatWindows;
   QHash<QString, QWeakPointer<Czateria::LoginSession>> mCurrentSessions;
+
+  struct NotificationContext {
+    MainChatWindow *chatWin;
+    QString nickname;
+  };
+
+  QHash<quint32, NotificationContext> mLiveNotifications;
 
   void onChannelDoubleClicked(const QModelIndex &);
   void onChannelClicked(const QModelIndex &);

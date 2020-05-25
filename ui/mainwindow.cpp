@@ -397,12 +397,20 @@ void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
 void MainWindow::onNotificationActionInvoked(quint32 notificationId,
                                              QString action) {
+  auto it = mLiveNotifications.find(notificationId);
+  if (it == std::end(mLiveNotifications)) {
+    return;
+  }
+  auto &context = it.value();
+  context.chatWin->onPrivateConvNotificationAccepted(context.nickname);
+  mLiveNotifications.remove(notificationId);
   qDebug() << notificationId << action;
 }
 
 MainWindow::~MainWindow() { delete ui; }
 
-void MainWindow::displayNotification() {
+void MainWindow::displayNotification(MainChatWindow *chatWin,
+                                     const QString &nickname) {
 #ifndef QT_NO_DBUS
   auto bus = QDBusConnection::sessionBus();
 
@@ -410,22 +418,22 @@ void MainWindow::displayNotification() {
     auto m = QDBusMessage::createMethodCall(
         dbusServiceName, dbusPath, dbusInterfaceName, QLatin1String("Notify"));
     QVariantList args;
-    args.append(QLatin1String("Czateria"));
+    args.append(QCoreApplication::applicationName());
     args.append(0U);
-    args.append(QLatin1String("czateria"));
-    args.append(QLatin1String("Incoming private conversation"));
+    args.append(QString());
+    args.append(tr("Incoming private conversation"));
     args.append(QLatin1String("foobar"));
     args.append(QStringList()
                 << QLatin1String("accept_priv_conv") << tr("Accept")
                 << QLatin1String("reject_priv_conv") << tr("Reject"));
-    args.append(QVariantMap());
+    args.append({QLatin1String("category"), QLatin1String("im.received")});
     args.append(static_cast<int32_t>(-1));
     m.setArguments(args);
-    auto replyMsg = bus.call(m);
-
-    /*if (replyMsg.isValid() && replyMsg.value() > 0) {
-      return true;
-    }*/
+    QDBusReply<quint32> replyMsg = bus.call(m);
+    if (replyMsg.isValid() && replyMsg.value() > 0) {
+      mLiveNotifications.insert(replyMsg.value(),
+                                NotificationContext{chatWin, nickname});
+    }
   }
 #endif
 }

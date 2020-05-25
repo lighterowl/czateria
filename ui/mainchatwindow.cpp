@@ -307,13 +307,18 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
 
 MainChatWindow::~MainChatWindow() { delete ui; }
 
+void MainChatWindow::onPrivateConvNotificationAccepted(
+    const QString &nickname) {
+  doAcceptPrivateConversation(nickname);
+}
+
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
   if (mAutoAcceptPrivs->isChecked()) {
     ui->tabWidget->openPrivateMessageTab(nickname);
     doAcceptPrivateConversation(nickname);
   } else {
     ui->tabWidget->askAcceptPrivateMessage(nickname);
-    mMainWindow->displayNotification();
+    mMainWindow->displayNotification(this, nickname);
   }
 }
 
