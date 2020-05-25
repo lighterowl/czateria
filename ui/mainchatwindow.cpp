@@ -4,6 +4,7 @@
 #include "ui_chatwidget.h"
 
 #include <QAction>
+#include <QClipboard>
 #include <QCompleter>
 #include <QDateTime>
 #include <QDialogButtonBox>
@@ -298,6 +299,8 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   connect(ui->tabWidget, &QTabWidget::currentChanged,
           [=](auto idx) { mSendImageAction->setEnabled(idx != 0); });
 
+  ui->lineEdit->installEventFilter(this);
+
   mChatSession->start();
 }
 
@@ -396,6 +399,22 @@ void MainChatWindow::sendImageToCurrent(const QImage &image) {
               QLatin1String("HH:mm:ss"))));
 }
 
+bool MainChatWindow::sendImageFromMime(const QMimeData *mime) {
+  Q_ASSERT(!ui->tabWidget->getCurrentNickname().isEmpty());
+  QImage img;
+  if (mime->hasImage()) {
+    img = qvariant_cast<QImage>(mime->imageData());
+  } else if (mime->hasUrls() && mime->urls()[0].isLocalFile()) {
+    img = QImage(mime->urls()[0].toLocalFile());
+  }
+  if (!img.isNull()) {
+    sendImageToCurrent(img);
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {
   if (ui->tabWidget->getCurrentNickname().isEmpty()) {
     return;
@@ -422,13 +441,26 @@ void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {
 }
 
 void MainChatWindow::dropEvent(QDropEvent *ev) {
-  const auto mime = ev->mimeData();
-  QImage img;
-  if (mime->hasImage()) {
-    img = qvariant_cast<QImage>(ev->mimeData()->imageData());
-  } else if (mime->hasUrls()) {
-    img = QImage(mime->urls()[0].toLocalFile());
-  }
-  sendImageToCurrent(img);
+  sendImageFromMime(ev->mimeData());
   ev->acceptProposedAction();
+}
+
+bool MainChatWindow::eventFilter(QObject *obj, QEvent *ev) {
+  if (obj == ui->lineEdit && ev->type() == QEvent::KeyPress) {
+    auto keyEv = static_cast<QKeyEvent *>(ev);
+    if (keyEv == QKeySequence::Paste &&
+        !ui->tabWidget->getCurrentNickname().isEmpty()) {
+      const auto clipboard = QGuiApplication::clipboard();
+      const QClipboard::Mode mode =
+          clipboard->supportsSelection() &&
+                  (keyEv->modifiers() == (Qt::CTRL | Qt::SHIFT)) &&
+                  keyEv->key() == Qt::Key_Insert
+              ? QClipboard::Selection
+              : QClipboard::Clipboard;
+      if (sendImageFromMime(clipboard->mimeData(mode))) {
+        return true;
+      }
+    }
+  }
+  return QMainWindow::eventFilter(obj, ev);
 }
