@@ -41,6 +41,10 @@ private:
   void doAcceptPrivateConversation(const QString &nickname);
   void notifyActivity();
   void updateWindowTitle();
+  void sendImageToCurrent(const QImage &);
+
+  void dragEnterEvent(QDragEnterEvent *) override;
+  void dropEvent(QDropEvent *) override;
 
   Ui::ChatWidget *ui;
   Czateria::ChatSession *const mChatSession;
