@@ -18,7 +18,7 @@
 #include <QSharedPointer>
 #include <QSortFilterProxyModel>
 
-#ifndef QT_NO_DBUS
+#ifdef QT_DBUS_LIB
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusReply>
@@ -244,7 +244,7 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
 
   startTimer(channelListRefreshInterval);
 
-#ifndef QT_NO_DBUS
+#ifdef QT_DBUS_LIB
   auto bus = QDBusConnection::sessionBus();
   if (bus.isConnected()) {
     bus.connect(dbusServiceName, dbusPath, dbusInterfaceName,
@@ -411,7 +411,7 @@ MainWindow::~MainWindow() { delete ui; }
 
 void MainWindow::displayNotification(MainChatWindow *chatWin,
                                      const QString &nickname) {
-#ifndef QT_NO_DBUS
+#ifdef QT_DBUS_LIB
   auto bus = QDBusConnection::sessionBus();
 
   if (bus.isConnected()) {
