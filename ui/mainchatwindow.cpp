@@ -7,15 +7,19 @@
 #include <QCompleter>
 #include <QDateTime>
 #include <QDialogButtonBox>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFileDialog>
 #include <QImageReader>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSortFilterProxyModel>
 #include <QStandardPaths>
 #include <QToolBar>
+#include <QUrl>
 
 #include <czatlib/chatsession.h>
 #include <czatlib/message.h>
@@ -148,6 +152,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   icon.addFile(QString::fromUtf8(":/icons/czateria.png"), QSize(),
                QIcon::Normal, QIcon::Off);
   setWindowIcon(icon);
+  setAcceptDrops(true);
   auto centralWidget = new QWidget(this);
   ui->setupUi(centralWidget);
   setWindowTitle(mChatSession->channel());
@@ -175,11 +180,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
           tr("The selected file does not appear to be an image"));
       return;
     }
-    mChatSession->sendImage(ui->tabWidget->getCurrentNickname(), image);
-    ui->tabWidget->addMessageToCurrent(
-        tr("[%1] Image sent")
-            .arg(QDateTime::currentDateTime().toString(
-                QLatin1String("HH:mm:ss"))));
+    sendImageToCurrent(image);
   });
   mSendImageAction->setToolTip(tr("Send an image"));
   mSendImageAction->setStatusTip(
@@ -385,4 +386,49 @@ void MainChatWindow::updateWindowTitle() {
         QString(QLatin1String("[%1] %2")).arg(unreadPrivs).arg(channelName);
   }
   setWindowTitle(windowTitle);
+}
+
+void MainChatWindow::sendImageToCurrent(const QImage &image) {
+  mChatSession->sendImage(ui->tabWidget->getCurrentNickname(), image);
+  ui->tabWidget->addMessageToCurrent(
+      tr("[%1] Image sent")
+          .arg(QDateTime::currentDateTime().toString(
+              QLatin1String("HH:mm:ss"))));
+}
+
+void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {
+  if (ui->tabWidget->getCurrentNickname().isEmpty()) {
+    return;
+  }
+
+  const auto mime = ev->mimeData();
+  bool has_data = false;
+  if (mime->hasImage()) {
+    has_data = true;
+  } else if (mime->hasUrls()) {
+    auto url = mime->urls()[0];
+    if (url.isLocalFile()) {
+      // TODO caching this value would be nice, but we have no means of
+      // modifying the event's QMimeData. currently the QImage needs to be
+      // constructed for a second time in dropEvent().
+      auto img = QImage(url.toLocalFile());
+      has_data = !img.isNull();
+    }
+  }
+
+  if (has_data) {
+    ev->acceptProposedAction();
+  }
+}
+
+void MainChatWindow::dropEvent(QDropEvent *ev) {
+  const auto mime = ev->mimeData();
+  QImage img;
+  if (mime->hasImage()) {
+    img = qvariant_cast<QImage>(ev->mimeData()->imageData());
+  } else if (mime->hasUrls()) {
+    img = QImage(mime->urls()[0].toLocalFile());
+  }
+  sendImageToCurrent(img);
+  ev->acceptProposedAction();
 }
