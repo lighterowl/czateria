@@ -107,25 +107,25 @@ public:
 
 private:
   void createSession() {
-    auto session =
-        QSharedPointer<Czateria::LoginSession>::create(mMainWindow->mNAM);
-    auto sessionPtr = session.data();
+    auto session = new Czateria::LoginSession(mMainWindow->mNAM);
     auto rooms = mLoginHash.values(*mLoginIter);
 
-    connect(sessionPtr, &Czateria::LoginSession::loginSuccessful, [=]() {
+    connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
       for (auto roomId : rooms) {
         if (auto room = mMainWindow->mRoomListModel->roomFromId(roomId)) {
-          mMainWindow->createChatWindow(std::move(session), *room);
+          mMainWindow->createChatWindow(
+              QSharedPointer<Czateria::LoginSession>(session), *room);
         }
       }
       nextSession();
     });
-    connect(sessionPtr, &Czateria::LoginSession::loginFailed, [=]() {
+    connect(session, &Czateria::LoginSession::loginFailed, [=]() {
       QMessageBox::warning(mMainWindow, tr("Autologin failed"),
                            tr("Autologin failed for username %1.\nRooms "
                               "using this username will not be autojoined.")
                                .arg(mLoginIter->username));
       nextSession();
+      delete session;
     });
 
     // an "initial" login room is needed in order to create a login session
@@ -201,10 +201,9 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
     blockUi(ui, false);
     ui->tableView->resizeColumnsToContents();
   });
-  auto conn = new QMetaObject::Connection;
+  auto conn = QSharedPointer<QMetaObject::Connection>::create();
   *conn = connect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
     disconnect(*conn);
-    delete conn;
     auto logins = mAppSettings.autologinHash();
     if (!logins.empty()) {
       new AutologinState(this, std::move(logins)); // self-destructs when done.
@@ -302,41 +301,41 @@ void MainWindow::onLoginFailed(Czateria::LoginFailReason why,
 }
 
 void MainWindow::startLogin(const Czateria::Room &room) {
-  auto session = QSharedPointer<Czateria::LoginSession>::create(mNAM);
-  auto sessionPtr = session.data();
-  connect(sessionPtr, &Czateria::LoginSession::captchaRequired,
+  auto session = new Czateria::LoginSession(mNAM);
+  connect(session, &Czateria::LoginSession::captchaRequired,
           [=](const QImage &image) {
             QApplication::restoreOverrideCursor();
             CaptchaDialog dialog(image, this);
             if (dialog.exec() == QDialog::Accepted) {
-              sessionPtr->setCaptchaReply(room, dialog.response());
+              session->setCaptchaReply(room, dialog.response());
             } else {
               blockUi(ui, false);
             }
           });
-  auto conn = new QMetaObject::Connection;
-  *conn = connect(sessionPtr, &Czateria::LoginSession::loginSuccessful, [=]() {
+  auto conn = QSharedPointer<QMetaObject::Connection>::create();
+  *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
     disconnect(*conn);
-    delete conn;
     blockUi(ui, false);
     if (ui->nicknameLineEdit->isEnabled()) {
       ui->nicknameLineEdit->setText(session->nickname());
     }
-    createChatWindow(std::move(session), room);
+    createChatWindow(QSharedPointer<Czateria::LoginSession>(session), room);
   });
-  connect(session.data(), &Czateria::LoginSession::loginFailed, this,
-          &MainWindow::onLoginFailed);
+  connect(session, &Czateria::LoginSession::loginFailed,
+          [=](auto why, auto &&loginData) {
+            onLoginFailed(why, loginData);
+            delete session;
+          });
   inspectRadioButtons(
       ui, [&]() { session->login(); },
       [&](auto &&nickname) { session->login(nickname); },
       [&](auto &&nickname, auto &&password) {
         session->login(room, nickname, password);
-        connect(session.data(), &Czateria::LoginSession::loginSuccessful,
-                [=]() {
-                  if (ui->saveCredentialsCheckBox) {
-                    saveLoginData(nickname, password);
-                  }
-                });
+        connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
+          if (ui->saveCredentialsCheckBox) {
+            saveLoginData(nickname, password);
+          }
+        });
       });
   blockUi(ui, true);
 }
