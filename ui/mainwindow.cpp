@@ -110,7 +110,9 @@ private:
     auto session = new Czateria::LoginSession(mMainWindow->mNAM);
     auto rooms = mLoginHash.values(*mLoginIter);
 
-    connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
+    auto conn = QSharedPointer<QMetaObject::Connection>::create();
+    *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
+      disconnect(*conn);
       for (auto roomId : rooms) {
         if (auto room = mMainWindow->mRoomListModel->roomFromId(roomId)) {
           mMainWindow->createChatWindow(
