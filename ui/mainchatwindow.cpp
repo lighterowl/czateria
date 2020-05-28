@@ -320,15 +320,10 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
     msgbox->button(QMessageBox::Yes)->setShortcut(QKeySequence());
     msgbox->button(QMessageBox::No)->setShortcut(QKeySequence());
     connect(msgbox, &QDialog::finished, [=](int result) {
-      switch (result) {
-      case QMessageBox::Yes:
+      if (result == QMessageBox::Yes) {
         doAcceptPrivateConversation(nickname);
-        break;
-      case QMessageBox::No:
+      } else {
         mChatSession->rejectPrivateConversation(nickname);
-        break;
-      default:
-        Q_ASSERT(0);
       }
     });
     msgbox->show();
