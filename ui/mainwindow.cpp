@@ -102,7 +102,7 @@ public:
 
 private:
   void createSession() {
-    auto session = new Czateria::LoginSession(mMainWindow->mNAM);
+    auto session = new Czateria::LoginSession(mMainWindow->mSocketFactory);
     auto rooms = mLoginHash.values(*mLoginIter);
 
     auto conn = QSharedPointer<QMetaObject::Connection>::create();

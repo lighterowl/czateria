@@ -66,7 +66,7 @@ signals:
 
 private:
   QVector<Room> mRooms;
-  HttpSocketFactory *mSocketFactory;
+  HttpSocketFactory *const mSocketFactory;
   LoginDataProvider &mLoginProvider;
   HttpSocket *mSocket;
 

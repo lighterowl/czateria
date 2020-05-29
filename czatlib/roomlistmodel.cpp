@@ -18,7 +18,8 @@ namespace Czateria {
 
 RoomListModel::RoomListModel(QObject *parent, HttpSocketFactory *factory,
                              LoginDataProvider &loginProvider)
-    : QAbstractTableModel(parent), mSocketFactory(factory), mReply(nullptr) {
+    : QAbstractTableModel(parent), mSocketFactory(factory),
+      mLoginProvider(loginProvider) {
   Q_ASSERT(factory);
 }
 
