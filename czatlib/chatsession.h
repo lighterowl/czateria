@@ -84,7 +84,7 @@ private:
   QString mNickname;
   const QString mHost;
   bool mHelloReceived;
-  int mKeepaliveTimerId;
+  int mKeepaliveTimerId = 0;
   QHash<QString, ConversationState> mCurrentPrivate;
   QHash<QString, QVector<Message>> mPendingPrivateMsgs;
   UserListModel *const mUserListModel;

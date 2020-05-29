@@ -209,6 +209,12 @@ ChatSession::~ChatSession() {
 }
 
 void ChatSession::start() {
+  if (mKeepaliveTimerId) {
+    killTimer(mKeepaliveTimerId);
+  }
+  mCurrentPrivate.clear();
+  mPendingPrivateMsgs.clear();
+  mHelloReceived = false;
   mWebSocket->open(QUrl(mHost));
   mKeepaliveTimerId = startTimer(keepaliveInterval);
 }
@@ -463,11 +469,7 @@ void ChatSession::onSocketError(int err) {
   if (err == 1) {
     if (mHelloReceived) {
       if (mLoginSession->restart(mRoom)) {
-        mHelloReceived = false;
         qInfo() << "Connection closed by server, trying to reconnect";
-        killTimer(mKeepaliveTimerId);
-        mCurrentPrivate.clear();
-        mPendingPrivateMsgs.clear();
       } else {
         emit sessionExpired();
       }
