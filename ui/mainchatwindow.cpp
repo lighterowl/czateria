@@ -5,18 +5,23 @@
 #include "ui_chatwidget.h"
 
 #include <QAction>
+#include <QClipboard>
 #include <QCompleter>
 #include <QDateTime>
 #include <QDialogButtonBox>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFileDialog>
 #include <QImageReader>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSortFilterProxyModel>
 #include <QStandardPaths>
 #include <QToolBar>
+#include <QUrl>
 
 #include <czatlib/chatsession.h>
 #include <czatlib/message.h>
@@ -45,7 +50,7 @@ void showImageDialog(QWidget *parent, const QString &nickname,
   auto imgDialog = new QDialog(parent);
   imgDialog->setAttribute(Qt::WA_DeleteOnClose);
   imgDialog->setModal(false);
-  imgDialog->setWindowTitle(QObject::tr("Image from %1").arg(nickname));
+  imgDialog->setWindowTitle(MainChatWindow::tr("Image from %1").arg(nickname));
   auto layout = new QVBoxLayout;
   auto label = new QLabel;
   auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Save);
@@ -55,7 +60,7 @@ void showImageDialog(QWidget *parent, const QString &nickname,
                    &QPushButton::clicked, [=](auto) {
                      auto fileName = QFileDialog::getSaveFileName(
                          parent,
-                         QObject::tr("Save image from %1").arg(nickname),
+                         MainChatWindow::tr("Save image from %1").arg(nickname),
                          defaultPath);
                      if (!fileName.isNull()) {
                        image.save(fileName);
@@ -82,7 +87,7 @@ QString getImageFilter() {
   if (!cached_result.isNull()) {
     return cached_result;
   }
-  auto rv = QObject::tr("Images (");
+  auto rv = MainChatWindow::tr("Images (");
   auto formats = QImageReader::supportedImageFormats();
   for (auto &&format : formats) {
     rv.append(QString(QLatin1String("*.%1"))
@@ -94,6 +99,36 @@ QString getImageFilter() {
   rv.append(QLatin1Char(')'));
   cached_result = rv;
   return rv;
+}
+
+QString explainBlockCause(Czateria::ChatSession::BlockCause why) {
+  using c = Czateria::ChatSession::BlockCause;
+  switch (why) {
+  case c::Nick:
+    return MainChatWindow::tr("nick");
+  case c::Avatar:
+    return MainChatWindow::tr("avatar");
+  case c::Behaviour:
+    return MainChatWindow::tr("behaviour");
+  default:
+    return QString();
+  }
+}
+
+QString getKickBanMsgStr(const QString &blockTypeStr,
+                         Czateria::ChatSession::BlockCause why,
+                         const QString &adminNick = QString()) {
+  auto bannedBy = adminNick.isEmpty()
+                      ? QString()
+                      : MainChatWindow::tr(" by %1").arg(adminNick);
+  auto causeStr = why == Czateria::ChatSession::BlockCause::Unknown
+                      ? QString()
+                      : MainChatWindow::tr(" for inappropriate %1")
+                            .arg(explainBlockCause(why));
+  return QString(QLatin1String("You were %1%2%3"))
+      .arg(blockTypeStr)
+      .arg(bannedBy)
+      .arg(causeStr);
 }
 QtWebSocketFactory webSocketFactory;
 } // namespace
@@ -109,18 +144,19 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)),
       mAppSettings(settings),
-      mAutoAcceptPrivs(new QAction(
-          QObject::tr("Automatically accept private conversations"))),
+      mAutoAcceptPrivs(
+          new QAction(tr("Automatically accept private conversations"), this)),
       mSendImageAction(
           new QAction(QIcon(QLatin1String(":/icons/file-picture-icon.png")),
-                      QObject::tr("Send an image"))),
+                      tr("Send an image"), this)),
       mShowChannelListAction(
           new QAction(QIcon(QLatin1String(":/icons/czateria.png")),
-                      QObject::tr("Show channel list"))) {
+                      tr("Show channel list"), this)) {
   QIcon icon;
   icon.addFile(QString::fromUtf8(":/icons/czateria.png"), QSize(),
                QIcon::Normal, QIcon::Off);
   setWindowIcon(icon);
+  setAcceptDrops(true);
   auto centralWidget = new QWidget(this);
   ui->setupUi(centralWidget);
   setWindowTitle(mChatSession->channel());
@@ -129,9 +165,8 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   auto toolbar = new QToolBar;
   addToolBar(Qt::TopToolBarArea, toolbar);
 
-  mShowChannelListAction->setToolTip(QObject::tr("Show channel list"));
-  mShowChannelListAction->setStatusTip(
-      QObject::tr("Shows the channel list window"));
+  mShowChannelListAction->setToolTip(tr("Show channel list"));
+  mShowChannelListAction->setStatusTip(tr("Shows the channel list window"));
   connect(mShowChannelListAction, &QAction::triggered,
           [=](auto) { mainWin->show(); });
   toolbar->addAction(mShowChannelListAction);
@@ -149,21 +184,17 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
           tr("The selected file does not appear to be an image"));
       return;
     }
-    mChatSession->sendImage(ui->tabWidget->getCurrentNickname(), image);
-    ui->tabWidget->addMessageToCurrent(
-        QObject::tr("[%1] Image sent")
-            .arg(QDateTime::currentDateTime().toString(
-                QLatin1String("HH:mm:ss"))));
+    sendImageToCurrent(image);
   });
-  mSendImageAction->setToolTip(QObject::tr("Send an image"));
+  mSendImageAction->setToolTip(tr("Send an image"));
   mSendImageAction->setStatusTip(
-      QObject::tr("Sends an image to your conversation partner"));
+      tr("Sends an image to your conversation partner"));
   mSendImageAction->setEnabled(false);
   toolbar->addAction(mSendImageAction);
 
-  auto menu = menuBar()->addMenu(QObject::tr("Options"));
+  auto menu = menuBar()->addMenu(tr("Options"));
   mAutoAcceptPrivs->setStatusTip(
-      QObject::tr("Accept private conversations without prompting"));
+      tr("Accept private conversations without prompting"));
   mAutoAcceptPrivs->setCheckable(true);
   menu->addAction(mAutoAcceptPrivs);
 
@@ -216,14 +247,14 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                   imageDefaultPath(mChatSession->channel(), nickname);
               image.save(defaultPath);
               textedit->appendPlainText(
-                  QObject::tr("[%1] Image saved as %2")
+                  tr("[%1] Image saved as %2")
                       .arg(QDateTime::currentDateTime().toString(
                           QLatin1String("HH:mm:ss")))
                       .arg(defaultPath));
             } else {
               showImageDialog(this, nickname, mChatSession->channel(), image);
               textedit->appendPlainText(
-                  QObject::tr("[%1] Image received")
+                  tr("[%1] Image received")
                       .arg(QDateTime::currentDateTime().toString(
                           QLatin1String("HH:mm:ss"))));
             }
@@ -249,6 +280,15 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
     ui->lineEdit->setCompleter(tabIdx == 0 ? mNicknameCompleter : nullptr);
     updateWindowTitle();
   });
+  connect(mChatSession, &Czateria::ChatSession::banned,
+          [=](auto why, auto &&who) {
+            QMessageBox::information(this, tr("Banned"),
+                                     getKickBanMsgStr(tr("banned"), why, who));
+          });
+  connect(mChatSession, &Czateria::ChatSession::kicked, [=](auto why) {
+    QMessageBox::information(this, tr("Kicked"),
+                             getKickBanMsgStr(tr("kicked"), why));
+  });
 
   connect(ui->lineEdit, &QLineEdit::returnPressed, this,
           &MainChatWindow::onReturnPressed);
@@ -262,6 +302,8 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   connect(ui->tabWidget, &QTabWidget::currentChanged,
           [=](auto idx) { mSendImageAction->setEnabled(idx != 0); });
 
+  ui->lineEdit->installEventFilter(this);
+
   mChatSession->start();
 }
 
@@ -271,25 +313,20 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
   if (mAutoAcceptPrivs->isChecked()) {
     doAcceptPrivateConversation(nickname);
   } else {
-    auto question = QObject::tr("%1 wants to talk in private.\nDo you accept?")
-                        .arg(nickname);
-    auto msgbox = new QMessageBox(
-        QMessageBox::Question, QObject::tr("New private conversation"),
-        question, QMessageBox::Yes | QMessageBox::No, this);
+    auto question =
+        tr("%1 wants to talk in private.\nDo you accept?").arg(nickname);
+    auto msgbox =
+        new QMessageBox(QMessageBox::Question, tr("New private conversation"),
+                        question, QMessageBox::Yes | QMessageBox::No, this);
     mPendingPrivRequests[nickname] = msgbox;
     msgbox->setDefaultButton(QMessageBox::Yes);
     msgbox->button(QMessageBox::Yes)->setShortcut(QKeySequence());
     msgbox->button(QMessageBox::No)->setShortcut(QKeySequence());
     connect(msgbox, &QDialog::finished, [=](int result) {
-      switch (result) {
-      case QMessageBox::Yes:
+      if (result == QMessageBox::Yes) {
         doAcceptPrivateConversation(nickname);
-        break;
-      case QMessageBox::No:
+      } else {
         mChatSession->rejectPrivateConversation(nickname);
-        break;
-      default:
-        Q_ASSERT(0);
       }
     });
     msgbox->show();
@@ -350,4 +387,78 @@ void MainChatWindow::updateWindowTitle() {
         QString(QLatin1String("[%1] %2")).arg(unreadPrivs).arg(channelName);
   }
   setWindowTitle(windowTitle);
+}
+
+void MainChatWindow::sendImageToCurrent(const QImage &image) {
+  mChatSession->sendImage(ui->tabWidget->getCurrentNickname(), image);
+  ui->tabWidget->addMessageToCurrent(
+      tr("[%1] Image sent")
+          .arg(QDateTime::currentDateTime().toString(
+              QLatin1String("HH:mm:ss"))));
+}
+
+bool MainChatWindow::sendImageFromMime(const QMimeData *mime) {
+  Q_ASSERT(!ui->tabWidget->getCurrentNickname().isEmpty());
+  QImage img;
+  if (mime->hasImage()) {
+    img = qvariant_cast<QImage>(mime->imageData());
+  } else if (mime->hasUrls() && mime->urls()[0].isLocalFile()) {
+    img = QImage(mime->urls()[0].toLocalFile());
+  }
+  if (!img.isNull()) {
+    sendImageToCurrent(img);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {
+  if (ui->tabWidget->getCurrentNickname().isEmpty()) {
+    return;
+  }
+
+  const auto mime = ev->mimeData();
+  bool has_data = false;
+  if (mime->hasImage()) {
+    has_data = true;
+  } else if (mime->hasUrls()) {
+    auto url = mime->urls()[0];
+    if (url.isLocalFile()) {
+      // TODO caching this value would be nice, but we have no means of
+      // modifying the event's QMimeData. currently the QImage needs to be
+      // constructed for a second time in dropEvent().
+      auto img = QImage(url.toLocalFile());
+      has_data = !img.isNull();
+    }
+  }
+
+  if (has_data) {
+    ev->acceptProposedAction();
+  }
+}
+
+void MainChatWindow::dropEvent(QDropEvent *ev) {
+  sendImageFromMime(ev->mimeData());
+  ev->acceptProposedAction();
+}
+
+bool MainChatWindow::eventFilter(QObject *obj, QEvent *ev) {
+  if (obj == ui->lineEdit && ev->type() == QEvent::KeyPress) {
+    auto keyEv = static_cast<QKeyEvent *>(ev);
+    if (keyEv == QKeySequence::Paste &&
+        !ui->tabWidget->getCurrentNickname().isEmpty()) {
+      const auto clipboard = QGuiApplication::clipboard();
+      const QClipboard::Mode mode =
+          clipboard->supportsSelection() &&
+                  (keyEv->modifiers() == (Qt::CTRL | Qt::SHIFT)) &&
+                  keyEv->key() == Qt::Key_Insert
+              ? QClipboard::Selection
+              : QClipboard::Clipboard;
+      if (sendImageFromMime(clipboard->mimeData(mode))) {
+        return true;
+      }
+    }
+  }
+  return QMainWindow::eventFilter(obj, ev);
 }

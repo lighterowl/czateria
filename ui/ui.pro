@@ -7,6 +7,7 @@ QT       += network widgets websockets
 
 SOURCES += \
   appsettings.cpp \
+    autologindatadialog.cpp \
         main.cpp \
         mainwindow.cpp \
     captchadialog.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
 
 HEADERS += \
   appsettings.h \
+    autologindatadialog.h \
         mainwindow.h \
     captchadialog.h \
     mainchatwindow.h \
@@ -27,6 +29,7 @@ HEADERS += \
     userlistview.h
 
 FORMS += \
+    autologindatadialog.ui \
   chatwidget.ui \
         mainwindow.ui \
     captchadialog.ui

@@ -10,6 +10,7 @@ class QCompleter;
 class QMessageBox;
 struct AppSettings;
 class MainWindow;
+class QMimeData;
 
 namespace Ui {
 class ChatWidget;
@@ -41,6 +42,13 @@ private:
   void doAcceptPrivateConversation(const QString &nickname);
   void notifyActivity();
   void updateWindowTitle();
+  void sendImageToCurrent(const QImage &);
+  bool sendImageFromMime(const QMimeData *);
+
+  void dragEnterEvent(QDragEnterEvent *) override;
+  void dropEvent(QDropEvent *) override;
+
+  bool eventFilter(QObject *, QEvent *) override;
 
   Ui::ChatWidget *ui;
   Czateria::ChatSession *const mChatSession;
