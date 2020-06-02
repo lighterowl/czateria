@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     
-    - name: Update
+    - name: Install Qt
       run: sudo apt install qt5-default qtbase5-dev libqt5websockets5-dev
       
     - name: Build with gcc
