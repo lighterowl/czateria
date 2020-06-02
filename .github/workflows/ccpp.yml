@@ -17,7 +17,8 @@ jobs:
     - uses: actions/checkout@v1
     
     - name: Update
-      run: sudo apt update
+      run: sudo apt update; exit 0;
+      shell: bash {0}
       
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
