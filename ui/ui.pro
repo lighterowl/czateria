@@ -23,7 +23,8 @@ HEADERS += \
     captchadialog.h \
     mainchatwindow.h \
     chatwindowtabwidget.h \
-    userlistview.h
+    userlistview.h \
+    util.h
 
 FORMS += \
     autologindatadialog.ui \
