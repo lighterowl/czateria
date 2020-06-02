@@ -33,7 +33,8 @@ public:
   explicit MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
                       QWidget *parent = nullptr);
   ~MainWindow() override;
-  void displayNotification(MainChatWindow *chatWin, const QString &nickname);
+  void displayNotification(MainChatWindow *chatWin, const QString &nickname,
+                           const QString &channel);
 
 protected:
   void closeEvent(QCloseEvent *ev) override;

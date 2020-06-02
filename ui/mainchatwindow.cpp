@@ -313,7 +313,13 @@ MainChatWindow::~MainChatWindow() { delete ui; }
 
 void MainChatWindow::onPrivateConvNotificationAccepted(
     const QString &nickname) {
+  // todo switch focus to tab & remove the yes/no dialog from stackedwidget
   doAcceptPrivateConversation(nickname);
+}
+
+void MainChatWindow::onPrivateConvNotificationRejected(
+    const QString &nickname) {
+  mChatSession->rejectPrivateConversation(nickname);
 }
 
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
@@ -322,7 +328,7 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
     doAcceptPrivateConversation(nickname);
   } else {
     ui->tabWidget->askAcceptPrivateMessage(nickname);
-    mMainWindow->displayNotification(this, nickname);
+    mMainWindow->displayNotification(this, nickname, mChatSession->channel());
   }
 }
 

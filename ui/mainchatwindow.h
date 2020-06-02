@@ -35,6 +35,7 @@ public:
   ~MainChatWindow();
 
   void onPrivateConvNotificationAccepted(const QString &nickname);
+  void onPrivateConvNotificationRejected(const QString &nickname);
 
 private:
   void onNewPrivateConversation(const QString &nickname);

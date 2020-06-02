@@ -26,9 +26,11 @@
 #endif
 
 namespace {
-QLatin1String const dbusServiceName("org.freedesktop.Notifications");
-QLatin1String const dbusInterfaceName("org.freedesktop.Notifications");
-QLatin1String const dbusPath("/org/freedesktop/Notifications");
+const QLatin1String dbusServiceName("org.freedesktop.Notifications");
+const QLatin1String dbusInterfaceName("org.freedesktop.Notifications");
+const QLatin1String dbusPath("/org/freedesktop/Notifications");
+const QLatin1String acceptPrivConvAction("accept_priv_conv");
+const QLatin1String rejectPrivConvAction("reject_priv_conv");
 
 template <typename F1, typename F2, typename F3>
 auto inspectRadioButtons(Ui::MainWindow *ui, F1 noNicknameFn, F2 nicknameFn,
@@ -426,9 +428,13 @@ void MainWindow::onNotificationActionInvoked(quint32 notificationId,
   if (it == std::end(mLiveNotifications)) {
     return;
   }
-  auto &context = it.value();
-  context.chatWin->onPrivateConvNotificationAccepted(context.nickname);
   qDebug() << notificationId << action;
+  auto &context = it.value();
+  if (action == acceptPrivConvAction) {
+    context.chatWin->onPrivateConvNotificationAccepted(context.nickname);
+  } else if (action == rejectPrivConvAction) {
+    context.chatWin->onPrivateConvNotificationRejected(context.nickname);
+  }
 }
 
 void MainWindow::onNotificationClosed(quint32 id, quint32) {
@@ -439,7 +445,8 @@ void MainWindow::onNotificationClosed(quint32 id, quint32) {
 MainWindow::~MainWindow() { delete ui; }
 
 void MainWindow::displayNotification(MainChatWindow *chatWin,
-                                     const QString &nickname) {
+                                     const QString &nickname,
+                                     const QString &channel) {
 #ifdef QT_DBUS_LIB
   auto bus = QDBusConnection::sessionBus();
   if (!bus.isConnected()) {
@@ -453,10 +460,12 @@ void MainWindow::displayNotification(MainChatWindow *chatWin,
   args.append(0U);
   args.append(QString());
   args.append(tr("Incoming private conversation"));
-  args.append(QLatin1String("foobar"));
-  args.append(QStringList()
-              << QLatin1String("accept_priv_conv") << tr("Accept")
-              << QLatin1String("reject_priv_conv") << tr("Reject"));
+  args.append(QString(QLatin1String("<b>%1</b> in room <b>%2</b> wants to "
+                                    "start a conversation."))
+                  .arg(nickname)
+                  .arg(channel));
+  args.append(QStringList() << acceptPrivConvAction << tr("Accept")
+                            << rejectPrivConvAction << tr("Reject"));
   args.append(QMap<QString, QVariant>{
       std::make_pair(QLatin1String("category"), QLatin1String("im.received"))});
   args.append(static_cast<int32_t>(-1));
