@@ -5,6 +5,7 @@
 #include "autologindatadialog.h"
 #include "captchadialog.h"
 #include "mainchatwindow.h"
+#include "util.h"
 
 #include <czatlib/loginsession.h>
 #include <czatlib/roomlistmodel.h>
@@ -110,9 +111,7 @@ private:
     auto session = new Czateria::LoginSession(mMainWindow->mNAM);
     auto rooms = mLoginHash.values(*mLoginIter);
 
-    auto conn = QSharedPointer<QMetaObject::Connection>::create();
-    *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
-      disconnect(*conn);
+    oneshotConnect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
       auto ses = QSharedPointer<Czateria::LoginSession>(session);
       for (auto roomId : rooms) {
         if (auto room = mMainWindow->mRoomListModel->roomFromId(roomId)) {
@@ -203,9 +202,7 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
     blockUi(ui, false);
     ui->tableView->resizeColumnsToContents();
   });
-  auto conn = QSharedPointer<QMetaObject::Connection>::create();
-  *conn = connect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
-    disconnect(*conn);
+  oneshotConnect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
     auto logins = mAppSettings.autologinHash();
     if (!logins.empty()) {
       new AutologinState(this, std::move(logins)); // self-destructs when done.
@@ -314,9 +311,7 @@ void MainWindow::startLogin(const Czateria::Room &room) {
               blockUi(ui, false);
             }
           });
-  auto conn = QSharedPointer<QMetaObject::Connection>::create();
-  *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
-    disconnect(*conn);
+  oneshotConnect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
     blockUi(ui, false);
     if (ui->nicknameLineEdit->isEnabled()) {
       ui->nicknameLineEdit->setText(session->nickname());
