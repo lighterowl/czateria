@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0) // QTBUG-60339
 #define QOBJECT_CONNECT_MOVES_FUNCTORS
 #include <memory>
 #else
