@@ -65,6 +65,8 @@ private:
   void saveLoginData(const QString &, const QString &);
   void createChatWindow(QSharedPointer<Czateria::LoginSession>,
                         const Czateria::Room &);
+  void onChatWindowDestroyed(QObject *);
+  void removeNotification(quint32);
 
   class AutologinState;
   friend class AutologinState;
@@ -74,6 +76,7 @@ private:
 
 private slots:
   void onNotificationActionInvoked(quint32, QString);
+  void onNotificationClosed(quint32, quint32);
 };
 
 #endif // MAINWINDOW_H

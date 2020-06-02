@@ -248,6 +248,9 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
     bus.connect(dbusServiceName, dbusPath, dbusInterfaceName,
                 QLatin1String("ActionInvoked"), this,
                 SLOT(onNotificationActionInvoked(quint32, QString)));
+    bus.connect(dbusServiceName, dbusPath, dbusInterfaceName,
+                QLatin1String("NotificationClosed"), this,
+                SLOT(onNotificationClosed(quint32, quint32)));
   }
 #endif
 }
@@ -378,6 +381,32 @@ void MainWindow::createChatWindow(
   win->show();
 }
 
+void MainWindow::onChatWindowDestroyed(QObject *obj) {
+  const auto it_end = std::end(mLiveNotifications);
+  for (auto it = std::begin(mLiveNotifications); it != it_end; ++it) {
+    if (it.value().chatWin == obj) {
+      removeNotification(it.key());
+    }
+  }
+}
+
+void MainWindow::removeNotification(quint32 notificationId) {
+#ifdef QT_DBUS_LIB
+  auto bus = QDBusConnection::sessionBus();
+  if (!bus.isConnected()) {
+    return;
+  }
+
+  auto m = QDBusMessage::createMethodCall(dbusServiceName, dbusPath,
+                                          dbusInterfaceName,
+                                          QLatin1String("CloseNotification"));
+  QVariantList args;
+  args.append(notificationId);
+  m.setArguments(args);
+  bus.call(m);
+#endif
+}
+
 bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
   if (obj == ui->nicknameLineEdit && ev->type() == QEvent::KeyPress) {
     auto keyEv = static_cast<QKeyEvent *>(ev);
@@ -399,8 +428,12 @@ void MainWindow::onNotificationActionInvoked(quint32 notificationId,
   }
   auto &context = it.value();
   context.chatWin->onPrivateConvNotificationAccepted(context.nickname);
-  mLiveNotifications.remove(notificationId);
   qDebug() << notificationId << action;
+}
+
+void MainWindow::onNotificationClosed(quint32 id, quint32) {
+  mLiveNotifications.remove(id);
+  qDebug() << id;
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -409,27 +442,31 @@ void MainWindow::displayNotification(MainChatWindow *chatWin,
                                      const QString &nickname) {
 #ifdef QT_DBUS_LIB
   auto bus = QDBusConnection::sessionBus();
+  if (!bus.isConnected()) {
+    return;
+  }
 
-  if (bus.isConnected()) {
-    auto m = QDBusMessage::createMethodCall(
-        dbusServiceName, dbusPath, dbusInterfaceName, QLatin1String("Notify"));
-    QVariantList args;
-    args.append(QCoreApplication::applicationName());
-    args.append(0U);
-    args.append(QString());
-    args.append(tr("Incoming private conversation"));
-    args.append(QLatin1String("foobar"));
-    args.append(QStringList()
-                << QLatin1String("accept_priv_conv") << tr("Accept")
-                << QLatin1String("reject_priv_conv") << tr("Reject"));
-    args.append({QLatin1String("category"), QLatin1String("im.received")});
-    args.append(static_cast<int32_t>(-1));
-    m.setArguments(args);
-    QDBusReply<quint32> replyMsg = bus.call(m);
-    if (replyMsg.isValid() && replyMsg.value() > 0) {
-      mLiveNotifications.insert(replyMsg.value(),
-                                NotificationContext{chatWin, nickname});
-    }
+  auto m = QDBusMessage::createMethodCall(
+      dbusServiceName, dbusPath, dbusInterfaceName, QLatin1String("Notify"));
+  QVariantList args;
+  args.append(QCoreApplication::applicationName());
+  args.append(0U);
+  args.append(QString());
+  args.append(tr("Incoming private conversation"));
+  args.append(QLatin1String("foobar"));
+  args.append(QStringList()
+              << QLatin1String("accept_priv_conv") << tr("Accept")
+              << QLatin1String("reject_priv_conv") << tr("Reject"));
+  args.append(QMap<QString, QVariant>{
+      std::make_pair(QLatin1String("category"), QLatin1String("im.received"))});
+  args.append(static_cast<int32_t>(-1));
+  m.setArguments(args);
+  QDBusReply<quint32> replyMsg = bus.call(m);
+  if (replyMsg.isValid() && replyMsg.value() > 0) {
+    mLiveNotifications.insert(replyMsg.value(),
+                              NotificationContext{chatWin, nickname});
+    connect(chatWin, &QObject::destroyed, this,
+            &MainWindow::onChatWindowDestroyed, Qt::UniqueConnection);
   }
 #endif
 }
