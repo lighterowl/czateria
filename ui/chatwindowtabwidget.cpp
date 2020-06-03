@@ -42,10 +42,6 @@ class ChatWindowTabWidget::PrivateChatTab : public QStackedWidget {
 
   void onConversationRejected() { deleteLater(); }
 
-  const QString mNickname;
-  QPlainTextEdit *mTextWidget = nullptr;
-
-public:
   friend struct PendingAcceptWidget;
   struct PendingAcceptWidget : public QWidget {
     PendingAcceptWidget(PrivateChatTab *chatTab,
@@ -71,6 +67,18 @@ public:
     }
   };
 
+  const QString mNickname;
+  QPlainTextEdit *mTextWidget = nullptr;
+  PendingAcceptWidget *mPendingAcceptWidget = nullptr;
+
+  void addPendingAcceptWidget(ChatWindowTabWidget *parent,
+                              const QString &nickname) {
+    Q_ASSERT(!mPendingAcceptWidget);
+    mPendingAcceptWidget = new PendingAcceptWidget(this, parent, nickname);
+    addWidget(mPendingAcceptWidget);
+  }
+
+public:
   const QString &nickname() const { return mNickname; }
 
   static PrivateChatTab *createAccepted(ChatWindowTabWidget *parent,
@@ -83,14 +91,20 @@ public:
   static PrivateChatTab *create(ChatWindowTabWidget *parent,
                                 const QString &nickname) {
     auto rv = new PrivateChatTab(parent, nickname);
-    auto pendingWidget = new PendingAcceptWidget(rv, parent, nickname);
-    rv->addWidget(pendingWidget);
+    rv->addPendingAcceptWidget(parent, nickname);
     rv->addTextWidget();
     return rv;
   }
 
   void appendPlainText(const QString &text) {
     mTextWidget->appendPlainText(text);
+  }
+
+  void removePendingAcceptWidget() {
+    if (mPendingAcceptWidget) {
+      mPendingAcceptWidget->deleteLater();
+      mPendingAcceptWidget = nullptr;
+    }
   }
 };
 
@@ -118,7 +132,9 @@ void ChatWindowTabWidget::displayPrivateMessage(const Czateria::Message &msg) {
 }
 
 void ChatWindowTabWidget::openPrivateMessageTab(const QString &nickname) {
-  setCurrentWidget(privateMessageTab(nickname));
+  auto tab = privateMessageTab(nickname);
+  tab->removePendingAcceptWidget();
+  setCurrentWidget(tab);
 }
 
 ChatWindowTabWidget::PrivateChatTab *
