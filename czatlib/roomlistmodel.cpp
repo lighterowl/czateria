@@ -31,7 +31,11 @@ void RoomListModel::download() {
   connect(mReply, &QNetworkReply::finished, this,
           &RoomListModel::onDownloadFinished);
   void (QNetworkReply::*errSignal)(QNetworkReply::NetworkError) =
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+      &QNetworkReply::errorOccurred;
+#else
       &QNetworkReply::error;
+#endif
   connect(mReply, errSignal, this, &RoomListModel::downloadError);
 }
 
