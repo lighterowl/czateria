@@ -62,6 +62,7 @@ signals:
                                        ConversationState state);
   void privateMessageReceived(const Message &msg);
   void imageReceived(const QString &nickname, const QImage &image);
+  void imageDelivered(const QString &nickname);
   void userJoined(const QString &nickname);
   void userLeft(const QString &nickname);
   void sessionExpired();

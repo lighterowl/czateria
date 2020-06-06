@@ -281,6 +281,13 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
     QMessageBox::information(this, tr("Kicked"),
                              getKickBanMsgStr(tr("kicked"), why));
   });
+  connect(mChatSession, &Czateria::ChatSession::imageDelivered,
+          [=](auto &&nick) {
+            ui->tabWidget->privateMessageTab(nick)->appendPlainText(
+                tr("[%1] Image delivered")
+                    .arg(QDateTime::currentDateTime().toString(
+                        QLatin1String("HH:mm:ss"))));
+          });
 
   connect(ui->lineEdit, &QLineEdit::returnPressed, this,
           &MainChatWindow::onReturnPressed);

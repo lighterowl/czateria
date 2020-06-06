@@ -453,6 +453,7 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
   "msgStyleId": 0,
   "nickColorId": 71,
   "code": 97 } */
+    emit imageDelivered(json[QLatin1String("user")].toString());
     return true;
   }
   bool ok;
