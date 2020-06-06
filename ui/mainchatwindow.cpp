@@ -223,14 +223,9 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   connect(mChatSession, &Czateria::ChatSession::newPrivateConversation, this,
           &MainChatWindow::onNewPrivateConversation);
   connect(mChatSession, &Czateria::ChatSession::privateConversationCancelled,
-          this, [=](const QString &nickname) {
-            auto msgbox = mPendingPrivRequests.value(nickname, nullptr);
-            if (msgbox) {
-              msgbox->reject();
-              msgbox->deleteLater();
-              mPendingPrivRequests.remove(nickname);
-            }
-          });
+          this, &MainChatWindow::closePrivateConvMsgbox);
+  connect(mChatSession, &Czateria::ChatSession::userLeft, this,
+          &MainChatWindow::closePrivateConvMsgbox);
   connect(mChatSession, &Czateria::ChatSession::privateConversationStateChanged,
           ui->tabWidget,
           &ChatWindowTabWidget::onPrivateConversationStateChanged);
@@ -407,6 +402,14 @@ bool MainChatWindow::sendImageFromMime(const QMimeData *mime) {
     return true;
   } else {
     return false;
+  }
+}
+
+void MainChatWindow::closePrivateConvMsgbox(const QString &nickname) {
+  if (auto msgbox = mPendingPrivRequests.value(nickname, nullptr)) {
+    msgbox->reject();
+    msgbox->deleteLater();
+    mPendingPrivRequests.remove(nickname);
   }
 }
 
