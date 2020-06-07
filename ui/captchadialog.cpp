@@ -8,7 +8,7 @@ CaptchaDialog::CaptchaDialog(const QImage &image, QWidget *parent)
     : QDialog(parent), ui(new Ui::CaptchaDialog) {
   ui->setupUi(this);
   ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
-  connect(ui->lineEdit, &QLineEdit::textChanged, [=](auto &&text) {
+  connect(ui->lineEdit, &QLineEdit::textChanged, this, [=](auto &&text) {
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(text.length() == 6);
   });
   ui->label->setPixmap(QPixmap::fromImage(image));

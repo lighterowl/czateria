@@ -91,7 +91,6 @@ public:
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                          QNetworkRequest::PreferCache);
     auto reply = mNAM->get(request);
-    auto nickname = user.mLogin;
     QObject::connect(reply, &QNetworkReply::finished, [=]() {
       if (reply->error() == QNetworkReply::NoError) {
         mAvatarCache[avatarId] = Avatar{fmt, reply->readAll()};

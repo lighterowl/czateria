@@ -313,7 +313,7 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   }
   case 128: {
     auto users = obj[QLatin1String("users")].toArray();
-    for (auto user : users) {
+    for (auto &&user : users) {
       emit userJoined(user.toObject()[QLatin1String("login")].toString());
     }
     mUserListModel->addUsers(users);

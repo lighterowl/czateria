@@ -21,7 +21,7 @@ void Captcha::get() {
           .arg(callbackName);
   qDebug() << requestAddr;
   auto captchaRequest = mNAM->get(QNetworkRequest(QUrl(requestAddr)));
-  connect(captchaRequest, &QNetworkReply::finished, [=]() {
+  connect(captchaRequest, &QNetworkReply::finished, this, [=]() {
     auto content = captchaRequest->readAll();
     captchaRequest->deleteLater();
     onRequestFinished(QString::fromUtf8(content), callbackName);
@@ -47,7 +47,7 @@ void Captcha::onRequestFinished(const QString &content,
   }
   qDebug() << url << uid;
   auto imgRequest = mNAM->get(QNetworkRequest(QUrl(url)));
-  connect(imgRequest, &QNetworkReply::finished, [=]() {
+  connect(imgRequest, &QNetworkReply::finished, this, [=]() {
     auto imgRawContent = imgRequest->readAll();
     imgRequest->deleteLater();
     emit downloaded(QImage::fromData(imgRawContent), uid);
