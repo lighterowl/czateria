@@ -55,20 +55,21 @@ public:
 
 signals:
   void nicknameAssigned(const QString &nickname);
-  void roomMessageReceived(const Message &msg);
+  void roomMessageReceived(const Czateria::Message &msg);
   void newPrivateConversation(const QString &nickname);
   void privateConversationCancelled(const QString &nickname);
   void privateConversationStateChanged(const QString &nickname,
-                                       ConversationState state);
-  void privateMessageReceived(const Message &msg);
+                                       Czateria::ConversationState state);
+  void privateMessageReceived(const Czateria::Message &msg);
   void imageReceived(const QString &nickname, const QImage &image);
   void imageDelivered(const QString &nickname);
   void userJoined(const QString &nickname);
   void userLeft(const QString &nickname);
   void sessionExpired();
   void sessionError();
-  void banned(BlockCause why, const QString &adminNickname);
-  void kicked(BlockCause why);
+  void banned(Czateria::ChatSession::BlockCause why,
+              const QString &adminNickname);
+  void kicked(Czateria::ChatSession::BlockCause why);
 
 protected:
   void timerEvent(QTimerEvent *) override;

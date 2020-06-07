@@ -27,7 +27,7 @@ QPlainTextEdit *createTextWidget(QWidget *parent) {
   return rv;
 }
 
-const QColor unreadTabColor = QColor(Qt::red);
+const QColor unreadTabColor() { return QColor(Qt::red); }
 } // namespace
 
 class ChatWindowTabWidget::PrivateChatTab : public QStackedWidget {
@@ -152,7 +152,7 @@ int ChatWindowTabWidget::countUnreadPrivateTabs() const {
   int rv = 0;
   auto bar = tabBar();
   for (int i = 1; i < bar->count(); ++i) {
-    if (bar->tabTextColor(i) == unreadTabColor) {
+    if (bar->tabTextColor(i) == unreadTabColor()) {
       ++rv;
     }
   }
@@ -174,7 +174,7 @@ void ChatWindowTabWidget::indicateTabActivity(int idx, const QIcon &icon) {
   if (idx == currentIndex()) {
     return;
   }
-  tabBar()->setTabTextColor(idx, unreadTabColor);
+  tabBar()->setTabTextColor(idx, unreadTabColor());
   tabBar()->setTabIcon(idx, icon);
 }
 

@@ -45,7 +45,7 @@ LoginSession::LoginSession(QNetworkAccessManager *nam, QObject *parent)
 void LoginSession::login(const QString &nickname) {
   mNickname = sanitiseNickname(nickname);
   auto c = new Captcha(mNAM);
-  connect(c, &Captcha::downloaded,
+  connect(c, &Captcha::downloaded, this,
           [=](const QImage &image, const QString &uid) {
             c->deleteLater();
             mCaptchaUid = uid;
@@ -131,7 +131,7 @@ void LoginSession::sendPostData(const QUrl &address,
   auto postDataEncoded = postData.toString(QUrl::FullyEncoded);
   qDebug() << address << postDataEncoded;
   auto postRequest = mNAM->post(request, postDataEncoded.toUtf8());
-  connect(postRequest, &QNetworkReply::finished, [=]() {
+  connect(postRequest, &QNetworkReply::finished, this, [=]() {
     auto content = postRequest->readAll();
     postRequest->deleteLater();
     onReplyReceived(content);

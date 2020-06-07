@@ -93,7 +93,7 @@ QVector<Room> RoomListModel::jsonToChannels(const QJsonArray &arr) {
       emit replyParseError(QLatin1String("'rooms' not an array"));
       return rv;
     }
-    for (QJsonValueRef r : rooms.toArray()) {
+    for (auto &&r : rooms.toArray()) {
       if (!r.isObject()) {
         emit replyParseError(
             QLatin1String("'rooms' array member not an object"));
