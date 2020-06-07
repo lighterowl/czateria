@@ -213,7 +213,12 @@ void ChatWindowTabWidget::onPrivateConversationStateChanged(
     Q_ASSERT(false);
     break;
   }
-  writePrivateInfo(nickname, message, icon);
+  auto it = mPrivateTabs.find(nickname);
+  if (it != std::end(mPrivateTabs)) {
+    auto tab = it.value();
+    writePrivateInfo(tab, message, icon);
+    tab->removePendingAcceptWidget();
+  }
 }
 
 QString ChatWindowTabWidget::getCurrentNickname() const {
@@ -247,16 +252,12 @@ void ChatWindowTabWidget::onTabCloseRequested(int index) {
   emit privateConversationClosed(nickname);
 }
 
-void ChatWindowTabWidget::writePrivateInfo(const QString &nickname,
+void ChatWindowTabWidget::writePrivateInfo(PrivateChatTab *tab,
                                            const QString &message,
                                            const QIcon &icon) {
-  auto it = mPrivateTabs.find(nickname);
-  if (it == std::end(mPrivateTabs)) {
-    return;
-  }
-  it.value()->appendPlainText(
+  tab->appendPlainText(
       QString(QLatin1String("[%1] %2"))
           .arg(QDateTime::currentDateTime().toString(QLatin1String("HH:mm:ss")))
           .arg(message));
-  indicateTabActivity(it.value(), icon);
+  indicateTabActivity(tab, icon);
 }

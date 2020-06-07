@@ -328,7 +328,7 @@ void MainChatWindow::onPrivateConvNotificationRejected(
 }
 
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
-  if (mAutoAcceptPrivs->isChecked()) {
+  if (mAutoAcceptPrivs->isChecked() || ui->tabWidget->privTabIsOpen(nickname)) {
     ui->tabWidget->openPrivateMessageTab(nickname);
     doAcceptPrivateConversation(nickname);
   } else {

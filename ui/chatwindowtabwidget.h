@@ -29,6 +29,9 @@ public:
   int countUnreadPrivateTabs() const;
   void askAcceptPrivateMessage(const QString &nickname);
   void addMessageToPrivateChat(const QString &nickname, const QString &str);
+  bool privTabIsOpen(const QString &nickname) const {
+    return mPrivateTabs.contains(nickname);
+  }
 
 signals:
   void privateConversationAccepted(const QString &nickname);
@@ -37,13 +40,13 @@ signals:
 
 private:
   void onTabCloseRequested(int index);
-  void writePrivateInfo(const QString &nickname, const QString &message,
-                        const QIcon &icon);
   void indicateTabActivity(int idx, const QIcon &icon);
   void indicateTabActivity(QWidget *tab, const QIcon &icon);
   void updateTabActivity(int idx);
 
   class PrivateChatTab;
+  void writePrivateInfo(PrivateChatTab *, const QString &message,
+                        const QIcon &icon);
   PrivateChatTab *privateMessageTab(const QString &nickname);
 
   QPlainTextEdit *const mMainChatTab;
