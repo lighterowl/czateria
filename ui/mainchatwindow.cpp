@@ -302,9 +302,10 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   connect(ui->tabWidget, &QTabWidget::currentChanged, this,
           [=](auto idx) { mSendImageAction->setEnabled(idx != 0); });
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationAccepted,
+          this,
           [=](auto &&nickname) { doAcceptPrivateConversation(nickname); });
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationRejected,
-          [=](auto &&nickname) {
+          this, [=](auto &&nickname) {
             mChatSession->rejectPrivateConversation(nickname);
           });
 

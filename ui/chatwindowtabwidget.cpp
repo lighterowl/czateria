@@ -53,12 +53,12 @@ class ChatWindowTabWidget::PrivateChatTab : public QStackedWidget {
                          .arg(nickname)));
       auto buttons = new QDialogButtonBox(
           QDialogButtonBox::Yes | QDialogButtonBox::No, Qt::Horizontal);
-      connect(buttons, &QDialogButtonBox::accepted, [=]() {
+      connect(buttons, &QDialogButtonBox::accepted, this, [=]() {
         emit chatWindow->privateConversationAccepted(nickname);
         this->deleteLater(); // remove self in order to have StackedWidget
                              // switch to TextEdit
       });
-      connect(buttons, &QDialogButtonBox::rejected, [=]() {
+      connect(buttons, &QDialogButtonBox::rejected, this, [=]() {
         emit chatWindow->privateConversationRejected(nickname);
         chatTab->onConversationRejected();
       });
