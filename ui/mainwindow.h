@@ -35,6 +35,7 @@ public:
   ~MainWindow() override;
   void displayNotification(MainChatWindow *chatWin, const QString &nickname,
                            const QString &channel);
+  void removeNotification(MainChatWindow *chatWin, const QString &nickname);
 
 protected:
   void closeEvent(QCloseEvent *ev) override;
@@ -68,6 +69,7 @@ private:
                         const Czateria::Room &);
   void onChatWindowDestroyed(QObject *);
   void removeNotification(quint32);
+  template <typename F> void removeNotifications(F &&);
 
   class AutologinState;
   friend class AutologinState;

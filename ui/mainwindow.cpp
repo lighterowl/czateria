@@ -391,12 +391,14 @@ void MainWindow::createChatWindow(
 }
 
 void MainWindow::onChatWindowDestroyed(QObject *obj) {
-  const auto it_end = std::end(mLiveNotifications);
-  for (auto it = std::begin(mLiveNotifications); it != it_end; ++it) {
-    if (it.value().chatWin == obj) {
-      removeNotification(it.key());
-    }
-  }
+  removeNotifications([&](auto &&ctx) { return ctx.chatWin == obj; });
+}
+
+void MainWindow::removeNotification(MainChatWindow *chatWin,
+                                    const QString &nickname) {
+  removeNotifications([&](auto &&ctx) {
+    return ctx.chatWin == chatWin && ctx.nickname == nickname;
+  });
 }
 
 void MainWindow::removeNotification(quint32 notificationId) {
@@ -493,5 +495,14 @@ void MainWindow::closeEvent(QCloseEvent *ev) {
   } else {
     ev->ignore();
     hide();
+  }
+}
+
+template <typename F> void MainWindow::removeNotifications(F &&f) {
+  const auto it_end = std::end(mLiveNotifications);
+  for (auto it = std::begin(mLiveNotifications); it != it_end; ++it) {
+    if (f(it.value())) {
+      removeNotification(it.key());
+    }
   }
 }
