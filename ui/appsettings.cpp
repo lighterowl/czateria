@@ -13,7 +13,7 @@ AppSettings::AppSettings() {
     }
   }
   mSettings.beginGroup(QLatin1String("autologin"));
-  for (auto idStr : mSettings.childGroups()) {
+  for (auto &&idStr : mSettings.childGroups()) {
     bool ok;
     auto id = idStr.toInt(&ok);
     if (ok) {
