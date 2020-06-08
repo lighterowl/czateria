@@ -1,0 +1,3 @@
+[submodule "WinToast"]
+	path = WinToast
+	url = https://github.com/xavery/WinToast.git
