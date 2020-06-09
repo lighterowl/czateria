@@ -148,7 +148,8 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                       tr("Send an image"), this)),
       mShowChannelListAction(
           new QAction(QIcon(QLatin1String(":/icons/czateria.png")),
-                      tr("Show channel list"), this)) {
+                      tr("Show channel list"), this)),
+      mUseEmoji(new QAction(tr("Use emoji icons"), this)) {
   QIcon icon;
   icon.addFile(QString::fromUtf8(":/icons/czateria.png"), QSize(),
                QIcon::Normal, QIcon::Off);
@@ -194,6 +195,13 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
       tr("Accept private conversations without prompting"));
   mAutoAcceptPrivs->setCheckable(true);
   menu->addAction(mAutoAcceptPrivs);
+
+  mUseEmoji->setStatusTip(tr("Convert icons and emoticons to emoji"));
+  mUseEmoji->setCheckable(true);
+  connect(mUseEmoji, &QAction::toggled, this,
+          [=](auto checked) { ui->tabWidget->setUseEmoji(checked); });
+  mUseEmoji->setChecked(mAppSettings.useEmojiIcons);
+  menu->addAction(mUseEmoji);
 
   auto desiredWidth = getOptimalUserListWidth(ui->listView);
   ui->widget_3->setMaximumSize(QSize(desiredWidth, QWIDGETSIZE_MAX));

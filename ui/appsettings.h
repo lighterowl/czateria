@@ -17,6 +17,7 @@ struct AppSettings : public Czateria::RoomListModel::LoginDataProvider {
   AppSettings();
   ~AppSettings();
 
+  bool useEmojiIcons = true;
   bool savePicturesAutomatically = false;
   QHash<QString, QVariant> logins;
   QMultiHash<Czateria::RoomListModel::LoginData, int> autologinHash() const;
