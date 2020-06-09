@@ -6,21 +6,25 @@
 namespace Czateria {
 
 Message Message::privMessage(const QJsonObject &json) {
-  return Message{tagsToTextIcons(json[QLatin1String("msg")].toString()),
+  return Message{json[QLatin1String("msg")].toString(),
                  json[QLatin1String("user")].toString()};
 }
 
 Message Message::roomMessage(const QJsonObject &json) {
-  return Message{tagsToTextIcons(json[QLatin1String("msg")].toString()),
+  return Message{json[QLatin1String("msg")].toString(),
                  json[QLatin1String("login")].toString()};
 }
 
 Message::Message(const QDateTime &msgTime, const QString &msg,
                  const QString &nickname)
-    : mReceivedAt(msgTime), mMessage(msg), mNickname(nickname) {}
+    : mReceivedAt(msgTime), mRawMessage(msg), mNickname(nickname) {}
+
+QString Message::message(IconReplaceMode replaceMode) const {
+  return convertRawMessage(mRawMessage, replaceMode);
+}
 
 Message::Message(const QString &msg, const QString &nick)
-    : mReceivedAt(QDateTime::currentDateTime()), mMessage(msg),
+    : mReceivedAt(QDateTime::currentDateTime()), mRawMessage(msg),
       mNickname(nick) {}
 
 } // namespace Czateria

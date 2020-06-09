@@ -21,6 +21,7 @@ icons are downloaded from
 https://qan.interia.pl/chat/applet/chat_resources/images/chat_imgs/icon_%1.gif
 where %1 is the icon's name, available as the first member. */
 
+// utf8 characters throw clang-format off, so we have to disable it from here.
 // clang-format off
 const std::array<Icon, 33> icons = {{
     {QLatin1String("biggrin"), QLatin1String(":]"), QString::fromUtf8("😁")},
@@ -57,11 +58,11 @@ const std::array<Icon, 33> icons = {{
     {QLatin1String("hmmm"), QLatin1String(":|"), QString::fromUtf8("😐")},
     {QLatin1String("we_flower"), QLatin1String(":HIDE:"), QString::fromUtf8("🌼")},
 }};
-// clang-format on
 } // namespace
 
 namespace Czateria {
-QString tagsToTextIcons(const QString &str) {
+QString convertRawMessage(const QString &str, IconReplaceMode replaceMode) {
+  const auto member = replaceMode == IconReplaceMode::Text ? &Icon::text : & Icon::emoji;
   static const auto re =
       QRegularExpression(QLatin1String("<icon>(\\d+)</icon>"),
                          QRegularExpression::OptimizeOnFirstUsageOption);
@@ -75,8 +76,9 @@ QString tagsToTextIcons(const QString &str) {
       continue;
     }
     auto &&icon = icons[static_cast<unsigned>(iconNumber)];
-    rv.replace(m.capturedStart() + offset, m.capturedLength(), icon.text);
-    offset += (icon.text.length() - m.capturedLength());
+    auto &&replacement = icon.*member;
+    rv.replace(m.capturedStart() + offset, m.capturedLength(), replacement);
+    offset += (replacement.length() - m.capturedLength());
   }
   // messages tend to contain an embedded \u0000 for some reason. there's no
   // real point in keeping them.
