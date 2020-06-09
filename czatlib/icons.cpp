@@ -62,7 +62,7 @@ const std::array<Icon, 33> icons = {{
 
 namespace Czateria {
 QString convertRawMessage(const QString &str, IconReplaceMode replaceMode) {
-  const auto member = replaceMode == IconReplaceMode::Text ? &Icon::text : & Icon::emoji;
+  const auto member = replaceMode == IconReplaceMode::Text ? &Icon::text : &Icon::emoji;
   static const auto re =
       QRegularExpression(QLatin1String("<icon>(\\d+)</icon>"),
                          QRegularExpression::OptimizeOnFirstUsageOption);
@@ -90,7 +90,9 @@ QString textIconsToTags(const QString &str) {
   auto rv = str;
   for (size_t i = 0; i < icons.size(); ++i) {
     auto &&icon = icons[i];
-    rv.replace(icon.text, QString(QLatin1String("<icon>%1</icon>")).arg(i));
+    const auto replacement = QString(QLatin1String("<icon>%1</icon>")).arg(i);
+    rv.replace(icon.text, replacement);
+    rv.replace(icon.emoji, replacement);
   }
   return rv;
 }
