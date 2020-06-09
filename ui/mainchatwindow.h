@@ -64,6 +64,7 @@ private:
   QAction *const mAutoAcceptPrivs;
   QAction *const mSendImageAction;
   QAction *const mShowChannelListAction;
+  QAction *const mUseEmoji;
   QHash<QString, QMessageBox *> mPendingPrivRequests;
 };
 

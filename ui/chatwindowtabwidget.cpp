@@ -12,13 +12,6 @@
 #include <czatlib/message.h>
 
 namespace {
-QString formatMessage(const Czateria::Message &msg) {
-  return QString(QLatin1String("[%1] <%2> %3"))
-      .arg(msg.receivedAt().toString(QLatin1String("HH:mm:ss")))
-      .arg(msg.nickname())
-      .arg(msg.message());
-}
-
 QPlainTextEdit *createTextWidget(QWidget *parent) {
   /* TODO : implement actual animated icons, like the website does. this will
    * probably require moving to a normal (non-plain) text edit. */
@@ -185,6 +178,14 @@ void ChatWindowTabWidget::indicateTabActivity(QWidget *tab, const QIcon &icon) {
 void ChatWindowTabWidget::updateTabActivity(int idx) {
   tabBar()->setTabTextColor(idx, QColor());
   tabBar()->setTabIcon(idx, QIcon());
+}
+
+QString ChatWindowTabWidget::formatMessage(const Czateria::Message &msg) const {
+  return QString(QLatin1String("[%1] <%2> %3"))
+      .arg(msg.receivedAt().toString(QLatin1String("HH:mm:ss")))
+      .arg(msg.nickname())
+      .arg(msg.message(mUseEmoji ? Czateria::IconReplaceMode::Emoji
+                                 : Czateria::IconReplaceMode::Text));
 }
 
 void ChatWindowTabWidget::onPrivateConversationStateChanged(

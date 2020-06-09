@@ -32,6 +32,7 @@ public:
   bool privTabIsOpen(const QString &nickname) const {
     return mPrivateTabs.contains(nickname);
   }
+  void setUseEmoji(bool useEmoji) { mUseEmoji = useEmoji; }
 
 signals:
   void privateConversationAccepted(const QString &nickname);
@@ -43,6 +44,7 @@ private:
   void indicateTabActivity(int idx, const QIcon &icon);
   void indicateTabActivity(QWidget *tab, const QIcon &icon);
   void updateTabActivity(int idx);
+  QString formatMessage(const Czateria::Message &) const;
 
   class PrivateChatTab;
   void writePrivateInfo(PrivateChatTab *, const QString &message,
@@ -51,6 +53,7 @@ private:
 
   QPlainTextEdit *const mMainChatTab;
   QHash<QString, PrivateChatTab *> mPrivateTabs;
+  bool mUseEmoji;
 };
 
 #endif // CHATWINDOWTABWIDGET_H

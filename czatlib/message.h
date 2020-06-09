@@ -1,9 +1,9 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include "icons.h"
 #include <QDateTime>
 #include <QString>
-
 class QJsonObject;
 
 namespace Czateria {
@@ -17,14 +17,14 @@ public:
   Message() {}
 
   const QDateTime &receivedAt() const { return mReceivedAt; }
-  const QString &message() const { return mMessage; }
   const QString &nickname() const { return mNickname; }
+  QString message(IconReplaceMode) const;
 
 private:
   Message(const QString &msg, const QString &nick);
 
   QDateTime mReceivedAt;
-  QString mMessage;
+  QString mRawMessage;
   QString mNickname;
 };
 

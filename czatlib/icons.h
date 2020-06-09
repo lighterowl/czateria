@@ -4,7 +4,10 @@
 #include <QString>
 
 namespace Czateria {
-QString tagsToTextIcons(const QString &str);
+
+enum class IconReplaceMode { Text, Emoji };
+
+QString convertRawMessage(const QString &str, IconReplaceMode);
 QString textIconsToTags(const QString &str);
 } // namespace Czateria
 

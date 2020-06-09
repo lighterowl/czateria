@@ -1,11 +1,19 @@
 #include "appsettings.h"
 
-AppSettings::AppSettings() {
-  auto variant = mSettings.value(QLatin1String("auto_pic_save"));
+namespace {
+void readSetting(const QSettings &settings, const QString &key, bool &value) {
+  auto variant = settings.value(key);
   if (variant.isValid()) {
-    savePicturesAutomatically = variant.toBool();
+    value = variant.toBool();
   }
-  variant = mSettings.value(QLatin1String("logins"));
+}
+} // namespace
+
+AppSettings::AppSettings() {
+  readSetting(mSettings, QLatin1String("auto_pic_save"),
+              savePicturesAutomatically);
+  readSetting(mSettings, QLatin1String("use_emoji"), useEmojiIcons);
+  auto variant = mSettings.value(QLatin1String("logins"));
   if (variant.isValid() && variant.type() == QVariant::Hash) {
     auto loginsHash = variant.toHash();
     for (auto it = loginsHash.cbegin(); it != loginsHash.cend(); ++it) {
@@ -33,6 +41,7 @@ AppSettings::AppSettings() {
 
 AppSettings::~AppSettings() {
   mSettings.setValue(QLatin1String("auto_pic_save"), savePicturesAutomatically);
+  mSettings.setValue(QLatin1String("use_emoji"), useEmojiIcons);
   mSettings.setValue(QLatin1String("logins"), logins);
   mSettings.beginGroup(QLatin1String("autologin"));
   for (auto it = mAutologinData.cbegin(); it != mAutologinData.cend(); ++it) {
