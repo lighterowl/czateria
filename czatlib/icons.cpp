@@ -21,7 +21,9 @@ icons are downloaded from
 https://qan.interia.pl/chat/applet/chat_resources/images/chat_imgs/icon_%1.gif
 where %1 is the icon's name, available as the first member. */
 
-// utf8 characters throw clang-format off, so we have to disable it from here.
+// clang-format doesn't like utf8 chars, and I don't like hex escapes. ergo,
+// clang-format needs to take a break here.
+
 // clang-format off
 const std::array<Icon, 33> icons = {{
     {QLatin1String("biggrin"), QLatin1String(":]"), QString::fromUtf8("😁")},
