@@ -231,9 +231,9 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   connect(
       ui->actionSave_pictures_automatically, &QAction::toggled, this,
       [=](bool checked) { mAppSettings.savePicturesAutomatically = checked; });
-  ui->actionSave_pictures_automatically->setStatusTip(
-      tr("Save the received images into the pictures directory without "
-         "displaying them"));
+  ui->actionUse_emoji_icons->setChecked(mAppSettings.useEmojiIcons);
+  connect(ui->actionUse_emoji_icons, &QAction::toggled, this,
+          [=](bool checked) { mAppSettings.useEmojiIcons = checked; });
 
   startTimer(channelListRefreshInterval);
 }

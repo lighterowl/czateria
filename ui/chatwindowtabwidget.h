@@ -28,6 +28,7 @@ public:
   void addMessageToCurrent(const QString &str);
   QPlainTextEdit *privateMessageTab(const QString &nickname);
   int countUnreadPrivateTabs() const;
+  void setUseEmoji(bool useEmoji) { mUseEmoji = useEmoji; }
 
 signals:
   void privateConversationClosed(const QString &nickname);
@@ -39,8 +40,10 @@ private:
   void indicateTabActivity(int idx, const QIcon &icon);
   void indicateTabActivity(QPlainTextEdit *tab, const QIcon &icon);
   void updateTabActivity(int idx);
+  QString formatMessage(const Czateria::Message &) const;
 
   QHash<QString, QPlainTextEdit *> mPrivateTabs;
+  bool mUseEmoji;
 };
 
 #endif // CHATWINDOWTABWIDGET_H

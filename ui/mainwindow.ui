@@ -147,6 +147,7 @@
      <string>Options</string>
     </property>
     <addaction name="actionSave_pictures_automatically"/>
+    <addaction name="actionUse_emoji_icons"/>
    </widget>
    <addaction name="menuOptions"/>
   </widget>
@@ -171,6 +172,20 @@
    </property>
    <property name="text">
     <string>Save pictures automatically</string>
+   </property>
+   <property name="statusTip">
+    <string>Save the received images into the pictures directory without displaying them</string>
+   </property>
+  </action>
+  <action name="actionUse_emoji_icons">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Use emoji icons</string>
+   </property>
+   <property name="statusTip">
+    <string>Convert icons and emoticons to emoji</string>
    </property>
   </action>
  </widget>
