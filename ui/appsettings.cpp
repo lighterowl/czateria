@@ -1,18 +1,13 @@
 #include "appsettings.h"
 
-namespace {
-void readSetting(const QSettings &settings, const QString &key, bool &value) {
-  auto variant = settings.value(key);
-  if (variant.isValid()) {
-    value = variant.toBool();
-  }
-}
-} // namespace
+template <>
+bool (QVariant::*const AppSettings::Setting<bool>::mConvFn)() const =
+    &QVariant::toBool;
 
-AppSettings::AppSettings() {
-  readSetting(mSettings, QLatin1String("auto_pic_save"),
-              savePicturesAutomatically);
-  readSetting(mSettings, QLatin1String("use_emoji"), useEmojiIcons);
+AppSettings::AppSettings()
+    : useEmojiIcons(mSettings, QLatin1String("use_emoji"), true),
+      savePicturesAutomatically(mSettings, QLatin1String("auto_pic_save"),
+                                false) {
   auto variant = mSettings.value(QLatin1String("logins"));
   if (variant.isValid() && variant.type() == QVariant::Hash) {
     auto loginsHash = variant.toHash();
@@ -40,8 +35,6 @@ AppSettings::AppSettings() {
 }
 
 AppSettings::~AppSettings() {
-  mSettings.setValue(QLatin1String("auto_pic_save"), savePicturesAutomatically);
-  mSettings.setValue(QLatin1String("use_emoji"), useEmojiIcons);
   mSettings.setValue(QLatin1String("logins"), logins);
   mSettings.beginGroup(QLatin1String("autologin"));
   for (auto it = mAutologinData.cbegin(); it != mAutologinData.cend(); ++it) {
@@ -85,4 +78,16 @@ void AppSettings::enableAutologin(const Czateria::Room &room, QString &&user,
   auto &&loginData = mAutologinData[room.id];
   loginData.username = user;
   loginData.password = password;
+}
+
+template <typename T>
+AppSettings::Setting<T>::Setting(QSettings &settings, QString &&key,
+                                 T initialValue)
+    : mSettings(settings), mKey(key) {
+  auto variant = mSettings.value(key);
+  mValue = variant.isValid() ? (variant.*mConvFn)() : initialValue;
+}
+
+template <typename T> AppSettings::Setting<T>::~Setting() {
+  mSettings.setValue(mKey, mValue);
 }

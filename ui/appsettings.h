@@ -14,11 +14,29 @@ struct Room;
 }
 
 struct AppSettings : public Czateria::RoomListModel::LoginDataProvider {
+private:
+  QSettings mSettings;
+
+public:
   AppSettings();
   ~AppSettings();
 
-  bool useEmojiIcons = true;
-  bool savePicturesAutomatically = false;
+  template <typename T> class Setting {
+  public:
+    Setting(QSettings &settings, QString &&key, T initialValue);
+    ~Setting();
+    operator T() const { return mValue; }
+    void operator=(const T &value) { mValue = value; }
+
+  private:
+    QSettings &mSettings;
+    const QString mKey;
+    T mValue;
+    static T (QVariant::*const mConvFn)() const;
+  };
+
+  Setting<bool> useEmojiIcons;
+  Setting<bool> savePicturesAutomatically;
   QHash<QString, QVariant> logins;
   QMultiHash<Czateria::RoomListModel::LoginData, int> autologinHash() const;
 
@@ -29,7 +47,6 @@ private:
   void enableAutologin(const Czateria::Room &room, QString &&user,
                        QString &&password) override;
   QHash<int, Czateria::RoomListModel::LoginData> mAutologinData;
-  QSettings mSettings;
 };
 
 #endif // APPSETTINGS_H
