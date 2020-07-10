@@ -204,7 +204,7 @@
     <string>Message box</string>
    </property>
    <property name="statusTip">
-    <string>New private conversation notifications will be displayed in a message box</string>
+    <string>Use a message box to notify about new private conversations</string>
    </property>
   </action>
   <action name="actionNative">
@@ -218,7 +218,7 @@
     <string>Native</string>
    </property>
    <property name="statusTip">
-    <string>The platform's desktop notification mechanism will be used for notifying about new private conversations</string>
+    <string>Use desktop notifications for new private conversations</string>
    </property>
   </action>
  </widget>
