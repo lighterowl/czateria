@@ -8,6 +8,7 @@ class QString;
 
 struct NotificationSupport {
 public:
+  virtual ~NotificationSupport() = default;
   virtual void displayNotification(MainChatWindow *chatWin,
                                    const QString &nickname,
                                    const QString &channel) = 0;
