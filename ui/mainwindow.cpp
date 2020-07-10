@@ -10,6 +10,7 @@
 #include <czatlib/loginsession.h>
 #include <czatlib/roomlistmodel.h>
 
+#include <QActionGroup>
 #include <QCloseEvent>
 #include <QCompleter>
 #include <QDebug>
@@ -236,6 +237,11 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
           [=](bool checked) { mAppSettings.useEmojiIcons = checked; });
 
   startTimer(channelListRefreshInterval);
+
+  auto grp = new QActionGroup(this);
+  grp->addAction(ui->actionNative);
+  grp->addAction(ui->actionMessage_box);
+  ui->actionMessage_box->setChecked(true);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
