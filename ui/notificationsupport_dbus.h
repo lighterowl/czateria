@@ -7,7 +7,7 @@
 #include <QHash>
 #include <QObject>
 
-class NotificationSupportDBus : public QObject, NotificationSupport {
+class NotificationSupportDBus : public QObject, public NotificationSupport {
   Q_OBJECT
 public:
   NotificationSupportDBus();

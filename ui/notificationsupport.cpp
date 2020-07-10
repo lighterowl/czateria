@@ -8,12 +8,12 @@ std::unique_ptr<NotificationSupport> NotificationSupport::msgBox() {
 #ifdef QT_DBUS_LIB
 #include "notificationsupport_dbus.h"
 std::unique_ptr<NotificationSupport> NotificationSupport::native() {
-  return std::make_unique<NotificationSupportDBus>();
+  return std::unique_ptr<NotificationSupport>(new NotificationSupportDBus);
 }
 #elif defined(Q_OS_WIN)
 #include "notificationsupport_win10.h"
 std::unique_ptr<NotificationSupport> NotificationSupport::native() {
-  return std::make_unique<NotificationSupportWin10>();
+  return std::unique_ptr<NotificationSupport>(new NotificationSupportWin10);
 }
 #else
 std::unique_ptr<NotificationSupport> NotificationSupport::native() {
