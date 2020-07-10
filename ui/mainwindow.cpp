@@ -366,8 +366,7 @@ void MainWindow::createChatWindow(
   win->show();
 }
 
-void MainWindow::removeNotification(MainChatWindow *chatWin,
-                                    const QString &nickname) {
+void MainWindow::removeNotification(MainChatWindow *, const QString &) {
   // FIXME
 }
 
@@ -386,9 +385,8 @@ void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
 MainWindow::~MainWindow() { delete ui; }
 
-void MainWindow::displayNotification(MainChatWindow *chatWin,
-                                     const QString &nickname,
-                                     const QString &channel) {
+void MainWindow::displayNotification(MainChatWindow *, const QString &,
+                                     const QString &) {
   // FIXME
 }
 
