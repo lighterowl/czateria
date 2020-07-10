@@ -8,3 +8,5 @@ void NotificationSupportWin10::displayNotification(MainChatWindow *,
 
 void NotificationSupportWin10::removeNotification(MainChatWindow *,
                                                   const QString &) {}
+
+bool NotificationSupportWin10::supported() const { return false; }

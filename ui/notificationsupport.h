@@ -14,6 +14,7 @@ public:
                                    const QString &channel) = 0;
   virtual void removeNotification(MainChatWindow *chatWin,
                                   const QString &nickname) = 0;
+  virtual bool supported() const = 0;
 
   static std::unique_ptr<NotificationSupport> msgBox();
   static std::unique_ptr<NotificationSupport> native();

@@ -238,10 +238,23 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
 
   startTimer(channelListRefreshInterval);
 
+  connect(ui->actionMessage_box, &QAction::toggled, this, [&](bool checked) {
+    if (checked) {
+      mNotifications = NotificationSupport::msgBox();
+    }
+  });
+  connect(ui->actionNative, &QAction::toggled, this, [&](bool checked) {
+    if (checked) {
+      mNotifications = NotificationSupport::native();
+    }
+  });
+
   auto grp = new QActionGroup(this);
   grp->addAction(ui->actionNative);
   grp->addAction(ui->actionMessage_box);
   ui->actionMessage_box->setChecked(true);
+  auto native = NotificationSupport::native();
+  ui->actionNative->setEnabled(native && native->supported());
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
@@ -372,8 +385,9 @@ void MainWindow::createChatWindow(
   win->show();
 }
 
-void MainWindow::removeNotification(MainChatWindow *, const QString &) {
-  // FIXME
+void MainWindow::removeNotification(MainChatWindow *chatWin,
+                                    const QString &nickname) {
+  mNotifications->removeNotification(chatWin, nickname);
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
@@ -391,9 +405,10 @@ void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
 MainWindow::~MainWindow() { delete ui; }
 
-void MainWindow::displayNotification(MainChatWindow *, const QString &,
-                                     const QString &) {
-  // FIXME
+void MainWindow::displayNotification(MainChatWindow *chatWin,
+                                     const QString &nickname,
+                                     const QString &channel) {
+  mNotifications->displayNotification(chatWin, nickname, channel);
 }
 
 void MainWindow::closeEvent(QCloseEvent *ev) {

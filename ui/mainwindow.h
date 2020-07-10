@@ -9,6 +9,8 @@
 #include <czatlib/avatarhandler.h>
 #include <czatlib/loginfailreason.h>
 
+#include "notificationsupport.h"
+
 class QNetworkAccessManager;
 class QNetworkReply;
 class CaptchaDialog;
@@ -50,6 +52,7 @@ private:
   AppSettings &mAppSettings;
   QList<MainChatWindow *> mChatWindows;
   QHash<QString, QWeakPointer<Czateria::LoginSession>> mCurrentSessions;
+  std::unique_ptr<NotificationSupport> mNotifications;
 
   void onChannelDoubleClicked(const QModelIndex &);
   void onChannelClicked(const QModelIndex &);

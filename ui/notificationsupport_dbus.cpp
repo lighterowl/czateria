@@ -31,6 +31,7 @@ NotificationSupportDBus::NotificationSupportDBus()
 void NotificationSupportDBus::displayNotification(MainChatWindow *chatWin,
                                                   const QString &nickname,
                                                   const QString &channel) {
+  Q_ASSERT(mSessionBus.isConnected());
   auto m = QDBusMessage::createMethodCall(
       dbusServiceName, dbusPath, dbusInterfaceName, QLatin1String("Notify"));
   QVariantList args;
@@ -65,11 +66,16 @@ void NotificationSupportDBus::removeNotification(MainChatWindow *chatWin,
   });
 }
 
+bool NotificationSupportDBus::supported() const {
+  return mSessionBus.isConnected();
+}
+
 void NotificationSupportDBus::onChatWindowDestroyed(QObject *obj) {
   removeNotifications([&](auto &&ctx) { return ctx.chatWin == obj; });
 }
 
 void NotificationSupportDBus::removeNotification(quint32 notificationId) {
+  Q_ASSERT(mSessionBus.isConnected());
   auto m = QDBusMessage::createMethodCall(dbusServiceName, dbusPath,
                                           dbusInterfaceName,
                                           QLatin1String("CloseNotification"));

@@ -12,6 +12,7 @@ struct NotificationSupportMsgBox : public NotificationSupport {
                            const QString &channel) override;
   void removeNotification(MainChatWindow *chatWin,
                           const QString &nickname) override;
+  bool supported() const override { return true; }
 
 private:
   QHash<QString, QMessageBox *> mPendingPrivRequests;

@@ -11,6 +11,7 @@ public:
                            const QString &channel) override;
   void removeNotification(MainChatWindow *chatWin,
                           const QString &nickname) override;
+  bool supported() const override;
 };
 
 #endif // NOTIFICATIONSUPPORTWIN10_H
