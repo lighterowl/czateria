@@ -16,6 +16,10 @@ SOURCES += \
     captchadialog.cpp \
     mainchatwindow.cpp \
     chatwindowtabwidget.cpp \
+    notificationsupport.cpp \
+    notificationsupport_dbus.cpp \
+    notificationsupport_msgbox.cpp \
+    notificationsupport_win10.cpp \
     userlistview.cpp
 
 HEADERS += \
@@ -25,6 +29,10 @@ HEADERS += \
     captchadialog.h \
     mainchatwindow.h \
     chatwindowtabwidget.h \
+    notificationsupport.h \
+    notificationsupport_dbus.h \
+    notificationsupport_msgbox.h \
+    notificationsupport_win10.h \
     userlistview.h \
     util.h
 

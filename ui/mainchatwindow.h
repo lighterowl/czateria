@@ -65,7 +65,6 @@ private:
   QAction *const mSendImageAction;
   QAction *const mShowChannelListAction;
   QAction *const mUseEmoji;
-  QHash<QString, QMessageBox *> mPendingPrivRequests;
 };
 
 #endif // MAINCHATWINDOW_H

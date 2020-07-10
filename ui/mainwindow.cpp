@@ -19,19 +19,7 @@
 #include <QSharedPointer>
 #include <QSortFilterProxyModel>
 
-#ifdef QT_DBUS_LIB
-#include <QDBusConnection>
-#include <QDBusMessage>
-#include <QDBusReply>
-#endif
-
 namespace {
-const QLatin1String dbusServiceName("org.freedesktop.Notifications");
-const QLatin1String dbusInterfaceName("org.freedesktop.Notifications");
-const QLatin1String dbusPath("/org/freedesktop/Notifications");
-const QLatin1String acceptPrivConvAction("accept_priv_conv");
-const QLatin1String rejectPrivConvAction("reject_priv_conv");
-
 template <typename F1, typename F2, typename F3>
 auto inspectRadioButtons(Ui::MainWindow *ui, F1 noNicknameFn, F2 nicknameFn,
                          F3 nickAndPassFn) {
@@ -248,18 +236,6 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
           [=](bool checked) { mAppSettings.useEmojiIcons = checked; });
 
   startTimer(channelListRefreshInterval);
-
-#ifdef QT_DBUS_LIB
-  auto bus = QDBusConnection::sessionBus();
-  if (bus.isConnected()) {
-    bus.connect(dbusServiceName, dbusPath, dbusInterfaceName,
-                QLatin1String("ActionInvoked"), this,
-                SLOT(onNotificationActionInvoked(quint32, QString)));
-    bus.connect(dbusServiceName, dbusPath, dbusInterfaceName,
-                QLatin1String("NotificationClosed"), this,
-                SLOT(onNotificationClosed(quint32, quint32)));
-  }
-#endif
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
@@ -390,32 +366,9 @@ void MainWindow::createChatWindow(
   win->show();
 }
 
-void MainWindow::onChatWindowDestroyed(QObject *obj) {
-  removeNotifications([&](auto &&ctx) { return ctx.chatWin == obj; });
-}
-
 void MainWindow::removeNotification(MainChatWindow *chatWin,
                                     const QString &nickname) {
-  removeNotifications([&](auto &&ctx) {
-    return ctx.chatWin == chatWin && ctx.nickname == nickname;
-  });
-}
-
-void MainWindow::removeNotification(quint32 notificationId) {
-#ifdef QT_DBUS_LIB
-  auto bus = QDBusConnection::sessionBus();
-  if (!bus.isConnected()) {
-    return;
-  }
-
-  auto m = QDBusMessage::createMethodCall(dbusServiceName, dbusPath,
-                                          dbusInterfaceName,
-                                          QLatin1String("CloseNotification"));
-  QVariantList args;
-  args.append(notificationId);
-  m.setArguments(args);
-  bus.call(m);
-#endif
+  // FIXME
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
@@ -431,62 +384,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
 
 void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
-void MainWindow::onNotificationActionInvoked(quint32 notificationId,
-                                             QString action) {
-  auto it = mLiveNotifications.find(notificationId);
-  if (it == std::end(mLiveNotifications)) {
-    return;
-  }
-  qDebug() << notificationId << action;
-  auto &context = it.value();
-  if (action == acceptPrivConvAction) {
-    context.chatWin->onPrivateConvNotificationAccepted(context.nickname);
-  } else if (action == rejectPrivConvAction) {
-    context.chatWin->onPrivateConvNotificationRejected(context.nickname);
-  }
-}
-
-void MainWindow::onNotificationClosed(quint32 id, quint32) {
-  mLiveNotifications.remove(id);
-  qDebug() << id;
-}
-
 MainWindow::~MainWindow() { delete ui; }
 
 void MainWindow::displayNotification(MainChatWindow *chatWin,
                                      const QString &nickname,
                                      const QString &channel) {
-#ifdef QT_DBUS_LIB
-  auto bus = QDBusConnection::sessionBus();
-  if (!bus.isConnected()) {
-    return;
-  }
-
-  auto m = QDBusMessage::createMethodCall(
-      dbusServiceName, dbusPath, dbusInterfaceName, QLatin1String("Notify"));
-  QVariantList args;
-  args.append(QCoreApplication::applicationName());
-  args.append(0U);
-  args.append(QString());
-  args.append(tr("Incoming private conversation"));
-  args.append(QString(QLatin1String("<b>%1</b> in room <b>%2</b> wants to "
-                                    "start a conversation."))
-                  .arg(nickname)
-                  .arg(channel));
-  args.append(QStringList() << acceptPrivConvAction << tr("Accept")
-                            << rejectPrivConvAction << tr("Reject"));
-  args.append(QMap<QString, QVariant>{
-      std::make_pair(QLatin1String("category"), QLatin1String("im.received"))});
-  args.append(static_cast<int32_t>(-1));
-  m.setArguments(args);
-  QDBusReply<quint32> replyMsg = bus.call(m);
-  if (replyMsg.isValid() && replyMsg.value() > 0) {
-    mLiveNotifications.insert(replyMsg.value(),
-                              NotificationContext{chatWin, nickname});
-    connect(chatWin, &QObject::destroyed, this,
-            &MainWindow::onChatWindowDestroyed, Qt::UniqueConnection);
-  }
-#endif
+  // FIXME
 }
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
@@ -495,14 +398,5 @@ void MainWindow::closeEvent(QCloseEvent *ev) {
   } else {
     ev->ignore();
     hide();
-  }
-}
-
-template <typename F> void MainWindow::removeNotifications(F &&f) {
-  const auto it_end = std::end(mLiveNotifications);
-  for (auto it = std::begin(mLiveNotifications); it != it_end; ++it) {
-    if (f(it.value())) {
-      removeNotification(it.key());
-    }
   }
 }

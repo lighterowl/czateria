@@ -51,13 +51,6 @@ private:
   QList<MainChatWindow *> mChatWindows;
   QHash<QString, QWeakPointer<Czateria::LoginSession>> mCurrentSessions;
 
-  struct NotificationContext {
-    MainChatWindow *chatWin;
-    QString nickname;
-  };
-
-  QHash<quint32, NotificationContext> mLiveNotifications;
-
   void onChannelDoubleClicked(const QModelIndex &);
   void onChannelClicked(const QModelIndex &);
   bool isLoginDataEntered();
@@ -67,19 +60,12 @@ private:
   void saveLoginData(const QString &, const QString &);
   void createChatWindow(QSharedPointer<Czateria::LoginSession>,
                         const Czateria::Room &);
-  void onChatWindowDestroyed(QObject *);
-  void removeNotification(quint32);
-  template <typename F> void removeNotifications(F &&);
 
   class AutologinState;
   friend class AutologinState;
 
   bool eventFilter(QObject *, QEvent *) override;
   void timerEvent(QTimerEvent *) override;
-
-private slots:
-  void onNotificationActionInvoked(quint32, QString);
-  void onNotificationClosed(quint32, quint32);
 };
 
 #endif // MAINWINDOW_H

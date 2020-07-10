@@ -430,11 +430,7 @@ bool MainChatWindow::sendImageFromMime(const QMimeData *mime) {
 }
 
 void MainChatWindow::closePrivateConvMsgbox(const QString &nickname) {
-  if (auto msgbox = mPendingPrivRequests.value(nickname, nullptr)) {
-    msgbox->reject();
-    msgbox->deleteLater();
-    mPendingPrivRequests.remove(nickname);
-  }
+  mMainWindow->removeNotification(this, nickname);
 }
 
 void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {
