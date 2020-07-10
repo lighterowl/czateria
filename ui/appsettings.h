@@ -13,7 +13,9 @@ namespace Czateria {
 struct Room;
 }
 
-struct AppSettings : public Czateria::RoomListModel::LoginDataProvider {
+struct AppSettings : public QObject,
+                     public Czateria::RoomListModel::LoginDataProvider {
+  Q_OBJECT
 private:
   QSettings mSettings;
 
@@ -37,6 +39,10 @@ public:
 
   Setting<bool> useEmojiIcons;
   Setting<bool> savePicturesAutomatically;
+  enum class NotificationStyle { MessageBox, Native };
+  Q_ENUM(NotificationStyle)
+  NotificationStyle notificationStyle = NotificationStyle::MessageBox;
+
   QHash<QString, QVariant> logins;
   QMultiHash<Czateria::RoomListModel::LoginData, int> autologinHash() const;
 

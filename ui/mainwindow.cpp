@@ -241,20 +241,29 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   connect(ui->actionMessage_box, &QAction::toggled, this, [&](bool checked) {
     if (checked) {
       mNotifications = NotificationSupport::msgBox();
+      mAppSettings.notificationStyle =
+          AppSettings::NotificationStyle::MessageBox;
     }
   });
   connect(ui->actionNative, &QAction::toggled, this, [&](bool checked) {
     if (checked) {
       mNotifications = NotificationSupport::native();
+      mAppSettings.notificationStyle = AppSettings::NotificationStyle::Native;
     }
   });
 
   auto grp = new QActionGroup(this);
   grp->addAction(ui->actionNative);
   grp->addAction(ui->actionMessage_box);
-  ui->actionMessage_box->setChecked(true);
+
   auto native = NotificationSupport::native();
-  ui->actionNative->setEnabled(native && native->supported());
+  const bool native_supported = native && native->supported();
+  ui->actionNative->setEnabled(native_supported);
+  ui->actionNative->setChecked(native_supported &&
+                               mAppSettings.notificationStyle ==
+                                   AppSettings::NotificationStyle::Native);
+  ui->actionMessage_box->setChecked(mAppSettings.notificationStyle ==
+                                    AppSettings::NotificationStyle::MessageBox);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
