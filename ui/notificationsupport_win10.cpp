@@ -19,13 +19,9 @@ private:
   void toastActivated() const override {}
   void toastActivated(int actionIndex) const override {
     if (actionIndex == 0) {
-      QMetaObject::invokeMethod(mChatWin, [=]() {
-        mChatWin->onPrivateConvNotificationAccepted(mNickname);
-      });
+      mChatWin->onPrivateConvNotificationAccepted(mNickname);
     } else if (actionIndex == 1) {
-      QMetaObject::invokeMethod(mChatWin, [=]() {
-        mChatWin->onPrivateConvNotificationRejected(mNickname);
-      });
+      mChatWin->onPrivateConvNotificationRejected(mNickname);
     }
   }
   void toastDismissed(WinToastDismissalReason) const override {
@@ -37,7 +33,7 @@ private:
 
   NotificationSupportWin10 &mParent;
   MainChatWindow *const mChatWin;
-  const QString &mNickname;
+  const QString mNickname;
 };
 
 NotificationSupportWin10::NotificationSupportWin10()
