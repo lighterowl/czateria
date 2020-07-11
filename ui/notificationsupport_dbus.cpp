@@ -2,6 +2,7 @@
 
 #include <QCoreApplication>
 #include <QDBusConnection>
+#include <QDBusConnectionInterface>
 #include <QDBusMessage>
 #include <QDBusReply>
 #include <QDebug>
@@ -18,7 +19,7 @@ const QLatin1String rejectPrivConvAction("reject_priv_conv");
 
 NotificationSupportDBus::NotificationSupportDBus()
     : mSessionBus(QDBusConnection::sessionBus()) {
-  if (mSessionBus.isConnected()) {
+  if (isServicePresent()) {
     mSessionBus.connect(dbusServiceName, dbusPath, dbusInterfaceName,
                         QLatin1String("ActionInvoked"), this,
                         SLOT(onNotificationActionInvoked(quint32, QString)));
@@ -66,8 +67,14 @@ void NotificationSupportDBus::removeNotification(MainChatWindow *chatWin,
   });
 }
 
-bool NotificationSupportDBus::supported() const {
-  return mSessionBus.isConnected();
+bool NotificationSupportDBus::supported() const { return isServicePresent(); }
+
+bool NotificationSupportDBus::isServicePresent() const {
+  if (mSessionBus.isConnected()) {
+    auto reply = mSessionBus.interface()->isServiceRegistered(dbusServiceName);
+    return reply.isValid() && reply.value();
+  }
+  return false;
 }
 
 void NotificationSupportDBus::onChatWindowDestroyed(QObject *obj) {

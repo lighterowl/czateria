@@ -18,6 +18,7 @@ public:
   bool supported() const override;
 
 private:
+  bool isServicePresent() const;
   void onChatWindowDestroyed(QObject *);
   void removeNotification(quint32);
   template <typename F> void removeNotifications(F &&);
