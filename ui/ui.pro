@@ -12,6 +12,7 @@ unix:qtHaveModule(dbus) {
 win32 {
   SOURCES += notificationsupport_win10.cpp ../WinToast/src/wintoastlib.cpp
   HEADERS += notificationsupport_win10.h ../WinToast/src/wintoastlib.h
+  DEFINES += UNICODE PSAPI_VERSION=1
 }
 
 INCLUDEPATH += ..
