@@ -262,8 +262,9 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   ui->actionNative->setChecked(native_supported &&
                                mAppSettings.notificationStyle ==
                                    AppSettings::NotificationStyle::Native);
-  ui->actionMessage_box->setChecked(mAppSettings.notificationStyle ==
-                                    AppSettings::NotificationStyle::MessageBox);
+  ui->actionMessage_box->setChecked(
+      !native_supported || mAppSettings.notificationStyle ==
+                               AppSettings::NotificationStyle::MessageBox);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
