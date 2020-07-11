@@ -10,8 +10,8 @@ unix:qtHaveModule(dbus) {
   HEADERS += notificationsupport_dbus.h
 }
 win32 {
-  SOURCES += notificationsupport_win10.cpp
-  HEADERS += notificationsupport_win10.h
+  SOURCES += notificationsupport_win10.cpp ../WinToast/src/wintoastlib.cpp
+  HEADERS += notificationsupport_win10.h ../WinToast/src/wintoastlib.h
 }
 
 INCLUDEPATH += ..
