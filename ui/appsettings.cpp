@@ -1,5 +1,7 @@
 #include "appsettings.h"
 
+#include <QMetaEnum>
+
 template <>
 bool (QVariant::*const AppSettings::Setting<bool>::mConvFn)() const =
     &QVariant::toBool;
@@ -13,6 +15,16 @@ AppSettings::AppSettings()
     auto loginsHash = variant.toHash();
     for (auto it = loginsHash.cbegin(); it != loginsHash.cend(); ++it) {
       logins[it.key()] = it.value().toString();
+    }
+  }
+  variant = mSettings.value(QLatin1String("notifications"));
+  if (variant.isValid() && variant.type() == QVariant::String) {
+    auto styleStr = variant.toString();
+    bool ok = false;
+    auto metaEnum = QMetaEnum::fromType<AppSettings::NotificationStyle>();
+    auto idx = metaEnum.keyToValue(styleStr.toLatin1().data(), &ok);
+    if (ok) {
+      notificationStyle = static_cast<AppSettings::NotificationStyle>(idx);
     }
   }
   mSettings.beginGroup(QLatin1String("autologin"));
@@ -36,6 +48,11 @@ AppSettings::AppSettings()
 
 AppSettings::~AppSettings() {
   mSettings.setValue(QLatin1String("logins"), logins);
+  mSettings.setValue(
+      QLatin1String("notifications"),
+      QLatin1String(
+          QMetaEnum::fromType<AppSettings::NotificationStyle>().valueToKey(
+              static_cast<int>(notificationStyle))));
   mSettings.beginGroup(QLatin1String("autologin"));
   for (auto it = mAutologinData.cbegin(); it != mAutologinData.cend(); ++it) {
     mSettings.beginGroup(QString(QLatin1String("%1")).arg(it.key()));

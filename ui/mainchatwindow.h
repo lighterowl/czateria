@@ -34,6 +34,9 @@ public:
                           const AppSettings &settings, MainWindow *mainWin);
   ~MainChatWindow();
 
+  void onPrivateConvNotificationAccepted(const QString &nickname);
+  void onPrivateConvNotificationRejected(const QString &nickname);
+
 private:
   void onNewPrivateConversation(const QString &nickname);
   void onReturnPressed();
@@ -52,6 +55,7 @@ private:
   bool eventFilter(QObject *, QEvent *) override;
 
   Ui::ChatWidget *ui;
+  MainWindow *const mMainWindow;
   Czateria::ChatSession *const mChatSession;
   QSortFilterProxyModel *const mSortProxy;
   QCompleter *const mNicknameCompleter;
@@ -61,7 +65,6 @@ private:
   QAction *const mSendImageAction;
   QAction *const mShowChannelListAction;
   QAction *const mUseEmoji;
-  QHash<QString, QMessageBox *> mPendingPrivRequests;
 };
 
 #endif // MAINCHATWINDOW_H

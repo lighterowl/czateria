@@ -10,6 +10,7 @@
 #include <czatlib/loginsession.h>
 #include <czatlib/roomlistmodel.h>
 
+#include <QActionGroup>
 #include <QCloseEvent>
 #include <QCompleter>
 #include <QDebug>
@@ -236,6 +237,34 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
           [=](bool checked) { mAppSettings.useEmojiIcons = checked; });
 
   startTimer(channelListRefreshInterval);
+
+  connect(ui->actionMessage_box, &QAction::toggled, this, [&](bool checked) {
+    if (checked) {
+      mNotifications = NotificationSupport::msgBox();
+      mAppSettings.notificationStyle =
+          AppSettings::NotificationStyle::MessageBox;
+    }
+  });
+  connect(ui->actionNative, &QAction::toggled, this, [&](bool checked) {
+    if (checked) {
+      mNotifications = NotificationSupport::native();
+      mAppSettings.notificationStyle = AppSettings::NotificationStyle::Native;
+    }
+  });
+
+  auto grp = new QActionGroup(this);
+  grp->addAction(ui->actionNative);
+  grp->addAction(ui->actionMessage_box);
+
+  auto native = NotificationSupport::native();
+  const bool native_supported = native && native->supported();
+  ui->actionNative->setEnabled(native_supported);
+  ui->actionNative->setChecked(native_supported &&
+                               mAppSettings.notificationStyle ==
+                                   AppSettings::NotificationStyle::Native);
+  ui->actionMessage_box->setChecked(
+      !native_supported || mAppSettings.notificationStyle ==
+                               AppSettings::NotificationStyle::MessageBox);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
@@ -366,6 +395,11 @@ void MainWindow::createChatWindow(
   win->show();
 }
 
+void MainWindow::removeNotification(MainChatWindow *chatWin,
+                                    const QString &nickname) {
+  mNotifications->removeNotification(chatWin, nickname);
+}
+
 bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
   if (obj == ui->nicknameLineEdit && ev->type() == QEvent::KeyPress) {
     auto keyEv = static_cast<QKeyEvent *>(ev);
@@ -380,6 +414,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
 void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
 MainWindow::~MainWindow() { delete ui; }
+
+void MainWindow::displayNotification(MainChatWindow *chatWin,
+                                     const QString &nickname,
+                                     const QString &channel) {
+  mNotifications->displayNotification(chatWin, nickname, channel);
+}
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
   if (mChatWindows.empty()) {

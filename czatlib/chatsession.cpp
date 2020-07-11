@@ -396,7 +396,7 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
     // incoming message
     auto msg = Message::privMessage(json);
     auto it = mCurrentPrivate.find(user);
-    if (it == std::end(mCurrentPrivate)) {
+    if (it == std::end(mCurrentPrivate) || *it == ConversationState::Closed) {
       mCurrentPrivate[user] = ConversationState::InviteReceived;
       mPendingPrivateMsgs[user].push_back(msg);
       emit newPrivateConversation(user);

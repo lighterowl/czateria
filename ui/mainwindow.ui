@@ -139,15 +139,23 @@
      <x>0</x>
      <y>0</y>
      <width>491</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOptions">
     <property name="title">
      <string>Options</string>
     </property>
+    <widget class="QMenu" name="menuNotification_style">
+     <property name="title">
+      <string>Notification style</string>
+     </property>
+     <addaction name="actionMessage_box"/>
+     <addaction name="actionNative"/>
+    </widget>
     <addaction name="actionSave_pictures_automatically"/>
     <addaction name="actionUse_emoji_icons"/>
+    <addaction name="menuNotification_style"/>
    </widget>
    <addaction name="menuOptions"/>
   </widget>
@@ -186,6 +194,31 @@
    </property>
    <property name="statusTip">
     <string>Convert icons and emoticons to emoji</string>
+   </property>
+  </action>
+  <action name="actionMessage_box">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Message box</string>
+   </property>
+   <property name="statusTip">
+    <string>Use a message box to notify about new private conversations</string>
+   </property>
+  </action>
+  <action name="actionNative">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Native</string>
+   </property>
+   <property name="statusTip">
+    <string>Use desktop notifications for new private conversations</string>
    </property>
   </action>
  </widget>

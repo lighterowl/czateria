@@ -135,7 +135,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                                Czateria::AvatarHandler &avatars,
                                const Czateria::Room &room,
                                const AppSettings &settings, MainWindow *mainWin)
-    : QMainWindow(nullptr), ui(new Ui::ChatWidget),
+    : QMainWindow(nullptr), ui(new Ui::ChatWidget), mMainWindow(mainWin),
       mChatSession(new Czateria::ChatSession(login, avatars, room, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
@@ -166,7 +166,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   mShowChannelListAction->setToolTip(tr("Show channel list"));
   mShowChannelListAction->setStatusTip(tr("Shows the channel list window"));
   connect(mShowChannelListAction, &QAction::triggered, mShowChannelListAction,
-          [=](auto) { mainWin->show(); });
+          [=](auto) { mMainWindow->show(); });
   toolbar->addAction(mShowChannelListAction);
 
   connect(mSendImageAction, &QAction::triggered, this, [=](auto) {
@@ -241,22 +241,21 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
           ui->nicknameLabel, &QLabel::setText);
   connect(mChatSession, &Czateria::ChatSession::imageReceived, this,
           [=](auto &&nickname, auto &&image) {
-            auto textedit = ui->tabWidget->privateMessageTab(nickname);
             if (mAppSettings.savePicturesAutomatically) {
               auto defaultPath =
                   imageDefaultPath(mChatSession->channel(), nickname);
               image.save(defaultPath);
-              textedit->appendPlainText(
-                  tr("[%1] Image saved as %2")
-                      .arg(QDateTime::currentDateTime().toString(
-                          QLatin1String("HH:mm:ss")))
-                      .arg(defaultPath));
+              ui->tabWidget->addMessageToPrivateChat(
+                  nickname, tr("[%1] Image saved as %2")
+                                .arg(QDateTime::currentDateTime().toString(
+                                    QLatin1String("HH:mm:ss")))
+                                .arg(defaultPath));
             } else {
               showImageDialog(this, nickname, mChatSession->channel(), image);
-              textedit->appendPlainText(
-                  tr("[%1] Image received")
-                      .arg(QDateTime::currentDateTime().toString(
-                          QLatin1String("HH:mm:ss"))));
+              ui->tabWidget->addMessageToPrivateChat(
+                  nickname, tr("[%1] Image received")
+                                .arg(QDateTime::currentDateTime().toString(
+                                    QLatin1String("HH:mm:ss"))));
             }
             notifyActivity();
           });
@@ -293,10 +292,10 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   });
   connect(mChatSession, &Czateria::ChatSession::imageDelivered, this,
           [=](auto &&nick) {
-            ui->tabWidget->privateMessageTab(nick)->appendPlainText(
-                tr("[%1] Image delivered")
-                    .arg(QDateTime::currentDateTime().toString(
-                        QLatin1String("HH:mm:ss"))));
+            ui->tabWidget->addMessageToPrivateChat(
+                nick, tr("[%1] Image delivered")
+                          .arg(QDateTime::currentDateTime().toString(
+                              QLatin1String("HH:mm:ss"))));
           });
 
   connect(ui->lineEdit, &QLineEdit::returnPressed, this,
@@ -310,6 +309,16 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
 
   connect(ui->tabWidget, &QTabWidget::currentChanged, this,
           [=](auto idx) { mSendImageAction->setEnabled(idx != 0); });
+  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationAccepted,
+          this, [=](auto &&nickname) {
+            doAcceptPrivateConversation(nickname);
+            mainWin->removeNotification(this, nickname);
+          });
+  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationRejected,
+          this, [=](auto &&nickname) {
+            mChatSession->rejectPrivateConversation(nickname);
+            mainWin->removeNotification(this, nickname);
+          });
 
   ui->lineEdit->installEventFilter(this);
 
@@ -318,29 +327,24 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
 
 MainChatWindow::~MainChatWindow() { delete ui; }
 
+void MainChatWindow::onPrivateConvNotificationAccepted(
+    const QString &nickname) {
+  ui->tabWidget->openPrivateMessageTab(nickname);
+  doAcceptPrivateConversation(nickname);
+}
+
+void MainChatWindow::onPrivateConvNotificationRejected(
+    const QString &nickname) {
+  mChatSession->rejectPrivateConversation(nickname);
+}
+
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
-  if (mAutoAcceptPrivs->isChecked()) {
+  if (mAutoAcceptPrivs->isChecked() || ui->tabWidget->privTabIsOpen(nickname)) {
+    ui->tabWidget->openPrivateMessageTab(nickname);
     doAcceptPrivateConversation(nickname);
   } else {
-    auto question =
-        tr("%1 wants to talk in private.\nDo you accept?").arg(nickname);
-    auto msgbox =
-        new QMessageBox(QMessageBox::Question, tr("New private conversation"),
-                        question, QMessageBox::Yes | QMessageBox::No, this);
-    mPendingPrivRequests[nickname] = msgbox;
-    msgbox->setDefaultButton(QMessageBox::Yes);
-    msgbox->button(QMessageBox::Yes)->setShortcut(QKeySequence());
-    msgbox->button(QMessageBox::No)->setShortcut(QKeySequence());
-    connect(msgbox, &QDialog::finished, this, [=](int result) {
-      if (result == QMessageBox::Yes) {
-        doAcceptPrivateConversation(nickname);
-      } else {
-        mChatSession->rejectPrivateConversation(nickname);
-      }
-    });
-    msgbox->show();
-    msgbox->raise();
-    msgbox->activateWindow();
+    ui->tabWidget->askAcceptPrivateMessage(nickname);
+    mMainWindow->displayNotification(this, nickname, mChatSession->channel());
   }
 }
 
@@ -377,7 +381,6 @@ void MainChatWindow::onUserNameMiddleClicked() {
 
 void MainChatWindow::doAcceptPrivateConversation(const QString &nickname) {
   mChatSession->acceptPrivateConversation(nickname);
-  ui->tabWidget->openPrivateMessageTab(nickname);
   ui->lineEdit->setFocus(Qt::OtherFocusReason);
   notifyActivity();
 }
@@ -427,11 +430,7 @@ bool MainChatWindow::sendImageFromMime(const QMimeData *mime) {
 }
 
 void MainChatWindow::closePrivateConvMsgbox(const QString &nickname) {
-  if (auto msgbox = mPendingPrivRequests.value(nickname, nullptr)) {
-    msgbox->reject();
-    msgbox->deleteLater();
-    mPendingPrivRequests.remove(nickname);
-  }
+  mMainWindow->removeNotification(this, nickname);
 }
 
 void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {

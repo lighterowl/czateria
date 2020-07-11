@@ -26,23 +26,33 @@ public:
 
   void addMessageToCurrent(const Czateria::Message &msg);
   void addMessageToCurrent(const QString &str);
-  QPlainTextEdit *privateMessageTab(const QString &nickname);
   int countUnreadPrivateTabs() const;
+  void askAcceptPrivateMessage(const QString &nickname);
+  void addMessageToPrivateChat(const QString &nickname, const QString &str);
+  bool privTabIsOpen(const QString &nickname) const {
+    return mPrivateTabs.contains(nickname);
+  }
   void setUseEmoji(bool useEmoji) { mUseEmoji = useEmoji; }
 
 signals:
+  void privateConversationAccepted(const QString &nickname);
+  void privateConversationRejected(const QString &nickname);
   void privateConversationClosed(const QString &nickname);
 
 private:
   void onTabCloseRequested(int index);
-  void writePrivateInfo(const QString &nickname, const QString &message,
-                        const QIcon &icon);
   void indicateTabActivity(int idx, const QIcon &icon);
-  void indicateTabActivity(QPlainTextEdit *tab, const QIcon &icon);
+  void indicateTabActivity(QWidget *tab, const QIcon &icon);
   void updateTabActivity(int idx);
   QString formatMessage(const Czateria::Message &) const;
 
-  QHash<QString, QPlainTextEdit *> mPrivateTabs;
+  class PrivateChatTab;
+  void writePrivateInfo(PrivateChatTab *, const QString &message,
+                        const QIcon &icon);
+  PrivateChatTab *privateMessageTab(const QString &nickname);
+
+  QPlainTextEdit *const mMainChatTab;
+  QHash<QString, PrivateChatTab *> mPrivateTabs;
   bool mUseEmoji;
 };
 
