@@ -262,6 +262,10 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   ui->actionNative->setChecked(native_supported &&
                                mAppSettings.notificationStyle ==
                                    AppSettings::NotificationStyle::Native);
+  if (!native_supported) {
+    ui->actionNative->setStatusTip(
+        tr("Desktop notifications not supported or disabled system-wide"));
+  }
   ui->actionMessage_box->setChecked(
       !native_supported || mAppSettings.notificationStyle ==
                                AppSettings::NotificationStyle::MessageBox);
