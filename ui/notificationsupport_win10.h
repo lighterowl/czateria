@@ -4,15 +4,15 @@
 #include "notificationsupport.h"
 
 #include <QHash>
+#include <QObject>
 #include <QString>
-
-class QObject;
 
 namespace WinToastLib {
 class WinToast;
 }
 
-class NotificationSupportWin10 : public NotificationSupport {
+class NotificationSupportWin10 : public QObject, public NotificationSupport {
+  Q_OBJECT
 public:
   NotificationSupportWin10();
 

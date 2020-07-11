@@ -63,9 +63,9 @@ void NotificationSupportWin10::displayNotification(MainChatWindow *chatWin,
   if (toastId >= 0) {
     mLiveNotifications.insert(toastId, NotificationContext{chatWin, nickname});
     handler->mToastId = toastId;
-    /*QObject::connect(chatWin, &QObject::destroyed, this,
-                     &NotificationSupportWin10::onChatWindowDestroyed,
-                     Qt::UniqueConnection);*/
+    connect(chatWin, &QObject::destroyed, this,
+            &NotificationSupportWin10::onChatWindowDestroyed,
+            Qt::UniqueConnection);
   }
 }
 
