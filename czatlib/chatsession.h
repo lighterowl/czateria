@@ -52,6 +52,8 @@ public:
   const QString &nickname() const { return mNickname; }
   UserListModel *userListModel() const { return mUserListModel; }
 
+  enum class BlockCause { Unknown, Nick, Behaviour, Avatar };
+
 signals:
   void nicknameAssigned(const QString &nickname);
   void roomMessageReceived(const Message &msg);
@@ -65,6 +67,8 @@ signals:
   void userLeft(const QString &nickname);
   void sessionExpired();
   void sessionError();
+  void banned(BlockCause why, const QString &adminNickname);
+  void kicked(BlockCause why);
 
 protected:
   void timerEvent(QTimerEvent *) override;
@@ -74,12 +78,13 @@ private:
   bool handlePrivateMessage(const QJsonObject &json);
   void onSocketError(int);
   void sendKeepalive();
+  void handleKickBan(const QJsonObject &json);
 
   WebSocket *const mWebSocket;
   QString mNickname;
   const QString mHost;
   bool mHelloReceived;
-  int mKeepaliveTimerId;
+  int mKeepaliveTimerId = 0;
   QHash<QString, ConversationState> mCurrentPrivate;
   QHash<QString, QVector<Message>> mPendingPrivateMsgs;
   UserListModel *const mUserListModel;

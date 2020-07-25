@@ -8,11 +8,12 @@
 #include <QStandardPaths>
 
 namespace {
-const QtMessageHandler defaultHandler = qInstallMessageHandler(nullptr);
-const bool enableDebugOutput = qEnvironmentVariableIsSet("CZATERIA_DEBUG");
+QtMessageHandler defaultHandler;
 
 void msgOutput(QtMsgType type, const QMessageLogContext &context,
                const QString &msg) {
+  static const bool enableDebugOutput =
+      qEnvironmentVariableIsSet("CZATERIA_DEBUG");
   if (type != QtDebugMsg || enableDebugOutput) {
     defaultHandler(type, context, msg);
   }
@@ -25,7 +26,7 @@ int main(int argc, char **argv) {
                                    "%{file}:%{line} %{function} "
 #endif
                                    "%{message}"));
-  qInstallMessageHandler(msgOutput);
+  defaultHandler = qInstallMessageHandler(msgOutput);
   QCoreApplication::setOrganizationName(QLatin1String("xavery"));
   QCoreApplication::setOrganizationDomain(QLatin1String("github.com"));
   QCoreApplication::setApplicationName(QLatin1String("czateria"));

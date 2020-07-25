@@ -50,6 +50,7 @@ private:
   QHash<QString, QWeakPointer<Czateria::LoginSession>> mCurrentSessions;
 
   void onChannelDoubleClicked(const QModelIndex &);
+  void onChannelClicked(const QModelIndex &);
   bool isLoginDataEntered();
   void refreshRoomList();
   void onLoginFailed(Czateria::LoginFailReason, const QString &);
@@ -57,6 +58,9 @@ private:
   void saveLoginData(const QString &, const QString &);
   void createChatWindow(QSharedPointer<Czateria::LoginSession>,
                         const Czateria::Room &);
+
+  class AutologinState;
+  friend class AutologinState;
 
   bool eventFilter(QObject *, QEvent *) override;
   void timerEvent(QTimerEvent *) override;

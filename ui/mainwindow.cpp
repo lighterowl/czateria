@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "appsettings.h"
+#include "autologindatadialog.h"
 #include "captchadialog.h"
 #include "mainchatwindow.h"
 #include "qthttpsocket.h"
@@ -12,13 +13,12 @@
 
 #include <QCloseEvent>
 #include <QCompleter>
+#include <QDebug>
 #include <QMessageBox>
 #include <QRegExpValidator>
 #include <QSettings>
 #include <QSharedPointer>
 #include <QSortFilterProxyModel>
-
-#include <chrono>
 
 namespace {
 template <typename F1, typename F2, typename F3>
@@ -47,8 +47,8 @@ void networkErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
                             const QString &title) {
   blockUi(ui, false);
   QMessageBox::critical(parent, title,
-                        QObject::tr("Could not obtain the list of "
-                                    "rooms.\nPlease try again later."));
+                        MainWindow::tr("Could not obtain the list of "
+                                       "rooms.\nPlease try again later."));
 }
 
 void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
@@ -57,38 +57,108 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
   QString message;
   switch (why) {
   case Czateria::LoginFailReason::BadCaptcha:
-    message = QObject::tr("incorrect captcha reply");
+    message = MainWindow::tr("incorrect captcha reply");
     break;
   case Czateria::LoginFailReason::BadPassword:
-    message = QObject::tr("incorrect password");
+    message = MainWindow::tr("incorrect password");
     break;
   case Czateria::LoginFailReason::NickRegistered:
-    message = QObject::tr("nick already registered");
+    message = MainWindow::tr("nick already registered");
     break;
   case Czateria::LoginFailReason::NoSuchUser:
-    message = QObject::tr("no such user");
+    message = MainWindow::tr("no such user");
     break;
   case Czateria::LoginFailReason::NaughtyNick:
-    message =
-        QObject::tr("nick rejected by the server.\nYou probably have naughty "
-                    "words in it.");
+    message = MainWindow::tr(
+        "nick rejected by the server.\nYou probably have naughty "
+        "words in it.");
     break;
   case Czateria::LoginFailReason::Unknown:
-    message = QObject::tr("reason unknown");
+    message = MainWindow::tr("reason unknown");
     break;
   }
-  QMessageBox::critical(parent, QObject::tr("Login error"),
-                        QObject::tr("Login failed : %1").arg(message));
+  QMessageBox::critical(parent, MainWindow::tr("Login error"),
+                        MainWindow::tr("Login failed : %1").arg(message));
 }
 
-using namespace std::literals::chrono_literals;
-constexpr auto channelListRefreshInterval = 5min;
+constexpr auto channelListRefreshInterval = 5 * 60 * 1000;
 } // namespace
+
+class MainWindow::AutologinState {
+  // a helper class introduced in order not to clutter the MainWindow object
+  // with the state variables while performing autologin, mostly needed in order
+  // to display warning messages when a given channel cannot be joined.
+public:
+  AutologinState(MainWindow *mainWin,
+                 QMultiHash<Czateria::RoomListModel::LoginData, int> &&logins)
+      : mMainWindow(mainWin), mLoginHash(logins),
+        mUniqueLogins(mLoginHash.uniqueKeys()),
+        mLoginIter(std::begin(mUniqueLogins)) {
+    Q_ASSERT(!mLoginHash.empty());
+    blockUi(mMainWindow->ui, true);
+    createSession();
+  }
+  ~AutologinState() { blockUi(mMainWindow->ui, false); }
+
+private:
+  void createSession() {
+    auto session = new Czateria::LoginSession(mMainWindow->mSocketFactory);
+    auto rooms = mLoginHash.values(*mLoginIter);
+
+    auto conn = QSharedPointer<QMetaObject::Connection>::create();
+    *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
+      disconnect(*conn);
+      for (auto roomId : rooms) {
+        if (auto room = mMainWindow->mRoomListModel->roomFromId(roomId)) {
+          mMainWindow->createChatWindow(
+              QSharedPointer<Czateria::LoginSession>(session), *room);
+        }
+      }
+      nextSession();
+    });
+    connect(session, &Czateria::LoginSession::loginFailed, [=]() {
+      QMessageBox::warning(mMainWindow, tr("Autologin failed"),
+                           tr("Autologin failed for username %1.\nRooms "
+                              "using this username will not be autojoined.")
+                               .arg(mLoginIter->username));
+      nextSession();
+      delete session;
+    });
+
+    // an "initial" login room is needed in order to create a login session
+    // due to the server requiring a room parameter. that room still needs to
+    // be actually joined later on, and has no real significance, which is why
+    // the first one is simply used.
+    const auto loginRoom = rooms[0];
+    if (auto room = mMainWindow->mRoomListModel->roomFromId(loginRoom)) {
+      session->login(*room, mLoginIter->username, mLoginIter->password);
+    } else {
+      qWarning() << "Room" << loginRoom
+                 << "not found while performing initial login for"
+                 << mLoginIter->username;
+      nextSession();
+    }
+  }
+
+  void nextSession() {
+    ++mLoginIter;
+    if (mLoginIter != std::end(mUniqueLogins)) {
+      createSession();
+    } else {
+      delete this;
+    }
+  }
+
+  MainWindow *const mMainWindow;
+  const QMultiHash<Czateria::RoomListModel::LoginData, int> mLoginHash;
+  QList<Czateria::RoomListModel::LoginData> mUniqueLogins;
+  QList<Czateria::RoomListModel::LoginData>::const_iterator mLoginIter;
+};
 
 MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
                        QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mSocketFactory(factory),
-      mRoomListModel(new Czateria::RoomListModel(this, factory)),
+      mRoomListModel(new Czateria::RoomListModel(this, factory, settings)),
       mRoomSortModel(new QSortFilterProxyModel(this)), mAvatarHandler(factory),
       mAppSettings(settings) {
   ui->setupUi(this);
@@ -107,6 +177,8 @@ MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
 
   connect(ui->tableView, &QTableView::doubleClicked, this,
           &MainWindow::onChannelDoubleClicked);
+  connect(ui->tableView, &QTableView::clicked, this,
+          &MainWindow::onChannelClicked);
 
   connect(mRoomListModel, &Czateria::RoomListModel::downloadError,
           [=](auto err) {
@@ -126,15 +198,23 @@ MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
     blockUi(ui, false);
     ui->tableView->resizeColumnsToContents();
   });
+  auto conn = QSharedPointer<QMetaObject::Connection>::create();
+  *conn = connect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
+    disconnect(*conn);
+    auto logins = mAppSettings.autologinHash();
+    if (!logins.empty()) {
+      new AutologinState(this, std::move(logins)); // self-destructs when done.
+    }
+  });
 
   refreshRoomList();
   mSavedLoginsModel.setStringList(mAppSettings.logins.keys());
 
+  void (QCompleter::*activatedFn)(const QString &) = &QCompleter::activated;
   auto completer = new QCompleter(&mSavedLoginsModel, this);
-  connect(completer, QOverload<const QString &>::of(&QCompleter::activated),
-          [this](auto &&text) {
-            ui->passwordLineEdit->setText(mAppSettings.logins[text].toString());
-          });
+  connect(completer, activatedFn, [this](auto &&text) {
+    ui->passwordLineEdit->setText(mAppSettings.logins[text].toString());
+  });
   ui->nicknameLineEdit->setCompleter(completer);
   ui->nicknameLineEdit->installEventFilter(this);
   ui->nicknameLineEdit->setValidator(CzateriaUtil::getNicknameValidator());
@@ -153,8 +233,8 @@ MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
   if (!isLoginDataEntered()) {
-    QMessageBox::information(this, QObject::tr("Not so fast"),
-                             QObject::tr("Enter your credentials first"));
+    QMessageBox::information(this, MainWindow::tr("Not so fast"),
+                             MainWindow::tr("Enter your credentials first"));
     return;
   }
   bool newSessionNeeded = true;
@@ -169,6 +249,19 @@ void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
   }
   if (newSessionNeeded) {
     startLogin(room);
+  }
+}
+
+void MainWindow::onChannelClicked(const QModelIndex &proxyIdx) {
+  auto idx = mRoomSortModel->mapToSource(proxyIdx);
+  if (idx.column() != 2) {
+    return;
+  }
+  if (mRoomListModel->data(idx, Qt::CheckStateRole).toInt() == Qt::Checked) {
+    mRoomListModel->disableAutologin(idx);
+  } else {
+    AutologinDataDialog dlg(*mRoomListModel, idx, this);
+    dlg.exec();
   }
 }
 
@@ -205,41 +298,41 @@ void MainWindow::onLoginFailed(Czateria::LoginFailReason why,
 }
 
 void MainWindow::startLogin(const Czateria::Room &room) {
-  auto session = QSharedPointer<Czateria::LoginSession>::create(mSocketFactory);
-  auto sessionPtr = session.data();
-  connect(sessionPtr, &Czateria::LoginSession::captchaRequired,
+  auto session = new Czateria::LoginSession(mSocketFactory);
+  connect(session, &Czateria::LoginSession::captchaRequired,
           [=](const QImage &image) {
             QApplication::restoreOverrideCursor();
             CaptchaDialog dialog(image, this);
             if (dialog.exec() == QDialog::Accepted) {
-              sessionPtr->setCaptchaReply(room, dialog.response());
+              session->setCaptchaReply(room, dialog.response());
             } else {
               blockUi(ui, false);
             }
           });
-  auto conn = new QMetaObject::Connection;
-  *conn = connect(sessionPtr, &Czateria::LoginSession::loginSuccessful, [=]() {
+  auto conn = QSharedPointer<QMetaObject::Connection>::create();
+  *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
     disconnect(*conn);
-    delete conn;
     blockUi(ui, false);
     if (ui->nicknameLineEdit->isEnabled()) {
       ui->nicknameLineEdit->setText(session->nickname());
     }
-    createChatWindow(std::move(session), room);
+    createChatWindow(QSharedPointer<Czateria::LoginSession>(session), room);
   });
-  connect(session.data(), &Czateria::LoginSession::loginFailed, this,
-          &MainWindow::onLoginFailed);
+  connect(session, &Czateria::LoginSession::loginFailed,
+          [=](auto why, auto &&loginData) {
+            onLoginFailed(why, loginData);
+            delete session;
+          });
   inspectRadioButtons(
       ui, [&]() { session->login(); },
       [&](auto &&nickname) { session->login(nickname); },
       [&](auto &&nickname, auto &&password) {
         session->login(room, nickname, password);
-        connect(session.data(), &Czateria::LoginSession::loginSuccessful,
-                [=]() {
-                  if (ui->saveCredentialsCheckBox) {
-                    saveLoginData(nickname, password);
-                  }
-                });
+        connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
+          if (ui->saveCredentialsCheckBox) {
+            saveLoginData(nickname, password);
+          }
+        });
       });
   blockUi(ui, true);
 }
