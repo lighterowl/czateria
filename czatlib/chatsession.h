@@ -80,6 +80,7 @@ private:
   void onSocketError(QAbstractSocket::SocketError);
   void sendKeepalive();
   void handleKickBan(const QJsonObject &json);
+  void emitPendingMessages(const QString &);
 
   QWebSocket *const mWebSocket;
   QString mNickname;
