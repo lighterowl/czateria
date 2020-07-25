@@ -26,7 +26,6 @@ private:
   friend class ToastHandler;
 
   void onChatWindowDestroyed(QObject *);
-  template <typename F> void removeNotifications(F &&);
 
   WinToastLib::WinToast &mWinToast;
 };
