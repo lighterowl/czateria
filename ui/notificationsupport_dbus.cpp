@@ -60,13 +60,6 @@ void NotificationSupportDBus::displayNotification(MainChatWindow *chatWin,
   }
 }
 
-void NotificationSupportDBus::removeNotification(MainChatWindow *chatWin,
-                                                 const QString &nickname) {
-  removeNotifications([&](auto &&ctx) {
-    return ctx.chatWin == chatWin && ctx.nickname == nickname;
-  });
-}
-
 bool NotificationSupportDBus::supported() const { return isServicePresent(); }
 
 bool NotificationSupportDBus::isServicePresent() const {
@@ -77,11 +70,7 @@ bool NotificationSupportDBus::isServicePresent() const {
   return false;
 }
 
-void NotificationSupportDBus::onChatWindowDestroyed(QObject *obj) {
-  removeNotifications([&](auto &&ctx) { return ctx.chatWin == obj; });
-}
-
-void NotificationSupportDBus::removeNotification(quint32 notificationId) {
+void NotificationSupportDBus::realRemoveNotification(quint32 notificationId) {
   Q_ASSERT(mSessionBus.isConnected());
   auto m = QDBusMessage::createMethodCall(dbusServiceName, dbusPath,
                                           dbusInterfaceName,
@@ -90,6 +79,10 @@ void NotificationSupportDBus::removeNotification(quint32 notificationId) {
   args.append(notificationId);
   m.setArguments(args);
   mSessionBus.call(m);
+}
+
+void NotificationSupportDBus::onChatWindowDestroyed(QObject *obj) {
+  removeNotifications([&](auto &&ctx) { return ctx.chatWin == obj; });
 }
 
 void NotificationSupportDBus::onNotificationActionInvoked(
@@ -110,13 +103,4 @@ void NotificationSupportDBus::onNotificationActionInvoked(
 void NotificationSupportDBus::onNotificationClosed(quint32 id, quint32) {
   mLiveNotifications.remove(id);
   qDebug() << id;
-}
-
-template <typename F> void NotificationSupportDBus::removeNotifications(F &&f) {
-  const auto it_end = std::end(mLiveNotifications);
-  for (auto it = std::begin(mLiveNotifications); it != it_end; ++it) {
-    if (f(it.value())) {
-      removeNotification(it.key());
-    }
-  }
 }

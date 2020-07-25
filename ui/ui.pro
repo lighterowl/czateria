@@ -38,6 +38,7 @@ HEADERS += \
     chatwindowtabwidget.h \
     notificationsupport.h \
     notificationsupport_msgbox.h \
+    notificationsupport_native.h \
     userlistview.h \
     util.h
 
