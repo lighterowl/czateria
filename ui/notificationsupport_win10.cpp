@@ -69,13 +69,6 @@ void NotificationSupportWin10::displayNotification(MainChatWindow *chatWin,
   }
 }
 
-void NotificationSupportWin10::removeNotification(MainChatWindow *chatWin,
-                                                  const QString &nickname) {
-  removeNotifications([&](auto &&ctx) {
-    return ctx.chatWin == chatWin && ctx.nickname == nickname;
-  });
-}
-
 bool NotificationSupportWin10::supported() const {
   return mWinToast.initialize() && WinToast::isSupportingModernFeatures();
 }
@@ -84,16 +77,6 @@ void NotificationSupportWin10::onChatWindowDestroyed(QObject *obj) {
   removeNotifications([&](auto &&ctx) { return ctx.chatWin == obj; });
 }
 
-void NotificationSupportWin10::removeNotification(qint64 id) {
+void NotificationSupportWin10::realRemoveNotification(qint64 id) {
   mWinToast.hideToast(id);
-}
-
-template <typename F>
-void NotificationSupportWin10::removeNotifications(F &&f) {
-  const auto it_end = std::end(mLiveNotifications);
-  for (auto it = std::begin(mLiveNotifications); it != it_end; ++it) {
-    if (f(it.value())) {
-      removeNotification(it.key());
-    }
-  }
 }
