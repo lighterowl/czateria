@@ -338,6 +338,7 @@ void MainChatWindow::onPrivateConvNotificationAccepted(
 void MainChatWindow::onPrivateConvNotificationRejected(
     const QString &nickname) {
   mChatSession->rejectPrivateConversation(nickname);
+  ui->tabWidget->closePrivateConversationTab(nickname);
 }
 
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
