@@ -272,8 +272,10 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
-          mChatSession,
-          &Czateria::ChatSession::notifyPrivateConversationClosed);
+          [=](auto &&nickname) {
+            mChatSession->notifyPrivateConversationClosed(nickname);
+            updateWindowTitle();
+          });
   connect(ui->tabWidget, &ChatWindowTabWidget::currentChanged, this,
           [=](int tabIdx) {
             // disable completer for private conversations
