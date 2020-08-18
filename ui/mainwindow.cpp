@@ -5,8 +5,8 @@
 #include "autologindatadialog.h"
 #include "captchadialog.h"
 #include "mainchatwindow.h"
-#include "util.h"
 #include "qthttpsocket.h"
+#include "util.h"
 
 #include <czatlib/loginsession.h>
 #include <czatlib/roomlistmodel.h>
