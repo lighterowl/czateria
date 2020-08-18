@@ -5,12 +5,14 @@
 #include "autologindatadialog.h"
 #include "captchadialog.h"
 #include "mainchatwindow.h"
+#include "util.h"
 #include "qthttpsocket.h"
 
 #include <czatlib/loginsession.h>
 #include <czatlib/roomlistmodel.h>
 #include <czatlib/util.h>
 
+#include <QActionGroup>
 #include <QCloseEvent>
 #include <QCompleter>
 #include <QDebug>
@@ -105,24 +107,23 @@ private:
     auto session = new Czateria::LoginSession(mMainWindow->mSocketFactory);
     auto rooms = mLoginHash.values(*mLoginIter);
 
-    auto conn = QSharedPointer<QMetaObject::Connection>::create();
-    *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
-      disconnect(*conn);
-      for (auto roomId : rooms) {
-        if (auto room = mMainWindow->mRoomListModel->roomFromId(roomId)) {
-          mMainWindow->createChatWindow(
-              QSharedPointer<Czateria::LoginSession>(session), *room);
-        }
-      }
-      nextSession();
-    });
-    connect(session, &Czateria::LoginSession::loginFailed, [=]() {
+    oneshotConnect(
+        session, &Czateria::LoginSession::loginSuccessful, session, [=]() {
+          auto ses = QSharedPointer<Czateria::LoginSession>(session);
+          for (auto roomId : rooms) {
+            if (auto room = mMainWindow->mRoomListModel->roomFromId(roomId)) {
+              mMainWindow->createChatWindow(ses, *room);
+            }
+          }
+          nextSession();
+        });
+    connect(session, &Czateria::LoginSession::loginFailed, session, [=]() {
       QMessageBox::warning(mMainWindow, tr("Autologin failed"),
                            tr("Autologin failed for username %1.\nRooms "
                               "using this username will not be autojoined.")
                                .arg(mLoginIter->username));
       nextSession();
-      delete session;
+      session->deleteLater();
     });
 
     // an "initial" login room is needed in order to create a login session
@@ -136,13 +137,14 @@ private:
       qWarning() << "Room" << loginRoom
                  << "not found while performing initial login for"
                  << mLoginIter->username;
+      delete session;
       nextSession();
     }
   }
 
   void nextSession() {
     ++mLoginIter;
-    if (mLoginIter != std::end(mUniqueLogins)) {
+    if (mLoginIter != std::cend(mUniqueLogins)) {
       createSession();
     } else {
       delete this;
@@ -180,39 +182,40 @@ MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
   connect(ui->tableView, &QTableView::clicked, this,
           &MainWindow::onChannelClicked);
 
-  connect(mRoomListModel, &Czateria::RoomListModel::downloadError,
+  connect(mRoomListModel, &Czateria::RoomListModel::downloadError, this,
           [=](auto err) {
             networkErrorMessageBox(this, ui, tr("Network error"));
             qInfo() << "Room list download error :" << err;
           });
-  connect(mRoomListModel, &Czateria::RoomListModel::jsonError, [=](auto err) {
-    networkErrorMessageBox(this, ui, tr("Message parse error"));
-    qInfo() << "Could not parse JSON :" << err.errorString();
-  });
-  connect(mRoomListModel, &Czateria::RoomListModel::replyParseError,
+  connect(mRoomListModel, &Czateria::RoomListModel::jsonError, this,
+          [=](auto err) {
+            networkErrorMessageBox(this, ui, tr("Message parse error"));
+            qInfo() << "Could not parse JSON :" << err.errorString();
+          });
+  connect(mRoomListModel, &Czateria::RoomListModel::replyParseError, this,
           [=](auto &&str) {
             networkErrorMessageBox(this, ui, tr("Message format error"));
             qInfo() << "Unexpected format :" << str;
           });
-  connect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
+  connect(mRoomListModel, &Czateria::RoomListModel::finished, this, [=]() {
     blockUi(ui, false);
     ui->tableView->resizeColumnsToContents();
   });
-  auto conn = QSharedPointer<QMetaObject::Connection>::create();
-  *conn = connect(mRoomListModel, &Czateria::RoomListModel::finished, [=]() {
-    disconnect(*conn);
-    auto logins = mAppSettings.autologinHash();
-    if (!logins.empty()) {
-      new AutologinState(this, std::move(logins)); // self-destructs when done.
-    }
-  });
+  oneshotConnect(mRoomListModel, &Czateria::RoomListModel::finished, this,
+                 [=]() {
+                   auto logins = mAppSettings.autologinHash();
+                   if (!logins.empty()) {
+                     new AutologinState(
+                         this, std::move(logins)); // self-destructs when done.
+                   }
+                 });
 
   refreshRoomList();
   mSavedLoginsModel.setStringList(mAppSettings.logins.keys());
 
   void (QCompleter::*activatedFn)(const QString &) = &QCompleter::activated;
   auto completer = new QCompleter(&mSavedLoginsModel, this);
-  connect(completer, activatedFn, [this](auto &&text) {
+  connect(completer, activatedFn, this, [=](auto &&text) {
     ui->passwordLineEdit->setText(mAppSettings.logins[text].toString());
   });
   ui->nicknameLineEdit->setCompleter(completer);
@@ -222,13 +225,41 @@ MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
   ui->actionSave_pictures_automatically->setChecked(
       mAppSettings.savePicturesAutomatically);
   connect(
-      ui->actionSave_pictures_automatically, &QAction::toggled,
+      ui->actionSave_pictures_automatically, &QAction::toggled, this,
       [=](bool checked) { mAppSettings.savePicturesAutomatically = checked; });
-  ui->actionSave_pictures_automatically->setStatusTip(
-      tr("Save the received images into the pictures directory without "
-         "displaying them"));
+  ui->actionUse_emoji_icons->setChecked(mAppSettings.useEmojiIcons);
+  connect(ui->actionUse_emoji_icons, &QAction::toggled, this,
+          [=](bool checked) { mAppSettings.useEmojiIcons = checked; });
 
   startTimer(channelListRefreshInterval);
+
+  connect(ui->actionMessage_box, &QAction::toggled, this, [&](bool checked) {
+    if (checked) {
+      mNotifications = NotificationSupport::msgBox();
+      mAppSettings.notificationStyle =
+          AppSettings::NotificationStyle::MessageBox;
+    }
+  });
+  connect(ui->actionNative, &QAction::toggled, this, [&](bool checked) {
+    if (checked) {
+      mNotifications = NotificationSupport::native();
+      mAppSettings.notificationStyle = AppSettings::NotificationStyle::Native;
+    }
+  });
+
+  auto grp = new QActionGroup(this);
+  grp->addAction(ui->actionNative);
+  grp->addAction(ui->actionMessage_box);
+
+  auto native = NotificationSupport::native();
+  const bool native_supported = native && native->supported();
+  ui->actionNative->setEnabled(native_supported);
+  ui->actionNative->setChecked(native_supported &&
+                               mAppSettings.notificationStyle ==
+                                   AppSettings::NotificationStyle::Native);
+  ui->actionMessage_box->setChecked(
+      !native_supported || mAppSettings.notificationStyle ==
+                               AppSettings::NotificationStyle::MessageBox);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
@@ -299,7 +330,7 @@ void MainWindow::onLoginFailed(Czateria::LoginFailReason why,
 
 void MainWindow::startLogin(const Czateria::Room &room) {
   auto session = new Czateria::LoginSession(mSocketFactory);
-  connect(session, &Czateria::LoginSession::captchaRequired,
+  connect(session, &Czateria::LoginSession::captchaRequired, this,
           [=](const QImage &image) {
             QApplication::restoreOverrideCursor();
             CaptchaDialog dialog(image, this);
@@ -309,16 +340,15 @@ void MainWindow::startLogin(const Czateria::Room &room) {
               blockUi(ui, false);
             }
           });
-  auto conn = QSharedPointer<QMetaObject::Connection>::create();
-  *conn = connect(session, &Czateria::LoginSession::loginSuccessful, [=]() {
-    disconnect(*conn);
-    blockUi(ui, false);
-    if (ui->nicknameLineEdit->isEnabled()) {
-      ui->nicknameLineEdit->setText(session->nickname());
-    }
-    createChatWindow(QSharedPointer<Czateria::LoginSession>(session), room);
-  });
-  connect(session, &Czateria::LoginSession::loginFailed,
+  oneshotConnect(
+      session, &Czateria::LoginSession::loginSuccessful, this, [=]() {
+        blockUi(ui, false);
+        if (ui->nicknameLineEdit->isEnabled()) {
+          ui->nicknameLineEdit->setText(session->nickname());
+        }
+        createChatWindow(QSharedPointer<Czateria::LoginSession>(session), room);
+      });
+  connect(session, &Czateria::LoginSession::loginFailed, this,
           [=](auto why, auto &&loginData) {
             onLoginFailed(why, loginData);
             delete session;
@@ -355,8 +385,14 @@ void MainWindow::createChatWindow(
   if (!session->nickname().isEmpty()) {
     mCurrentSessions[session->nickname()] = session.toWeakRef();
   }
-  connect(win, &QObject::destroyed, [=]() { mChatWindows.removeAll(win); });
+  connect(win, &QObject::destroyed, this,
+          [=]() { mChatWindows.removeAll(win); });
   win->show();
+}
+
+void MainWindow::removeNotification(MainChatWindow *chatWin,
+                                    const QString &nickname) {
+  mNotifications->removeNotification(chatWin, nickname);
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
@@ -373,6 +409,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *ev) {
 void MainWindow::timerEvent(QTimerEvent *) { refreshRoomList(); }
 
 MainWindow::~MainWindow() { delete ui; }
+
+void MainWindow::displayNotification(MainChatWindow *chatWin,
+                                     const QString &nickname,
+                                     const QString &channel) {
+  mNotifications->displayNotification(chatWin, nickname, channel);
+}
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
   if (mChatWindows.empty()) {

@@ -9,9 +9,12 @@
 
 namespace {
 using namespace Czateria;
-const QStringList model_columns = {RoomListModel::tr("Room name"),
-                                   RoomListModel::tr("Users"),
-                                   RoomListModel::tr("Autojoin")};
+const QStringList &model_columns() {
+  static const QStringList columns = {RoomListModel::tr("Room name"),
+                                      RoomListModel::tr("Users"),
+                                      RoomListModel::tr("Autojoin")};
+  return columns;
+}
 } // namespace
 
 namespace Czateria {
@@ -28,6 +31,7 @@ void RoomListModel::download() {
       QUrl(QLatin1String("https://czateria.interia.pl/rooms-list")));
   connect(mSocket, &HttpSocket::finished, this,
           &RoomListModel::onDownloadFinished);
+
   connect(mSocket, &HttpSocket::downloadError, this,
           &RoomListModel::downloadError);
 }
@@ -45,7 +49,7 @@ const Room *RoomListModel::roomFromId(int roomId) const {
 int RoomListModel::rowCount(const QModelIndex &) const { return mRooms.size(); }
 
 int RoomListModel::columnCount(const QModelIndex &) const {
-  return model_columns.size();
+  return model_columns().size();
 }
 
 QVariant RoomListModel::data(const QModelIndex &index, int role) const {
@@ -67,7 +71,7 @@ QVariant RoomListModel::data(const QModelIndex &index, int role) const {
 QVariant RoomListModel::headerData(int section, Qt::Orientation orientation,
                                    int role) const {
   if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-    return model_columns[section];
+    return model_columns()[section];
   } else {
     return QAbstractTableModel::headerData(section, orientation, role);
   }
@@ -83,7 +87,7 @@ QVector<Room> RoomListModel::jsonToChannels(const QJsonArray &arr) {
       emit replyParseError(QLatin1String("'rooms' not an array"));
       return rv;
     }
-    for (QJsonValueRef r : rooms.toArray()) {
+    for (auto &&r : rooms.toArray()) {
       if (!r.isObject()) {
         emit replyParseError(
             QLatin1String("'rooms' array member not an object"));

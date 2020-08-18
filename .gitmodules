@@ -1,3 +1,6 @@
+[submodule "WinToast"]
+	path = WinToast
+	url = https://github.com/xavery/WinToast.git
 [submodule "googletest"]
 	path = czatlibtest/googletest
 	url = https://github.com/google/googletest.git

@@ -224,18 +224,13 @@ void ChatSession::acceptPrivateConversation(const QString &nickname) {
            mCurrentPrivate.value(nickname) ==
                ConversationState::InviteReceived);
   mCurrentPrivate[nickname] = ConversationState::Active;
-  auto it = mPendingPrivateMsgs.find(nickname);
-  if (it != std::end(mPendingPrivateMsgs)) {
-    for (auto &&msg : it.value()) {
-      emit privateMessageReceived(msg);
-    }
-    mPendingPrivateMsgs.remove(nickname);
-  }
+  emitPendingMessages(nickname);
 }
 
 void ChatSession::rejectPrivateConversation(const QString &nickname) {
   SendTextMessage(mWebSocket, privRejectMsg(nickname));
   mCurrentPrivate.remove(nickname);
+  mPendingPrivateMsgs.remove(nickname);
 }
 
 void ChatSession::notifyPrivateConversationClosed(const QString &nickname) {
@@ -313,15 +308,25 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   }
   case 128: {
     auto users = obj[QLatin1String("users")].toArray();
-    for (auto user : users) {
+    for (auto &&user : users) {
       emit userJoined(user.toObject()[QLatin1String("login")].toString());
     }
     mUserListModel->addUsers(users);
     break;
   }
-  case 130:
-    emit userLeft(obj[QLatin1String("login")].toString());
-    break;
+  case 130: {
+    // TODO this duplicates the subcode 14 behaviour in handlePrivateMessage().
+    // we also seem to have introduced parallel arrays (well, actually hashes,
+    // but still), so it would be nice to stuff "private conversation state"
+    // into a struct/class and put the "abnormal destruction" behaviour in one
+    // place.
+    auto user = obj[QLatin1String("login")].toString();
+    emitPendingMessages(user);
+    mCurrentPrivate.remove(user);
+    emit privateConversationStateChanged(user,
+                                         Czateria::ConversationState::UserLeft);
+    emit userLeft(user);
+  } break;
 
   case 97:
     if (!handlePrivateMessage(obj)) {
@@ -396,7 +401,7 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
     // incoming message
     auto msg = Message::privMessage(json);
     auto it = mCurrentPrivate.find(user);
-    if (it == std::end(mCurrentPrivate)) {
+    if (it == std::end(mCurrentPrivate) || *it == ConversationState::Closed) {
       mCurrentPrivate[user] = ConversationState::InviteReceived;
       mPendingPrivateMsgs[user].push_back(msg);
       emit newPrivateConversation(user);
@@ -418,8 +423,10 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
              mCurrentPrivate.value(user, ConversationState::Active) ==
                  ConversationState::InviteReceived) {
     // conversation request cancelled before accepting.
-    mPendingPrivateMsgs.remove(user);
+    emitPendingMessages(user);
     mCurrentPrivate.remove(user);
+    emit privateConversationStateChanged(user,
+                                         Czateria::ConversationState::Closed);
     emit privateConversationCancelled(user);
     return true;
   } else if (subcode == 25) {
@@ -453,6 +460,7 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
   "msgStyleId": 0,
   "nickColorId": 71,
   "code": 97 } */
+    emit imageDelivered(json[QLatin1String("user")].toString());
     return true;
   }
   bool ok;
@@ -506,6 +514,16 @@ void ChatSession::handleKickBan(const QJsonObject &json) {
   case 33:
     emit kicked(BlockCause::Unknown);
     break;
+  }
+}
+
+void ChatSession::emitPendingMessages(const QString &nickname) {
+  auto it = mPendingPrivateMsgs.find(nickname);
+  if (it != std::end(mPendingPrivateMsgs)) {
+    for (auto &&msg : it.value()) {
+      emit privateMessageReceived(msg);
+    }
+    mPendingPrivateMsgs.remove(nickname);
   }
 }
 

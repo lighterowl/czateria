@@ -86,7 +86,6 @@ public:
     }
 
     auto sock = mSocketFactory->getCached(QUrl(address));
-    auto nickname = user.mLogin;
     QObject::connect(sock, &HttpSocket::finished, [=]() {
       if (sock->error() == 0) {
         mAvatarCache[avatarId] = Avatar{fmt, sock->readAll()};

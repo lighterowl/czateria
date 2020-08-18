@@ -9,6 +9,8 @@
 #include <czatlib/avatarhandler.h>
 #include <czatlib/loginfailreason.h>
 
+#include "notificationsupport.h"
+
 class QNetworkAccessManager;
 class QNetworkReply;
 class CaptchaDialog;
@@ -34,6 +36,9 @@ public:
   explicit MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
                       QWidget *parent = nullptr);
   ~MainWindow() override;
+  void displayNotification(MainChatWindow *chatWin, const QString &nickname,
+                           const QString &channel);
+  void removeNotification(MainChatWindow *chatWin, const QString &nickname);
 
 protected:
   void closeEvent(QCloseEvent *ev) override;
@@ -48,6 +53,7 @@ private:
   AppSettings &mAppSettings;
   QList<MainChatWindow *> mChatWindows;
   QHash<QString, QWeakPointer<Czateria::LoginSession>> mCurrentSessions;
+  std::unique_ptr<NotificationSupport> mNotifications;
 
   void onChannelDoubleClicked(const QModelIndex &);
   void onChannelClicked(const QModelIndex &);

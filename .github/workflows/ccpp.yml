@@ -19,9 +19,7 @@ jobs:
         submodules: recursive
     
     - name: Install Qt
-      uses: jurplel/install-qt-action@v2
-      with:
-        version: "5.9.5"
+      run: sudo apt install qt5-default qtbase5-dev libqt5websockets5-dev
       
     - name: Build with gcc
       run: ./workflow_build_linux.sh g++

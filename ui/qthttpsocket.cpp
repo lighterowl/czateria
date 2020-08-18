@@ -10,7 +10,11 @@ public:
     mReply->setParent(this);
     connect(mReply, &QNetworkReply::finished, this, &HttpSocket::finished);
     void (QNetworkReply::*errSignal)(QNetworkReply::NetworkError) =
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        &QNetworkReply::errorOccurred;
+#else
         &QNetworkReply::error;
+#endif
     connect(mReply, errSignal, [=](auto err) { emit downloadError(err); });
   }
   QByteArray readAll() override { return mReply->readAll(); }

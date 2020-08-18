@@ -57,7 +57,7 @@ void showImageDialog(QWidget *parent, const QString &nickname,
   buttonBox->setCenterButtons(true);
   auto defaultPath = imageDefaultPath(channel, nickname);
   QObject::connect(buttonBox->button(QDialogButtonBox::Save),
-                   &QPushButton::clicked, [=](auto) {
+                   &QPushButton::clicked, parent, [=](auto) {
                      auto fileName = QFileDialog::getSaveFileName(
                          parent,
                          MainChatWindow::tr("Save image from %1").arg(nickname),
@@ -137,7 +137,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                                Czateria::AvatarHandler &avatars,
                                const Czateria::Room &room,
                                const AppSettings &settings, MainWindow *mainWin)
-    : QMainWindow(nullptr), ui(new Ui::ChatWidget),
+    : QMainWindow(nullptr), ui(new Ui::ChatWidget), mMainWindow(mainWin),
       mChatSession(new Czateria::ChatSession(login, avatars, room,
                                              &webSocketFactory, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
@@ -151,7 +151,8 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                       tr("Send an image"), this)),
       mShowChannelListAction(
           new QAction(QIcon(QLatin1String(":/icons/czateria.png")),
-                      tr("Show channel list"), this)) {
+                      tr("Show channel list"), this)),
+      mUseEmoji(new QAction(tr("Use emoji icons"), this)) {
   QIcon icon;
   icon.addFile(QString::fromUtf8(":/icons/czateria.png"), QSize(),
                QIcon::Normal, QIcon::Off);
@@ -167,11 +168,11 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
 
   mShowChannelListAction->setToolTip(tr("Show channel list"));
   mShowChannelListAction->setStatusTip(tr("Shows the channel list window"));
-  connect(mShowChannelListAction, &QAction::triggered,
-          [=](auto) { mainWin->show(); });
+  connect(mShowChannelListAction, &QAction::triggered, mShowChannelListAction,
+          [=](auto) { mMainWindow->show(); });
   toolbar->addAction(mShowChannelListAction);
 
-  connect(mSendImageAction, &QAction::triggered, [=](auto) {
+  connect(mSendImageAction, &QAction::triggered, this, [=](auto) {
     auto filename = QFileDialog::getOpenFileName(
         this, tr("Select an image file"), QString(), getImageFilter());
     if (filename.isEmpty()) {
@@ -197,6 +198,13 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
       tr("Accept private conversations without prompting"));
   mAutoAcceptPrivs->setCheckable(true);
   menu->addAction(mAutoAcceptPrivs);
+
+  mUseEmoji->setStatusTip(tr("Convert icons and emoticons to emoji"));
+  mUseEmoji->setCheckable(true);
+  connect(mUseEmoji, &QAction::toggled, this,
+          [=](auto checked) { ui->tabWidget->setUseEmoji(checked); });
+  mUseEmoji->setChecked(mAppSettings.useEmojiIcons);
+  menu->addAction(mUseEmoji);
 
   auto desiredWidth = getOptimalUserListWidth(ui->listView);
   ui->widget_3->setMaximumSize(QSize(desiredWidth, QWIDGETSIZE_MAX));
@@ -226,46 +234,40 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   connect(mChatSession, &Czateria::ChatSession::newPrivateConversation, this,
           &MainChatWindow::onNewPrivateConversation);
   connect(mChatSession, &Czateria::ChatSession::privateConversationCancelled,
-          this, [=](const QString &nickname) {
-            auto msgbox = mPendingPrivRequests.value(nickname, nullptr);
-            if (msgbox) {
-              msgbox->reject();
-              msgbox->deleteLater();
-              mPendingPrivRequests.remove(nickname);
-            }
-          });
+          this, &MainChatWindow::closePrivateConvMsgbox);
+  connect(mChatSession, &Czateria::ChatSession::userLeft, this,
+          &MainChatWindow::closePrivateConvMsgbox);
   connect(mChatSession, &Czateria::ChatSession::privateConversationStateChanged,
           ui->tabWidget,
           &ChatWindowTabWidget::onPrivateConversationStateChanged);
   connect(mChatSession, &Czateria::ChatSession::nicknameAssigned,
           ui->nicknameLabel, &QLabel::setText);
-  connect(mChatSession, &Czateria::ChatSession::imageReceived,
+  connect(mChatSession, &Czateria::ChatSession::imageReceived, this,
           [=](auto &&nickname, auto &&image) {
-            auto textedit = ui->tabWidget->privateMessageTab(nickname);
             if (mAppSettings.savePicturesAutomatically) {
               auto defaultPath =
                   imageDefaultPath(mChatSession->channel(), nickname);
               image.save(defaultPath);
-              textedit->appendPlainText(
-                  tr("[%1] Image saved as %2")
-                      .arg(QDateTime::currentDateTime().toString(
-                          QLatin1String("HH:mm:ss")))
-                      .arg(defaultPath));
+              ui->tabWidget->addMessageToPrivateChat(
+                  nickname, tr("[%1] Image saved as %2")
+                                .arg(QDateTime::currentDateTime().toString(
+                                    QLatin1String("HH:mm:ss")))
+                                .arg(defaultPath));
             } else {
               showImageDialog(this, nickname, mChatSession->channel(), image);
-              textedit->appendPlainText(
-                  tr("[%1] Image received")
-                      .arg(QDateTime::currentDateTime().toString(
-                          QLatin1String("HH:mm:ss"))));
+              ui->tabWidget->addMessageToPrivateChat(
+                  nickname, tr("[%1] Image received")
+                                .arg(QDateTime::currentDateTime().toString(
+                                    QLatin1String("HH:mm:ss"))));
             }
             notifyActivity();
           });
-  connect(mChatSession, &Czateria::ChatSession::sessionExpired, [=]() {
+  connect(mChatSession, &Czateria::ChatSession::sessionExpired, this, [=]() {
     QMessageBox::information(
         this, tr("Session expired"),
         tr("Your session has expired.\nPlease log back in."));
   });
-  connect(mChatSession, &Czateria::ChatSession::sessionError, [=]() {
+  connect(mChatSession, &Czateria::ChatSession::sessionError, this, [=]() {
     QMessageBox::critical(
         this, tr("Communication error"),
         tr("An unknown error has occurred.\nPlease try logging in again, "
@@ -273,22 +275,33 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
-          mChatSession,
-          &Czateria::ChatSession::notifyPrivateConversationClosed);
-  connect(ui->tabWidget, &ChatWindowTabWidget::currentChanged, [=](int tabIdx) {
-    // disable completer for private conversations
-    ui->lineEdit->setCompleter(tabIdx == 0 ? mNicknameCompleter : nullptr);
-    updateWindowTitle();
-  });
-  connect(mChatSession, &Czateria::ChatSession::banned,
+          [=](auto &&nickname) {
+            mChatSession->notifyPrivateConversationClosed(nickname);
+            updateWindowTitle();
+          });
+  connect(ui->tabWidget, &ChatWindowTabWidget::currentChanged, this,
+          [=](int tabIdx) {
+            // disable completer for private conversations
+            ui->lineEdit->setCompleter(tabIdx == 0 ? mNicknameCompleter
+                                                   : nullptr);
+            updateWindowTitle();
+          });
+  connect(mChatSession, &Czateria::ChatSession::banned, this,
           [=](auto why, auto &&who) {
             QMessageBox::information(this, tr("Banned"),
                                      getKickBanMsgStr(tr("banned"), why, who));
           });
-  connect(mChatSession, &Czateria::ChatSession::kicked, [=](auto why) {
+  connect(mChatSession, &Czateria::ChatSession::kicked, this, [=](auto why) {
     QMessageBox::information(this, tr("Kicked"),
                              getKickBanMsgStr(tr("kicked"), why));
   });
+  connect(mChatSession, &Czateria::ChatSession::imageDelivered, this,
+          [=](auto &&nick) {
+            ui->tabWidget->addMessageToPrivateChat(
+                nick, tr("[%1] Image delivered")
+                          .arg(QDateTime::currentDateTime().toString(
+                              QLatin1String("HH:mm:ss"))));
+          });
 
   connect(ui->lineEdit, &QLineEdit::returnPressed, this,
           &MainChatWindow::onReturnPressed);
@@ -299,8 +312,18 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   connect(ui->listView, &UserListView::mouseMiddleClicked, this,
           &MainChatWindow::onUserNameMiddleClicked);
 
-  connect(ui->tabWidget, &QTabWidget::currentChanged,
+  connect(ui->tabWidget, &QTabWidget::currentChanged, this,
           [=](auto idx) { mSendImageAction->setEnabled(idx != 0); });
+  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationAccepted,
+          this, [=](auto &&nickname) {
+            doAcceptPrivateConversation(nickname);
+            mainWin->removeNotification(this, nickname);
+          });
+  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationRejected,
+          this, [=](auto &&nickname) {
+            mChatSession->rejectPrivateConversation(nickname);
+            mainWin->removeNotification(this, nickname);
+          });
 
   ui->lineEdit->installEventFilter(this);
 
@@ -309,29 +332,25 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
 
 MainChatWindow::~MainChatWindow() { delete ui; }
 
+void MainChatWindow::onPrivateConvNotificationAccepted(
+    const QString &nickname) {
+  ui->tabWidget->openPrivateMessageTab(nickname);
+  doAcceptPrivateConversation(nickname);
+}
+
+void MainChatWindow::onPrivateConvNotificationRejected(
+    const QString &nickname) {
+  mChatSession->rejectPrivateConversation(nickname);
+  ui->tabWidget->closePrivateConversationTab(nickname);
+}
+
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
-  if (mAutoAcceptPrivs->isChecked()) {
+  if (mAutoAcceptPrivs->isChecked() || ui->tabWidget->privTabIsOpen(nickname)) {
+    ui->tabWidget->openPrivateMessageTab(nickname);
     doAcceptPrivateConversation(nickname);
   } else {
-    auto question =
-        tr("%1 wants to talk in private.\nDo you accept?").arg(nickname);
-    auto msgbox =
-        new QMessageBox(QMessageBox::Question, tr("New private conversation"),
-                        question, QMessageBox::Yes | QMessageBox::No, this);
-    mPendingPrivRequests[nickname] = msgbox;
-    msgbox->setDefaultButton(QMessageBox::Yes);
-    msgbox->button(QMessageBox::Yes)->setShortcut(QKeySequence());
-    msgbox->button(QMessageBox::No)->setShortcut(QKeySequence());
-    connect(msgbox, &QDialog::finished, [=](int result) {
-      if (result == QMessageBox::Yes) {
-        doAcceptPrivateConversation(nickname);
-      } else {
-        mChatSession->rejectPrivateConversation(nickname);
-      }
-    });
-    msgbox->show();
-    msgbox->raise();
-    msgbox->activateWindow();
+    ui->tabWidget->askAcceptPrivateMessage(nickname);
+    mMainWindow->displayNotification(this, nickname, mChatSession->channel());
   }
 }
 
@@ -368,7 +387,6 @@ void MainChatWindow::onUserNameMiddleClicked() {
 
 void MainChatWindow::doAcceptPrivateConversation(const QString &nickname) {
   mChatSession->acceptPrivateConversation(nickname);
-  ui->tabWidget->openPrivateMessageTab(nickname);
   ui->lineEdit->setFocus(Qt::OtherFocusReason);
   notifyActivity();
 }
@@ -402,8 +420,12 @@ bool MainChatWindow::sendImageFromMime(const QMimeData *mime) {
   QImage img;
   if (mime->hasImage()) {
     img = qvariant_cast<QImage>(mime->imageData());
-  } else if (mime->hasUrls() && mime->urls()[0].isLocalFile()) {
-    img = QImage(mime->urls()[0].toLocalFile());
+  } else if (mime->hasUrls()) {
+    auto urls = mime->urls();
+    auto &&url = urls[0];
+    if (url.isLocalFile()) {
+      img = QImage(url.toLocalFile());
+    }
   }
   if (!img.isNull()) {
     sendImageToCurrent(img);
@@ -411,6 +433,10 @@ bool MainChatWindow::sendImageFromMime(const QMimeData *mime) {
   } else {
     return false;
   }
+}
+
+void MainChatWindow::closePrivateConvMsgbox(const QString &nickname) {
+  mMainWindow->removeNotification(this, nickname);
 }
 
 void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {
@@ -423,7 +449,8 @@ void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {
   if (mime->hasImage()) {
     has_data = true;
   } else if (mime->hasUrls()) {
-    auto url = mime->urls()[0];
+    auto urls = mime->urls();
+    auto &&url = urls[0];
     if (url.isLocalFile()) {
       // TODO caching this value would be nice, but we have no means of
       // modifying the event's QMimeData. currently the QImage needs to be

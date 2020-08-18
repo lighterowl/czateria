@@ -20,7 +20,7 @@ void Captcha::get() {
           .arg(callbackName);
   qDebug() << requestAddr;
   auto captchaRequest = mSocketFactory->get(QUrl(requestAddr));
-  connect(captchaRequest, &HttpSocket::finished, [=]() {
+  connect(captchaRequest, &HttpSocket::finished, this, [=]() {
     auto content = captchaRequest->readAll();
     captchaRequest->deleteLater();
     onRequestFinished(QString::fromUtf8(content), callbackName);
@@ -46,7 +46,7 @@ void Captcha::onRequestFinished(const QString &content,
   }
   qDebug() << url << uid;
   auto imgRequest = mSocketFactory->get(QUrl(url));
-  connect(imgRequest, &HttpSocket::finished, [=]() {
+  connect(imgRequest, &HttpSocket::finished, this, [=]() {
     auto imgRawContent = imgRequest->readAll();
     imgRequest->deleteLater();
     emit downloaded(QImage::fromData(imgRawContent), uid);

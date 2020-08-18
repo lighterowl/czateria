@@ -1,19 +1,34 @@
 #include "appsettings.h"
 
-AppSettings::AppSettings() {
-  auto variant = mSettings.value(QLatin1String("auto_pic_save"));
-  if (variant.isValid()) {
-    savePicturesAutomatically = variant.toBool();
-  }
-  variant = mSettings.value(QLatin1String("logins"));
+#include <QMetaEnum>
+
+template <>
+bool (QVariant::*const AppSettings::Setting<bool>::mConvFn)() const =
+    &QVariant::toBool;
+
+AppSettings::AppSettings()
+    : useEmojiIcons(mSettings, QLatin1String("use_emoji"), true),
+      savePicturesAutomatically(mSettings, QLatin1String("auto_pic_save"),
+                                false) {
+  auto variant = mSettings.value(QLatin1String("logins"));
   if (variant.isValid() && variant.type() == QVariant::Hash) {
     auto loginsHash = variant.toHash();
     for (auto it = loginsHash.cbegin(); it != loginsHash.cend(); ++it) {
       logins[it.key()] = it.value().toString();
     }
   }
+  variant = mSettings.value(QLatin1String("notifications"));
+  if (variant.isValid() && variant.type() == QVariant::String) {
+    auto styleStr = variant.toString();
+    bool ok = false;
+    auto metaEnum = QMetaEnum::fromType<AppSettings::NotificationStyle>();
+    auto idx = metaEnum.keyToValue(styleStr.toLatin1().data(), &ok);
+    if (ok) {
+      notificationStyle = static_cast<AppSettings::NotificationStyle>(idx);
+    }
+  }
   mSettings.beginGroup(QLatin1String("autologin"));
-  for (auto idStr : mSettings.childGroups()) {
+  for (auto &&idStr : mSettings.childGroups()) {
     bool ok;
     auto id = idStr.toInt(&ok);
     if (ok) {
@@ -32,8 +47,12 @@ AppSettings::AppSettings() {
 }
 
 AppSettings::~AppSettings() {
-  mSettings.setValue(QLatin1String("auto_pic_save"), savePicturesAutomatically);
   mSettings.setValue(QLatin1String("logins"), logins);
+  mSettings.setValue(
+      QLatin1String("notifications"),
+      QLatin1String(
+          QMetaEnum::fromType<AppSettings::NotificationStyle>().valueToKey(
+              static_cast<int>(notificationStyle))));
   mSettings.beginGroup(QLatin1String("autologin"));
   for (auto it = mAutologinData.cbegin(); it != mAutologinData.cend(); ++it) {
     mSettings.beginGroup(QString(QLatin1String("%1")).arg(it.key()));
@@ -76,4 +95,16 @@ void AppSettings::enableAutologin(const Czateria::Room &room, QString &&user,
   auto &&loginData = mAutologinData[room.id];
   loginData.username = user;
   loginData.password = password;
+}
+
+template <typename T>
+AppSettings::Setting<T>::Setting(QSettings &settings, QString &&key,
+                                 T initialValue)
+    : mSettings(settings), mKey(key) {
+  auto variant = mSettings.value(key);
+  mValue = variant.isValid() ? (variant.*mConvFn)() : initialValue;
+}
+
+template <typename T> AppSettings::Setting<T>::~Setting() {
+  mSettings.setValue(mKey, mValue);
 }

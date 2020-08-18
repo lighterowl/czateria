@@ -43,7 +43,7 @@ LoginSession::LoginSession(HttpSocketFactory *factory, QObject *parent)
 void LoginSession::login(const QString &nickname) {
   mNickname = sanitiseNickname(nickname);
   auto c = new Captcha(mSocketFactory);
-  connect(c, &Captcha::downloaded,
+  connect(c, &Captcha::downloaded, this,
           [=](const QImage &image, const QString &uid) {
             c->deleteLater();
             mCaptchaUid = uid;
@@ -125,7 +125,7 @@ void LoginSession::sendPostData(const QUrl &address,
                                 const QUrlQuery &postData) {
   qDebug() << address << postData.toString(QUrl::PrettyDecoded);
   auto postRequest = mSocketFactory->post(address, postData);
-  connect(postRequest, &HttpSocket::finished, [=]() {
+  connect(postRequest, &HttpSocket::finished, this, [=]() {
     auto content = postRequest->readAll();
     postRequest->deleteLater();
     onReplyReceived(content);

@@ -34,6 +34,9 @@ public:
                           const AppSettings &settings, MainWindow *mainWin);
   ~MainChatWindow();
 
+  void onPrivateConvNotificationAccepted(const QString &nickname);
+  void onPrivateConvNotificationRejected(const QString &nickname);
+
 private:
   void onNewPrivateConversation(const QString &nickname);
   void onReturnPressed();
@@ -44,6 +47,7 @@ private:
   void updateWindowTitle();
   void sendImageToCurrent(const QImage &);
   bool sendImageFromMime(const QMimeData *);
+  void closePrivateConvMsgbox(const QString &);
 
   void dragEnterEvent(QDragEnterEvent *) override;
   void dropEvent(QDropEvent *) override;
@@ -51,6 +55,7 @@ private:
   bool eventFilter(QObject *, QEvent *) override;
 
   Ui::ChatWidget *ui;
+  MainWindow *const mMainWindow;
   Czateria::ChatSession *const mChatSession;
   QSortFilterProxyModel *const mSortProxy;
   QCompleter *const mNicknameCompleter;
@@ -59,7 +64,7 @@ private:
   QAction *const mAutoAcceptPrivs;
   QAction *const mSendImageAction;
   QAction *const mShowChannelListAction;
-  QHash<QString, QMessageBox *> mPendingPrivRequests;
+  QAction *const mUseEmoji;
 };
 
 #endif // MAINCHATWINDOW_H
