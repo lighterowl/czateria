@@ -69,7 +69,7 @@ class ChatWindowTabWidget::PrivateChatTab : public QStackedWidget {
     Q_ASSERT(!mPendingAcceptWidget);
     mPendingAcceptWidget = new PendingAcceptWidget(this, parent, nickname);
     addWidget(mPendingAcceptWidget);
-    connect(mPendingAcceptWidget, &QObject::destroyed,
+    connect(mPendingAcceptWidget, &QObject::destroyed, this,
             [&](auto) { mPendingAcceptWidget = nullptr; });
   }
 
