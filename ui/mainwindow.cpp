@@ -86,7 +86,7 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
 constexpr auto channelListRefreshInterval = 5 * 60 * 1000;
 } // namespace
 
-class MainWindow::AutologinState {
+class MainWindow::AutologinState : public QObject {
   // a helper class introduced in order not to clutter the MainWindow object
   // with the state variables while performing autologin, mostly needed in order
   // to display warning messages when a given channel cannot be joined.
@@ -108,7 +108,7 @@ private:
     auto rooms = mLoginHash.values(*mLoginIter);
 
     oneshotConnect(
-        session, &Czateria::LoginSession::loginSuccessful, session, [=]() {
+        session, &Czateria::LoginSession::loginSuccessful, this, [=]() {
           auto ses = QSharedPointer<Czateria::LoginSession>(session);
           for (auto roomId : rooms) {
             if (auto room = mMainWindow->mRoomListModel->roomFromId(roomId)) {
@@ -117,7 +117,7 @@ private:
           }
           nextSession();
         });
-    connect(session, &Czateria::LoginSession::loginFailed, session, [=]() {
+    connect(session, &Czateria::LoginSession::loginFailed, this, [=]() {
       QMessageBox::warning(mMainWindow, tr("Autologin failed"),
                            tr("Autologin failed for username %1.\nRooms "
                               "using this username will not be autojoined.")
@@ -147,7 +147,7 @@ private:
     if (mLoginIter != std::cend(mUniqueLogins)) {
       createSession();
     } else {
-      delete this;
+      deleteLater();
     }
   }
 
