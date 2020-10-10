@@ -33,7 +33,6 @@ void NotificationSupportMsgBox::displayNotification(MainChatWindow *chatWin,
 void NotificationSupportMsgBox::removeNotification(MainChatWindow *,
                                                    const QString &nickname) {
   if (auto msgbox = mPendingPrivRequests.value(nickname, nullptr)) {
-    msgbox->reject();
     msgbox->deleteLater();
     mPendingPrivRequests.remove(nickname);
   }
