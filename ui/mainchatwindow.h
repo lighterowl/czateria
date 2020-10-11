@@ -47,7 +47,7 @@ private:
   void updateWindowTitle();
   void sendImageToCurrent(const QImage &);
   bool sendImageFromMime(const QMimeData *);
-  void closePrivateConvMsgbox(const QString &);
+  void onUserLeft(const QString &);
 
   void dragEnterEvent(QDragEnterEvent *) override;
   void dropEvent(QDropEvent *) override;
