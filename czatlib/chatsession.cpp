@@ -258,14 +258,16 @@ void ChatSession::sendPrivateMessage(const QString &nickname,
 }
 
 void ChatSession::sendImage(const QString &nickname, const QImage &image) {
-  auto sentImage = image;
   if (image.width() > 600 || image.height() > 600) {
     // the website seems to scale images to be at most 600 pixels wide or high
     // before actually sending them.
-    sentImage =
-        image.scaled(600, 600, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    SendTextMessage(
+        mWebSocket,
+        privImageMsg(nickname, image.scaled(600, 600, Qt::KeepAspectRatio,
+                                            Qt::SmoothTransformation)));
+  } else {
+    SendTextMessage(mWebSocket, privImageMsg(nickname, image));
   }
-  SendTextMessage(mWebSocket, privImageMsg(nickname, sentImage));
 }
 
 void ChatSession::timerEvent(QTimerEvent *ev) {
