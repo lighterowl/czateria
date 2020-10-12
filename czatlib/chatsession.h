@@ -11,7 +11,7 @@
 #include "loginsession.h"
 #include "room.h"
 
-class QImage;
+class QByteArray;
 class QWebSocket;
 class QTimerEvent;
 
@@ -57,7 +57,8 @@ signals:
   void privateConversationStateChanged(const QString &nickname,
                                        Czateria::ConversationState state);
   void privateMessageReceived(const Czateria::Message &msg);
-  void imageReceived(const QString &nickname, const QImage &image);
+  void imageReceived(const QString &nickname, const QByteArray &data,
+                     const QByteArray &format);
   void imageDelivered(const QString &nickname);
   void userJoined(const QString &nickname);
   void userLeft(const QString &nickname);

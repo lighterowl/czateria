@@ -35,17 +35,29 @@ int getOptimalUserListWidth(QWidget *widget) {
   return QFontMetrics(font).size(Qt::TextSingleLine, worstCase).width();
 }
 
-QString imageDefaultPath(const QString &channel, const QString &nickname) {
-  return QString(QLatin1String("%1/czateria_%2_%3_%4.png"))
+QString
+imageDefaultPath(const QString &channel, const QString &nickname,
+                 const QByteArray &format,
+                 const QDateTime &datetime = QDateTime::currentDateTime()) {
+  return QString(QLatin1String("%1/czateria_%2_%3_%4.%5"))
       .arg(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation))
       .arg(channel)
       .arg(nickname)
-      .arg(QDateTime::currentDateTime().toString(
-          QLatin1String("yyyyMMddHHmmss")));
+      .arg(datetime.toString(QLatin1String("yyyyMMddHHmmss")))
+      .arg(QLatin1String(format.constData()));
+}
+
+void saveImage(const QByteArray &data, const QString &fileName) {
+  if (!fileName.isNull()) {
+    QFile f(fileName);
+    f.open(QIODevice::WriteOnly);
+    f.write(data);
+  }
 }
 
 void showImageDialog(QWidget *parent, const QString &nickname,
-                     const QString &channel, const QImage &image) {
+                     const QString &channel, const QByteArray &data,
+                     const QByteArray &format) {
   auto imgDialog = new QDialog(parent);
   imgDialog->setAttribute(Qt::WA_DeleteOnClose);
   imgDialog->setModal(false);
@@ -54,18 +66,20 @@ void showImageDialog(QWidget *parent, const QString &nickname,
   auto label = new QLabel;
   auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Save);
   buttonBox->setCenterButtons(true);
-  auto defaultPath = imageDefaultPath(channel, nickname);
+  auto defaultPath = imageDefaultPath(channel, nickname, format);
   QObject::connect(buttonBox->button(QDialogButtonBox::Save),
                    &QPushButton::clicked, parent, [=](auto) {
                      auto fileName = QFileDialog::getSaveFileName(
                          parent,
                          MainChatWindow::tr("Save image from %1").arg(nickname),
                          defaultPath);
-                     if (!fileName.isNull()) {
-                       image.save(fileName);
-                     }
+                     saveImage(data, fileName);
                    });
+  auto image =
+      QImage::fromData(reinterpret_cast<const uchar *>(data.constData()),
+                       data.size(), format.constData());
   label->setPixmap(QPixmap::fromImage(image));
+  label->setScaledContents(true);
   layout->addWidget(label);
   layout->addWidget(buttonBox);
   imgDialog->setLayout(layout);
@@ -240,22 +254,21 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   connect(mChatSession, &Czateria::ChatSession::nicknameAssigned,
           ui->nicknameLabel, &QLabel::setText);
   connect(mChatSession, &Czateria::ChatSession::imageReceived, this,
-          [=](auto &&nickname, auto &&image) {
+          [=](auto &&nickname, auto &&data, auto &&format) {
+            const auto datetime = QDateTime::currentDateTime();
+            const auto time = datetime.toString(QLatin1String("HH:mm:ss"));
             if (mAppSettings.savePicturesAutomatically) {
-              auto defaultPath =
-                  imageDefaultPath(mChatSession->channel(), nickname);
-              image.save(defaultPath);
+              auto defaultPath = imageDefaultPath(mChatSession->channel(),
+                                                  nickname, format, datetime);
               ui->tabWidget->addMessageToPrivateChat(
-                  nickname, tr("[%1] Image saved as %2")
-                                .arg(QDateTime::currentDateTime().toString(
-                                    QLatin1String("HH:mm:ss")))
-                                .arg(defaultPath));
+                  nickname,
+                  tr("[%1] Image saved as %2").arg(time).arg(defaultPath));
+              saveImage(data, defaultPath);
             } else {
-              showImageDialog(this, nickname, mChatSession->channel(), image);
+              showImageDialog(this, nickname, mChatSession->channel(), data,
+                              format);
               ui->tabWidget->addMessageToPrivateChat(
-                  nickname, tr("[%1] Image received")
-                                .arg(QDateTime::currentDateTime().toString(
-                                    QLatin1String("HH:mm:ss"))));
+                  nickname, tr("[%1] Image received").arg(time));
             }
             notifyActivity();
           });
