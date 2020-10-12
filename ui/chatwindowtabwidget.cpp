@@ -167,10 +167,8 @@ void ChatWindowTabWidget::addMessageToPrivateChat(const QString &nickname,
 
 void ChatWindowTabWidget::closePrivateConversationTab(const QString &nickname) {
   if (auto tab = mPrivateTabs.take(nickname)) {
-    auto i = indexOf(tab);
-    removeTab(i);
+    removeTab(indexOf(tab));
     tab->deleteLater();
-    qInfo() << "deleting, indexOf =" << i;
   }
 }
 

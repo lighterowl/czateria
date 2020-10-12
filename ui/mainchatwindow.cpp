@@ -453,6 +453,7 @@ void MainChatWindow::onUserLeft(const QString &nickname) {
 }
 
 void MainChatWindow::onPrivateConversationCancelled(const QString &nickname) {
+  mMainWindow->removeNotification(this, nickname);
   if (mAppSettings.ignoreUnacceptedMessages) {
     ui->tabWidget->closePrivateConversationTab(nickname);
     updateWindowTitle();
