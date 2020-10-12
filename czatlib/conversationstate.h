@@ -9,8 +9,7 @@ enum class ConversationState {
   Rejected,
   Closed,
   NoPrivs,
-  NoFreePrivs,
-  UserLeft
+  NoFreePrivs
 };
 }
 

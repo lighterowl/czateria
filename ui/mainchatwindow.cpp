@@ -447,6 +447,9 @@ bool MainChatWindow::sendImageFromMime(const QMimeData *mime) {
 
 void MainChatWindow::onUserLeft(const QString &nickname) {
   mMainWindow->removeNotification(this, nickname);
+  ui->tabWidget->writeConversationState(
+      nickname, tr("User logged out"),
+      QIcon(QLatin1String(":/icons/door_out.png")));
 }
 
 void MainChatWindow::onPrivateConversationCancelled(const QString &nickname) {
@@ -454,7 +457,6 @@ void MainChatWindow::onPrivateConversationCancelled(const QString &nickname) {
     ui->tabWidget->closePrivateConversationTab(nickname);
     updateWindowTitle();
   }
-  onUserLeft(nickname);
 }
 
 void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {
