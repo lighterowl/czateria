@@ -144,11 +144,10 @@ bool shouldUseQueuedConnectionForWebSocket() {
 
 bool privSubcodeToState(int subcode, Czateria::ConversationState &state) {
   using s = Czateria::ConversationState;
-  static const std::array<std::tuple<int, s>, 6> subcodeToState = {
+  static const std::array<std::tuple<int, s>, 5> subcodeToState = {
       {{13, s::Rejected},
        {18, s::Rejected},
        {14, s::Closed},
-       {15, s::UserLeft},
        {16, s::NoPrivs},
        {17, s::NoFreePrivs}}};
   return CzateriaUtil::convert(subcode, state, subcodeToState);
@@ -317,12 +316,18 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   }
   case 130: {
     auto user = obj[QLatin1String("login")].toString();
-    emitPendingMessages(user);
-    mCurrentPrivate.remove(user);
-    emit privateConversationStateChanged(user,
-                                         Czateria::ConversationState::UserLeft);
+    auto it = mCurrentPrivate.find(user);
+    if (it != std::end(mCurrentPrivate)) {
+      const auto lastState = it->mState;
+      emitPendingMessages(it);
+      mCurrentPrivate.remove(user);
+      if (lastState == Czateria::ConversationState::InviteReceived) {
+        emit privateConversationCancelled(user);
+      }
+    }
     emit userLeft(user);
-  } break;
+    break;
+  }
 
   case 97:
     if (!handlePrivateMessage(obj)) {

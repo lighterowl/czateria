@@ -232,9 +232,16 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   connect(
       ui->actionSave_pictures_automatically, &QAction::toggled, this,
       [=](bool checked) { mAppSettings.savePicturesAutomatically = checked; });
+
   ui->actionUse_emoji_icons->setChecked(mAppSettings.useEmojiIcons);
   connect(ui->actionUse_emoji_icons, &QAction::toggled, this,
           [=](bool checked) { mAppSettings.useEmojiIcons = checked; });
+
+  ui->actionDiscard_unaccepted_messages->setChecked(
+      mAppSettings.ignoreUnacceptedMessages);
+  connect(
+      ui->actionDiscard_unaccepted_messages, &QAction::toggled, this,
+      [=](bool checked) { mAppSettings.ignoreUnacceptedMessages = checked; });
 
   startTimer(channelListRefreshInterval);
 
