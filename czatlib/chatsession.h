@@ -36,11 +36,7 @@ public:
   void notifyPrivateConversationClosed(const QString &nickname);
   bool canSendMessage(const QString &nickname) const {
     auto it = mCurrentPrivate.find(nickname);
-    return it == std::end(mCurrentPrivate) ||
-           (*it == ConversationState::InviteSent ||
-            *it == ConversationState::Active ||
-            *it == ConversationState::Rejected ||
-            *it == ConversationState::Closed);
+    return it == std::end(mCurrentPrivate) || isStateOkayToSend(it->mState);
   }
 
   void sendRoomMessage(const QString &message);
@@ -75,6 +71,18 @@ protected:
   void timerEvent(QTimerEvent *) override;
 
 private:
+  static bool isStateOkayToSend(ConversationState s) {
+    using cs = ConversationState;
+    switch (s) {
+    case cs::InviteSent:
+    case cs::Active:
+    case cs::Rejected:
+    case cs::Closed:
+      return true;
+    default:
+      return false;
+    }
+  }
   void onTextMessageReceived(const QString &);
   bool handlePrivateMessage(const QJsonObject &json);
   void onSocketError(QAbstractSocket::SocketError);
@@ -87,11 +95,17 @@ private:
   const QString mHost;
   bool mHelloReceived;
   int mKeepaliveTimerId = 0;
-  QHash<QString, ConversationState> mCurrentPrivate;
-  QHash<QString, QVector<Message>> mPendingPrivateMsgs;
   UserListModel *const mUserListModel;
   QSharedPointer<Czateria::LoginSession> mLoginSession;
   const Room mRoom;
+
+  struct PrivConvContext {
+    ConversationState mState;
+    QVector<Message> mPendingMessages;
+  };
+  using PrivConvHash = QHash<QString, PrivConvContext>;
+  PrivConvHash mCurrentPrivate;
+  void emitPendingMessages(PrivConvHash::iterator);
 };
 
 } // namespace Czateria
