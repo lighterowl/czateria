@@ -48,6 +48,7 @@ private:
   void sendImageToCurrent(const QImage &);
   bool sendImageFromMime(const QMimeData *);
   void onUserLeft(const QString &);
+  void onPrivateConversationCancelled(const QString &);
 
   void dragEnterEvent(QDragEnterEvent *) override;
   void dropEvent(QDropEvent *) override;

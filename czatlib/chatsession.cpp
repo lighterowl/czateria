@@ -317,12 +317,24 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   }
   case 130: {
     auto user = obj[QLatin1String("login")].toString();
-    emitPendingMessages(user);
-    mCurrentPrivate.remove(user);
+    auto it = mCurrentPrivate.find(user);
+    bool emitCancelled = false;
+    if (it != std::end(mCurrentPrivate)) {
+      const auto lastState = it->mState;
+      emitPendingMessages(it);
+      mCurrentPrivate.remove(user);
+      if (lastState == Czateria::ConversationState::InviteReceived) {
+        emitCancelled = true;
+      }
+    }
     emit privateConversationStateChanged(user,
                                          Czateria::ConversationState::UserLeft);
     emit userLeft(user);
-  } break;
+    if (emitCancelled) {
+      emit privateConversationCancelled(user);
+    }
+    break;
+  }
 
   case 97:
     if (!handlePrivateMessage(obj)) {

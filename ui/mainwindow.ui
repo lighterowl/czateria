@@ -155,6 +155,7 @@
     </widget>
     <addaction name="actionSave_pictures_automatically"/>
     <addaction name="actionUse_emoji_icons"/>
+    <addaction name="actionDiscard_unaccepted_messages"/>
     <addaction name="menuNotification_style"/>
    </widget>
    <addaction name="menuOptions"/>
@@ -219,6 +220,17 @@
    </property>
    <property name="statusTip">
     <string>Use desktop notifications for new private conversations</string>
+   </property>
+  </action>
+  <action name="actionDiscard_unaccepted_messages">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Discard unaccepted messages</string>
+   </property>
+   <property name="statusTip">
+    <string>Discards messages from unaccepted conversations when partner disconnects</string>
    </property>
   </action>
  </widget>

@@ -245,7 +245,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   connect(mChatSession, &Czateria::ChatSession::newPrivateConversation, this,
           &MainChatWindow::onNewPrivateConversation);
   connect(mChatSession, &Czateria::ChatSession::privateConversationCancelled,
-          this, &MainChatWindow::onUserLeft);
+          this, &MainChatWindow::onPrivateConversationCancelled);
   connect(mChatSession, &Czateria::ChatSession::userLeft, this,
           &MainChatWindow::onUserLeft);
   connect(mChatSession, &Czateria::ChatSession::privateConversationStateChanged,
@@ -447,6 +447,14 @@ bool MainChatWindow::sendImageFromMime(const QMimeData *mime) {
 
 void MainChatWindow::onUserLeft(const QString &nickname) {
   mMainWindow->removeNotification(this, nickname);
+}
+
+void MainChatWindow::onPrivateConversationCancelled(const QString &nickname) {
+  if (mAppSettings.ignoreUnacceptedMessages) {
+    ui->tabWidget->closePrivateConversationTab(nickname);
+    updateWindowTitle();
+  }
+  onUserLeft(nickname);
 }
 
 void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {

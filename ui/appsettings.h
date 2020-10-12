@@ -39,6 +39,7 @@ public:
 
   Setting<bool> useEmojiIcons;
   Setting<bool> savePicturesAutomatically;
+  Setting<bool> ignoreUnacceptedMessages;
   enum class NotificationStyle { MessageBox, Native };
   Q_ENUM(NotificationStyle)
   NotificationStyle notificationStyle = NotificationStyle::MessageBox;
