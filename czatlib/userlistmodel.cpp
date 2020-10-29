@@ -50,7 +50,8 @@ QString createToolTip(const Czateria::User &user,
   }
   if (avatars.hasAvatar(user)) {
     auto &&avatar = avatars.getAvatar(user);
-    s << QString(QLatin1String("<img src=\"data:%1;base64, "))
+    s << QString(
+             QLatin1String("<img width=120 height=120 src=\"data:%1;base64, "))
              .arg(avatar.contentType());
     s << QString::fromUtf8(avatar.data.toBase64());
     s << "\">";
