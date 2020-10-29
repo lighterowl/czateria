@@ -78,7 +78,7 @@ public:
 
       if (avatarId.length() == 46) {
         address.append(QLatin1String("temporary"));
-      } else if (avatarId.length() == 22) {
+      } else if (avatarId.length() == 22 || avatarId.length() == 23) {
         address.append(QLatin1String("users"));
       }
       address.append(QLatin1Char('/'));
@@ -90,6 +90,7 @@ public:
     auto request = QNetworkRequest(QUrl(address));
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                          QNetworkRequest::PreferCache);
+    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     auto reply = mNAM->get(request);
     QObject::connect(reply, &QNetworkReply::finished, [=]() {
       if (reply->error() == QNetworkReply::NoError) {
