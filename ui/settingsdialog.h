@@ -5,6 +5,7 @@
 
 namespace Ui {
 class SettingsDialog;
+class ChatSettingsForm;
 }
 
 class SettingsDialog : public QDialog {
@@ -16,6 +17,7 @@ public:
 
 private:
   Ui::SettingsDialog *ui;
+  Ui::ChatSettingsForm *uiForm;
 };
 
 #endif // SETTINGSDIALOG_H

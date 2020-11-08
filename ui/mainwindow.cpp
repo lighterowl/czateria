@@ -5,6 +5,7 @@
 #include "autologindatadialog.h"
 #include "captchadialog.h"
 #include "mainchatwindow.h"
+#include "settingsdialog.h"
 #include "util.h"
 
 #include <czatlib/loginsession.h>
@@ -177,6 +178,14 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   refreshAct->setStatusTip(tr("Refresh the list of channels"));
   connect(refreshAct, &QAction::triggered, this, &MainWindow::refreshRoomList);
   ui->mainToolBar->addAction(refreshAct);
+
+  auto settingsAct = new QAction(QIcon(QLatin1String(":/icons/settings.png")),
+                                 tr("Settings"), this);
+  connect(settingsAct, &QAction::triggered, this, [=]() {
+    auto d = new SettingsDialog(this);
+    d->exec();
+  });
+  ui->mainToolBar->addAction(settingsAct);
 
   mRoomSortModel->setSourceModel(mRoomListModel);
   ui->tableView->setModel(mRoomSortModel);
