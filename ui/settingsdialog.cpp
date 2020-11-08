@@ -25,7 +25,10 @@ SettingsDialog::SettingsDialog(AppSettings &settings, QWidget *parent)
   }
 }
 
-SettingsDialog::~SettingsDialog() { delete ui; }
+SettingsDialog::~SettingsDialog() {
+  delete ui;
+  delete uiForm;
+}
 
 void SettingsDialog::readSettings() {
   uiForm->autoAcceptPrivs->setChecked(mAppSettings.autoAcceptPrivs);
