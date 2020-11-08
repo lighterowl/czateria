@@ -28,6 +28,7 @@ SOURCES += \
     chatwindowtabwidget.cpp \
     notificationsupport.cpp \
     notificationsupport_msgbox.cpp \
+    settingsdialog.cpp \
     userlistview.cpp
 
 HEADERS += \
@@ -40,6 +41,7 @@ HEADERS += \
     notificationsupport.h \
     notificationsupport_msgbox.h \
     notificationsupport_native.h \
+    settingsdialog.h \
     userlistview.h \
     util.h
 
@@ -48,7 +50,8 @@ FORMS += \
     chatsettingsform.ui \
     chatwidget.ui \
     mainwindow.ui \
-    captchadialog.ui
+    captchadialog.ui \
+    settingsdialog.ui
 
 win32:CONFIG (release, debug|release): LIBS += -L../czatlib/release -lczatlib
 else:win32:CONFIG (debug, debug|release): LIBS += -L../czatlib/debug -lczatlib
