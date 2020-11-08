@@ -45,6 +45,7 @@ HEADERS += \
 
 FORMS += \
     autologindatadialog.ui \
+    chatsettings.ui \
     chatwidget.ui \
     mainwindow.ui \
     captchadialog.ui
