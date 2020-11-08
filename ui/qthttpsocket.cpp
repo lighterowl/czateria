@@ -33,6 +33,7 @@ Czateria::HttpSocket *QtHttpSocketFactory::getCached(const QUrl &address) {
   auto request = QNetworkRequest(address);
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                        QNetworkRequest::PreferCache);
+  request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
   return new QtHttpSocket(mNAM.get(request));
 }
 
