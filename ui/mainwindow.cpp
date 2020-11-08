@@ -193,6 +193,7 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
 
   auto settingsAct = new QAction(QIcon(QLatin1String(":/icons/settings.png")),
                                  tr("Settings"), this);
+  settingsAct->setStatusTip(tr("Open the global settings window"));
   connect(settingsAct, &QAction::triggered, this, [&]() {
     auto d = new SettingsDialog(mAppSettings, this);
     auto rv = d->exec();
@@ -252,51 +253,7 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
   ui->nicknameLineEdit->installEventFilter(this);
   ui->nicknameLineEdit->setValidator(getNicknameValidator());
 
-  ui->actionSave_pictures_automatically->setChecked(
-      mAppSettings.savePicturesAutomatically);
-  connect(
-      ui->actionSave_pictures_automatically, &QAction::toggled, this,
-      [=](bool checked) { mAppSettings.savePicturesAutomatically = checked; });
-
-  ui->actionUse_emoji_icons->setChecked(mAppSettings.useEmojiIcons);
-  connect(ui->actionUse_emoji_icons, &QAction::toggled, this,
-          [=](bool checked) { mAppSettings.useEmojiIcons = checked; });
-
-  ui->actionDiscard_unaccepted_messages->setChecked(
-      mAppSettings.ignoreUnacceptedMessages);
-  connect(
-      ui->actionDiscard_unaccepted_messages, &QAction::toggled, this,
-      [=](bool checked) { mAppSettings.ignoreUnacceptedMessages = checked; });
-
   startTimer(channelListRefreshInterval);
-
-  connect(ui->actionMessage_box, &QAction::toggled, this, [&](bool checked) {
-    if (checked) {
-      mNotifications = NotificationSupport::msgBox();
-      mAppSettings.notificationStyle =
-          AppSettings::NotificationStyle::MessageBox;
-    }
-  });
-  connect(ui->actionNative, &QAction::toggled, this, [&](bool checked) {
-    if (checked) {
-      mNotifications = NotificationSupport::native();
-      mAppSettings.notificationStyle = AppSettings::NotificationStyle::Native;
-    }
-  });
-
-  auto grp = new QActionGroup(this);
-  grp->addAction(ui->actionNative);
-  grp->addAction(ui->actionMessage_box);
-
-  auto native = NotificationSupport::native();
-  const bool native_supported = native && native->supported();
-  ui->actionNative->setEnabled(native_supported);
-  ui->actionNative->setChecked(native_supported &&
-                               mAppSettings.notificationStyle ==
-                                   AppSettings::NotificationStyle::Native);
-  ui->actionMessage_box->setChecked(
-      !native_supported || mAppSettings.notificationStyle ==
-                               AppSettings::NotificationStyle::MessageBox);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {

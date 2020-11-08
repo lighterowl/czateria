@@ -133,33 +133,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>491</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuOptions">
-    <property name="title">
-     <string>Options</string>
-    </property>
-    <widget class="QMenu" name="menuNotification_style">
-     <property name="title">
-      <string>Notification style</string>
-     </property>
-     <addaction name="actionMessage_box"/>
-     <addaction name="actionNative"/>
-    </widget>
-    <addaction name="actionSave_pictures_automatically"/>
-    <addaction name="actionUse_emoji_icons"/>
-    <addaction name="actionDiscard_unaccepted_messages"/>
-    <addaction name="menuNotification_style"/>
-   </widget>
-   <addaction name="menuOptions"/>
-  </widget>
   <widget class="QToolBar" name="mainToolBar">
    <property name="movable">
     <bool>false</bool>
@@ -175,64 +148,6 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionSave_pictures_automatically">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Save pictures automatically</string>
-   </property>
-   <property name="statusTip">
-    <string>Save the received images into the pictures directory without displaying them</string>
-   </property>
-  </action>
-  <action name="actionUse_emoji_icons">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Use emoji icons</string>
-   </property>
-   <property name="statusTip">
-    <string>Convert icons and emoticons to emoji</string>
-   </property>
-  </action>
-  <action name="actionMessage_box">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Message box</string>
-   </property>
-   <property name="statusTip">
-    <string>Use a message box to notify about new private conversations</string>
-   </property>
-  </action>
-  <action name="actionNative">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Native</string>
-   </property>
-   <property name="statusTip">
-    <string>Use desktop notifications for new private conversations</string>
-   </property>
-  </action>
-  <action name="actionDiscard_unaccepted_messages">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Discard unaccepted messages</string>
-   </property>
-   <property name="statusTip">
-    <string>Discards messages from unaccepted conversations when partner disconnects</string>
-   </property>
-  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
