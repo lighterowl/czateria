@@ -8,6 +8,7 @@
 
 #include "conversationstate.h"
 #include "loginsession.h"
+#include "message.h"
 #include "room.h"
 
 class QByteArray;
