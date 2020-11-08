@@ -90,6 +90,17 @@ const QValidator *getNicknameValidator() {
 }
 
 constexpr auto channelListRefreshInterval = 5 * 60 * 1000;
+
+std::unique_ptr<NotificationSupport>
+createNotificationSupport(AppSettings::NotificationStyle style) {
+  switch (style) {
+  case AppSettings::NotificationStyle::MessageBox:
+    return NotificationSupport::msgBox();
+  case AppSettings::NotificationStyle::Native:
+    return NotificationSupport::native();
+  }
+  return nullptr;
+}
 } // namespace
 
 class MainWindow::AutologinState : public QObject {
@@ -168,7 +179,8 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
     : QMainWindow(parent), ui(new Ui::MainWindow), mNAM(nam),
       mRoomListModel(new Czateria::RoomListModel(this, nam, settings)),
       mRoomSortModel(new QSortFilterProxyModel(this)), mAvatarHandler(nam),
-      mAppSettings(settings) {
+      mAppSettings(settings),
+      mNotifications(createNotificationSupport(settings.notificationStyle)) {
   ui->setupUi(this);
 
   auto refreshAct =
@@ -181,9 +193,13 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
 
   auto settingsAct = new QAction(QIcon(QLatin1String(":/icons/settings.png")),
                                  tr("Settings"), this);
-  connect(settingsAct, &QAction::triggered, this, [=]() {
-    auto d = new SettingsDialog(this);
-    d->exec();
+  connect(settingsAct, &QAction::triggered, this, [&]() {
+    auto d = new SettingsDialog(mAppSettings, this);
+    auto rv = d->exec();
+    if (rv == QDialog::Accepted) {
+      mNotifications =
+          createNotificationSupport(mAppSettings.notificationStyle);
+    }
   });
   ui->mainToolBar->addAction(settingsAct);
 
