@@ -11,7 +11,8 @@ AppSettings::AppSettings()
       savePicturesAutomatically(mSettings, QLatin1String("auto_pic_save"),
                                 false),
       ignoreUnacceptedMessages(mSettings, QLatin1String("ignore_unaccepted"),
-                               false) {
+                               false),
+      autoAcceptPrivs(mSettings, QLatin1String("auto_accept_privs"), false) {
   auto variant = mSettings.value(QLatin1String("logins"));
   if (variant.isValid() && variant.type() == QVariant::Hash) {
     auto loginsHash = variant.toHash();

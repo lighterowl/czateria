@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ChatSettingsForm</class>
+ <widget class="QWidget" name="ChatSettingsForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>332</width>
+    <height>128</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <item row="0" column="0">
+    <widget class="QCheckBox" name="autoAcceptPrivs">
+     <property name="toolTip">
+      <string>Accept private conversations without prompting</string>
+     </property>
+     <property name="text">
+      <string>Automatically accept private conversations</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QCheckBox" name="autoSavePictures">
+     <property name="toolTip">
+      <string>Save the received images into the pictures directory without displaying them</string>
+     </property>
+     <property name="text">
+      <string>Save pictures automatically</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QCheckBox" name="useEmojiIcons">
+     <property name="toolTip">
+      <string>Convert icons and emoticons to emoji</string>
+     </property>
+     <property name="text">
+      <string>Use emoji icons</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QCheckBox" name="discardUnaccepted">
+     <property name="toolTip">
+      <string>Discards messages from unaccepted conversations when partner disconnects</string>
+     </property>
+     <property name="text">
+      <string>Discard unaccepted messages</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

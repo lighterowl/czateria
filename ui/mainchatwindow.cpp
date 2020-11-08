@@ -1,6 +1,7 @@
 #include "mainchatwindow.h"
 #include "appsettings.h"
 #include "mainwindow.h"
+#include "ui_chatsettingsform.h"
 #include "ui_chatwidget.h"
 
 #include <QAction>
@@ -12,7 +13,6 @@
 #include <QDropEvent>
 #include <QFileDialog>
 #include <QImageReader>
-#include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPlainTextEdit>
@@ -145,6 +145,56 @@ QString getKickBanMsgStr(const QString &blockTypeStr,
 }
 } // namespace
 
+class MainChatWindow::SettingsDialog : public QDialog {
+public:
+  SettingsDialog(MainChatWindow *parent)
+      : QDialog(parent), mChatWindow(*parent), ui(new Ui::ChatSettingsForm()) {
+    setWindowTitle(QString(QLatin1String("%1/%2 : Settings"))
+                       .arg(parent->mChatSession->channel())
+                       .arg(parent->mChatSession->nickname()));
+    setAttribute(Qt::WA_DeleteOnClose);
+    setModal(true);
+
+    auto lay = new QVBoxLayout;
+    auto lbl = new QLabel(
+        tr("This is the per-session settings window.\nIf you want to modify "
+           "global defaults, open the settings window from the main window."));
+    lbl->setAlignment(Qt::AlignCenter);
+    lay->addWidget(lbl);
+
+    auto form = new QWidget(this);
+    ui->setupUi(form);
+    lay->addWidget(form);
+
+    auto btns =
+        new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    connect(btns, &QDialogButtonBox::accepted, this, &SettingsDialog::accept);
+    connect(btns, &QDialogButtonBox::rejected, this, &SettingsDialog::reject);
+    lay->addWidget(btns);
+
+    setLayout(lay);
+
+    ui->autoAcceptPrivs->setChecked(mChatWindow.mAutoAcceptPrivs);
+    ui->autoSavePictures->setChecked(mChatWindow.mAutoSavePictures);
+    ui->discardUnaccepted->setChecked(mChatWindow.mIgnoreUnacceptedMessages);
+    ui->useEmojiIcons->setChecked(mChatWindow.ui->tabWidget->shouldUseEmoji());
+  }
+
+  ~SettingsDialog() { delete ui; }
+
+private:
+  MainChatWindow &mChatWindow;
+  Ui::ChatSettingsForm *const ui;
+
+  void accept() override {
+    mChatWindow.mAutoAcceptPrivs = ui->autoAcceptPrivs->isChecked();
+    mChatWindow.mAutoSavePictures = ui->autoSavePictures->isChecked();
+    mChatWindow.mIgnoreUnacceptedMessages = ui->discardUnaccepted->isChecked();
+    mChatWindow.ui->tabWidget->setUseEmoji(ui->useEmojiIcons->isChecked());
+    QDialog::accept();
+  }
+};
+
 MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                                Czateria::AvatarHandler &avatars,
                                const Czateria::Room &room,
@@ -154,16 +204,17 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)),
-      mAppSettings(settings),
-      mAutoAcceptPrivs(
-          new QAction(tr("Automatically accept private conversations"), this)),
-      mSendImageAction(
-          new QAction(QIcon(QLatin1String(":/icons/file-picture-icon.png")),
-                      tr("Send an image"), this)),
       mShowChannelListAction(
           new QAction(QIcon(QLatin1String(":/icons/czateria.png")),
                       tr("Show channel list"), this)),
-      mUseEmoji(new QAction(tr("Use emoji icons"), this)) {
+      mSendImageAction(
+          new QAction(QIcon(QLatin1String(":/icons/file-picture-icon.png")),
+                      tr("Send an image"), this)),
+      mSettingsAction(new QAction(QIcon(QLatin1String(":/icons/settings.png")),
+                                  tr("Open the settings window"), this)),
+      mAutoAcceptPrivs(settings.autoAcceptPrivs),
+      mAutoSavePictures(settings.savePicturesAutomatically),
+      mIgnoreUnacceptedMessages(settings.ignoreUnacceptedMessages) {
   QIcon icon;
   icon.addFile(QString::fromUtf8(":/icons/czateria.png"), QSize(),
                QIcon::Normal, QIcon::Off);
@@ -173,7 +224,6 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   ui->setupUi(centralWidget);
   setWindowTitle(mChatSession->channel());
   setCentralWidget(centralWidget);
-  statusBar();
   auto toolbar = new QToolBar;
   addToolBar(Qt::TopToolBarArea, toolbar);
 
@@ -204,18 +254,14 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   mSendImageAction->setEnabled(false);
   toolbar->addAction(mSendImageAction);
 
-  auto menu = menuBar()->addMenu(tr("Options"));
-  mAutoAcceptPrivs->setStatusTip(
-      tr("Accept private conversations without prompting"));
-  mAutoAcceptPrivs->setCheckable(true);
-  menu->addAction(mAutoAcceptPrivs);
+  mSettingsAction->setToolTip(tr("Opens the settings window"));
+  connect(mSettingsAction, &QAction::triggered, this, [=](auto) {
+    auto d = new SettingsDialog(this);
+    d->exec();
+  });
+  toolbar->addAction(mSettingsAction);
 
-  mUseEmoji->setStatusTip(tr("Convert icons and emoticons to emoji"));
-  mUseEmoji->setCheckable(true);
-  connect(mUseEmoji, &QAction::toggled, this,
-          [=](auto checked) { ui->tabWidget->setUseEmoji(checked); });
-  mUseEmoji->setChecked(mAppSettings.useEmojiIcons);
-  menu->addAction(mUseEmoji);
+  ui->tabWidget->setUseEmoji(settings.useEmojiIcons);
 
   auto desiredWidth = getOptimalUserListWidth(ui->listView);
   ui->widget_3->setMaximumSize(QSize(desiredWidth, QWIDGETSIZE_MAX));
@@ -257,7 +303,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
           [=](auto &&nickname, auto &&data, auto &&format) {
             const auto datetime = QDateTime::currentDateTime();
             const auto time = datetime.toString(QLatin1String("HH:mm:ss"));
-            if (mAppSettings.savePicturesAutomatically) {
+            if (mAutoSavePictures) {
               auto defaultPath = imageDefaultPath(mChatSession->channel(),
                                                   nickname, format, datetime);
               ui->tabWidget->addMessageToPrivateChat(
@@ -355,7 +401,7 @@ void MainChatWindow::onPrivateConvNotificationRejected(
 }
 
 void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
-  if (mAutoAcceptPrivs->isChecked() || ui->tabWidget->privTabIsOpen(nickname)) {
+  if (mAutoAcceptPrivs || ui->tabWidget->privTabIsOpen(nickname)) {
     ui->tabWidget->openPrivateMessageTab(nickname);
     doAcceptPrivateConversation(nickname);
   } else {
@@ -454,7 +500,7 @@ void MainChatWindow::onUserLeft(const QString &nickname) {
 
 void MainChatWindow::onPrivateConversationCancelled(const QString &nickname) {
   mMainWindow->removeNotification(this, nickname);
-  if (mAppSettings.ignoreUnacceptedMessages) {
+  if (mIgnoreUnacceptedMessages) {
     ui->tabWidget->closePrivateConversationTab(nickname);
     updateWindowTitle();
   }
