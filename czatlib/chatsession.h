@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QSharedPointer>
 #include <QString>
+#include <QVector>
 
 #include "conversationstate.h"
 #include "loginsession.h"
