@@ -33,7 +33,10 @@ public:
     return mPrivateTabs.contains(nickname);
   }
   void setUseEmoji(bool useEmoji) { mUseEmoji = useEmoji; }
+  bool shouldUseEmoji() const { return mUseEmoji; }
   void closePrivateConversationTab(const QString &nickname);
+  void writeConversationState(const QString &nickname, const QString &message,
+                              const QIcon &icon);
 
 signals:
   void privateConversationAccepted(const QString &nickname);

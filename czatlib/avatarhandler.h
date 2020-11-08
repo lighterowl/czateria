@@ -76,7 +76,7 @@ public:
 
       if (avatarId.length() == 46) {
         address.append(QLatin1String("temporary"));
-      } else if (avatarId.length() == 22) {
+      } else if (avatarId.length() == 22 || avatarId.length() == 23) {
         address.append(QLatin1String("users"));
       }
       address.append(QLatin1Char('/'));
@@ -86,6 +86,7 @@ public:
     }
 
     auto sock = mSocketFactory->getCached(QUrl(address));
+    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
     QObject::connect(sock, &HttpSocket::finished, [=]() {
       if (sock->error() == 0) {
         mAvatarCache[avatarId] = Avatar{fmt, sock->readAll()};

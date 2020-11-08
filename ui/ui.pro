@@ -29,6 +29,7 @@ SOURCES += \
     notificationsupport_msgbox.cpp \
   qthttpsocket.cpp \
   qtwebsocket.cpp \
+    settingsdialog.cpp \
     userlistview.cpp
 
 HEADERS += \
@@ -41,6 +42,7 @@ HEADERS += \
     notificationsupport.h \
     notificationsupport_msgbox.h \
     notificationsupport_native.h \
+    settingsdialog.h \
     userlistview.h \
     util.h \
   qthttpsocket.h \
@@ -49,8 +51,16 @@ HEADERS += \
 
 FORMS += \
     autologindatadialog.ui \
+    chatsettingsform.ui \
     chatwidget.ui \
     mainwindow.ui \
-    captchadialog.ui
+    captchadialog.ui \
+    settingsdialog.ui
+
+win32:CONFIG (release, debug|release): LIBS += -L../czatlib/release -lczatlib
+else:win32:CONFIG (debug, debug|release): LIBS += -L../czatlib/debug -lczatlib
+else:unix: LIBS += -L../czatlib -lczatlib
+
+unix: PRE_TARGETDEPS += ../czatlib/libczatlib.a
 
 RESOURCES += rsrc.qrc

@@ -9,7 +9,10 @@ bool (QVariant::*const AppSettings::Setting<bool>::mConvFn)() const =
 AppSettings::AppSettings()
     : useEmojiIcons(mSettings, QLatin1String("use_emoji"), true),
       savePicturesAutomatically(mSettings, QLatin1String("auto_pic_save"),
-                                false) {
+                                false),
+      ignoreUnacceptedMessages(mSettings, QLatin1String("ignore_unaccepted"),
+                               false),
+      autoAcceptPrivs(mSettings, QLatin1String("auto_accept_privs"), false) {
   auto variant = mSettings.value(QLatin1String("logins"));
   if (variant.isValid() && variant.type() == QVariant::Hash) {
     auto loginsHash = variant.toHash();

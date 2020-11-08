@@ -197,10 +197,20 @@ QString ChatWindowTabWidget::formatMessage(const Czateria::Message &msg) const {
                                  : Czateria::IconReplaceMode::Text));
 }
 
+void ChatWindowTabWidget::writeConversationState(const QString &nickname,
+                                                 const QString &message,
+                                                 const QIcon &icon) {
+  auto it = mPrivateTabs.find(nickname);
+  if (it != std::end(mPrivateTabs)) {
+    auto tab = it.value();
+    writePrivateInfo(tab, message, icon);
+    tab->removePendingAcceptWidget();
+  }
+}
+
 void ChatWindowTabWidget::onPrivateConversationStateChanged(
     const QString &nickname, Czateria::ConversationState state) {
   QString message;
-  QIcon icon = QIcon(QLatin1String(":/icons/no_entry.png")); // common default
   using s = decltype(state);
   switch (state) {
   case s::Rejected:
@@ -208,10 +218,6 @@ void ChatWindowTabWidget::onPrivateConversationStateChanged(
     break;
   case s::Closed:
     message = tr("User closed the conversation window");
-    break;
-  case s::UserLeft:
-    message = tr("User logged out");
-    icon = QIcon(QLatin1String(":/icons/door_out.png"));
     break;
   case s::NoPrivs:
     message = tr("User has turned off private conversations");
@@ -223,12 +229,8 @@ void ChatWindowTabWidget::onPrivateConversationStateChanged(
     Q_ASSERT(false);
     break;
   }
-  auto it = mPrivateTabs.find(nickname);
-  if (it != std::end(mPrivateTabs)) {
-    auto tab = it.value();
-    writePrivateInfo(tab, message, icon);
-    tab->removePendingAcceptWidget();
-  }
+  writeConversationState(nickname, message,
+                         QIcon(QLatin1String(":/icons/no_entry.png")));
 }
 
 QString ChatWindowTabWidget::getCurrentNickname() const {

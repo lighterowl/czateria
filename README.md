@@ -17,6 +17,10 @@ is working.
 Certain things are missing, most notably graphical icons in conversations and
 text formatting.
 
+Additional icons courtesy of [FamFamFam](http://www.famfamfam.com/) and
+[Small-n-flat](http://paomedia.github.io/small-n-flat/). Czateria favicon used
+without permission.
+
 # Disclaimer
 This software is not endorsed in any way by the owner of Czateria. Please use it
 at your own risk.

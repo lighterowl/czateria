@@ -47,7 +47,8 @@ private:
   void updateWindowTitle();
   void sendImageToCurrent(const QImage &);
   bool sendImageFromMime(const QMimeData *);
-  void closePrivateConvMsgbox(const QString &);
+  void onUserLeft(const QString &);
+  void onPrivateConversationCancelled(const QString &);
 
   void dragEnterEvent(QDragEnterEvent *) override;
   void dropEvent(QDropEvent *) override;
@@ -59,12 +60,17 @@ private:
   Czateria::ChatSession *const mChatSession;
   QSortFilterProxyModel *const mSortProxy;
   QCompleter *const mNicknameCompleter;
-  const AppSettings &mAppSettings; // Hania tu byla
 
-  QAction *const mAutoAcceptPrivs;
-  QAction *const mSendImageAction;
   QAction *const mShowChannelListAction;
-  QAction *const mUseEmoji;
+  QAction *const mSendImageAction;
+  QAction *const mSettingsAction;
+
+  bool mAutoAcceptPrivs;
+  bool mAutoSavePictures;
+  bool mIgnoreUnacceptedMessages;
+
+  class SettingsDialog;
+  friend class SettingsDialog;
 };
 
 #endif // MAINCHATWINDOW_H

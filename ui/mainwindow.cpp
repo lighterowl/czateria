@@ -6,6 +6,7 @@
 #include "captchadialog.h"
 #include "mainchatwindow.h"
 #include "qthttpsocket.h"
+#include "settingsdialog.h"
 #include "util.h"
 
 #include <czatlib/loginsession.h>
@@ -84,6 +85,17 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
 }
 
 constexpr auto channelListRefreshInterval = 5 * 60 * 1000;
+
+std::unique_ptr<NotificationSupport>
+createNotificationSupport(AppSettings::NotificationStyle style) {
+  switch (style) {
+  case AppSettings::NotificationStyle::MessageBox:
+    return NotificationSupport::msgBox();
+  case AppSettings::NotificationStyle::Native:
+    return NotificationSupport::native();
+  }
+  return nullptr;
+}
 } // namespace
 
 class MainWindow::AutologinState : public QObject {
@@ -162,7 +174,8 @@ MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
     : QMainWindow(parent), ui(new Ui::MainWindow), mSocketFactory(factory),
       mRoomListModel(new Czateria::RoomListModel(this, factory, settings)),
       mRoomSortModel(new QSortFilterProxyModel(this)), mAvatarHandler(factory),
-      mAppSettings(settings) {
+      mAppSettings(settings),
+      mNotifications(createNotificationSupport(settings.notificationStyle)) {
   ui->setupUi(this);
 
   auto refreshAct =
@@ -172,6 +185,19 @@ MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
   refreshAct->setStatusTip(tr("Refresh the list of channels"));
   connect(refreshAct, &QAction::triggered, this, &MainWindow::refreshRoomList);
   ui->mainToolBar->addAction(refreshAct);
+
+  auto settingsAct = new QAction(QIcon(QLatin1String(":/icons/settings.png")),
+                                 tr("Settings"), this);
+  settingsAct->setStatusTip(tr("Open the global settings window"));
+  connect(settingsAct, &QAction::triggered, this, [&]() {
+    auto d = new SettingsDialog(mAppSettings, this);
+    auto rv = d->exec();
+    if (rv == QDialog::Accepted) {
+      mNotifications =
+          createNotificationSupport(mAppSettings.notificationStyle);
+    }
+  });
+  ui->mainToolBar->addAction(settingsAct);
 
   mRoomSortModel->setSourceModel(mRoomListModel);
   ui->tableView->setModel(mRoomSortModel);
@@ -222,44 +248,7 @@ MainWindow::MainWindow(QtHttpSocketFactory *factory, AppSettings &settings,
   ui->nicknameLineEdit->installEventFilter(this);
   ui->nicknameLineEdit->setValidator(CzateriaUtil::getNicknameValidator());
 
-  ui->actionSave_pictures_automatically->setChecked(
-      mAppSettings.savePicturesAutomatically);
-  connect(
-      ui->actionSave_pictures_automatically, &QAction::toggled, this,
-      [=](bool checked) { mAppSettings.savePicturesAutomatically = checked; });
-  ui->actionUse_emoji_icons->setChecked(mAppSettings.useEmojiIcons);
-  connect(ui->actionUse_emoji_icons, &QAction::toggled, this,
-          [=](bool checked) { mAppSettings.useEmojiIcons = checked; });
-
   startTimer(channelListRefreshInterval);
-
-  connect(ui->actionMessage_box, &QAction::toggled, this, [&](bool checked) {
-    if (checked) {
-      mNotifications = NotificationSupport::msgBox();
-      mAppSettings.notificationStyle =
-          AppSettings::NotificationStyle::MessageBox;
-    }
-  });
-  connect(ui->actionNative, &QAction::toggled, this, [&](bool checked) {
-    if (checked) {
-      mNotifications = NotificationSupport::native();
-      mAppSettings.notificationStyle = AppSettings::NotificationStyle::Native;
-    }
-  });
-
-  auto grp = new QActionGroup(this);
-  grp->addAction(ui->actionNative);
-  grp->addAction(ui->actionMessage_box);
-
-  auto native = NotificationSupport::native();
-  const bool native_supported = native && native->supported();
-  ui->actionNative->setEnabled(native_supported);
-  ui->actionNative->setChecked(native_supported &&
-                               mAppSettings.notificationStyle ==
-                                   AppSettings::NotificationStyle::Native);
-  ui->actionMessage_box->setChecked(
-      !native_supported || mAppSettings.notificationStyle ==
-                               AppSettings::NotificationStyle::MessageBox);
 }
 
 void MainWindow::onChannelDoubleClicked(const QModelIndex &idx) {
