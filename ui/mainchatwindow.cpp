@@ -191,10 +191,8 @@ private:
     mChatWindow.mAutoSavePictures = ui->autoSavePictures->isChecked();
     mChatWindow.mIgnoreUnacceptedMessages = ui->discardUnaccepted->isChecked();
     mChatWindow.ui->tabWidget->setUseEmoji(ui->useEmojiIcons->isChecked());
-    close();
+    QDialog::accept();
   }
-
-  void reject() override { close(); }
 };
 
 MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
