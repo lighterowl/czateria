@@ -14,7 +14,7 @@ class QJsonObject;
 namespace Czateria {
 
 class AvatarHandler;
-struct ChatBlocker;
+class ChatBlocker;
 class ChatSession;
 
 class UserListModel : public QAbstractListModel {
@@ -39,6 +39,9 @@ public:
 
 private:
   void populateUsers(const QJsonArray &userData, const QJsonArray &cardData);
+  void onBlockerChanged();
+  std::vector<User>::iterator
+  removeUserInternal(std::vector<User>::iterator it);
 
   std::vector<User> mUsers;
 

@@ -22,7 +22,7 @@ class ChatSession;
 class Message;
 class AvatarHandler;
 struct Room;
-struct ChatBlocker;
+class ChatBlocker;
 } // namespace Czateria
 
 class MainChatWindow : public QMainWindow {

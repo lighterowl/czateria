@@ -201,6 +201,7 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
     if (rv == QDialog::Accepted) {
       mNotifications =
           createNotificationSupport(mAppSettings.notificationStyle);
+      emit mBlocker.changed();
     }
   });
   ui->mainToolBar->addAction(settingsAct);

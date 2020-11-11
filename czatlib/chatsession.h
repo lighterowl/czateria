@@ -21,7 +21,7 @@ class LoginSession;
 class Message;
 class UserListModel;
 class AvatarHandler;
-struct ChatBlocker;
+class ChatBlocker;
 
 class ChatSession : public QObject {
   Q_OBJECT
@@ -92,6 +92,7 @@ private:
   void sendKeepalive();
   void handleKickBan(const QJsonObject &json);
   void emitPendingMessages(const QString &);
+  void onBlockerChanged();
 
   QWebSocket *const mWebSocket;
   QString mNickname;
