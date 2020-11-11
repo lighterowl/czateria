@@ -149,11 +149,13 @@ void UserListModel::setPrivStatus(const QString &nickname, bool hasPrivs) {
 void UserListModel::addUsers(const QJsonArray &userData) {
   for (int i = 0; i < userData.size(); ++i) {
     auto user = User(userData[i].toObject());
-    auto it = std::upper_bound(std::begin(mUsers), std::end(mUsers), user);
-    auto row = static_cast<int>(std::distance(std::begin(mUsers), it));
-    beginInsertRows(QModelIndex(), row, row);
-    mUsers.insert(it, user);
-    endInsertRows();
+    if (!mBlocker.isUserBlocked(user.mLogin)) {
+      auto it = std::upper_bound(std::begin(mUsers), std::end(mUsers), user);
+      auto row = static_cast<int>(std::distance(std::begin(mUsers), it));
+      beginInsertRows(QModelIndex(), row, row);
+      mUsers.insert(it, user);
+      endInsertRows();
+    }
   }
 }
 
