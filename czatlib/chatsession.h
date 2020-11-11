@@ -21,7 +21,7 @@ class LoginSession;
 class Message;
 class UserListModel;
 class AvatarHandler;
-class ChatBlocker;
+struct ChatBlocker;
 
 class ChatSession : public QObject {
   Q_OBJECT

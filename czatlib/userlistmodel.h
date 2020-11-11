@@ -14,7 +14,7 @@ class QJsonObject;
 namespace Czateria {
 
 class AvatarHandler;
-class ChatBlocker;
+struct ChatBlocker;
 class ChatSession;
 
 class UserListModel : public QAbstractListModel {
