@@ -334,7 +334,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
            "perhaps with a different nickname."));
   });
 
-  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
+  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed, this,
           [=](auto &&nickname) {
             mChatSession->notifyPrivateConversationClosed(nickname);
             updateWindowTitle();
