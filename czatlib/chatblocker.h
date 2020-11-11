@@ -5,6 +5,7 @@
 
 namespace Czateria {
 struct ChatBlocker {
+  virtual ~ChatBlocker() {}
   virtual bool isUserBlocked(const QString &nickname) const = 0;
   virtual bool isMessageBlocked(const QString &content) const = 0;
 };

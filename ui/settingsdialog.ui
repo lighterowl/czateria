@@ -20,7 +20,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="generalTab">
       <attribute name="title">
@@ -95,6 +95,93 @@ They are applied to all new chat sessions.</string>
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="blockingTab">
+      <attribute name="title">
+       <string>Blocking</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QTabWidget" name="tabWidget_3">
+         <property name="currentIndex">
+          <number>1</number>
+         </property>
+         <widget class="QWidget" name="blockingUsersTab">
+          <attribute name="title">
+           <string>Users</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Messages (general and private) from usernames matching any of these regular expressions will be ignored.</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="blockUserLineEdit">
+             <property name="placeholderText">
+              <string>Press return to add a new expression</string>
+             </property>
+             <property name="clearButtonEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="blockedUsersList"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="blockingMsgsTab">
+          <attribute name="title">
+           <string>Messages</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Messages whose contents match any of these regular expressions will be ignored.</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="blockMsgsLineEdit">
+             <property name="placeholderText">
+              <string>Press return to add a new expression</string>
+             </property>
+             <property name="clearButtonEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="blockedMsgsList">
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
+             <property name="resizeMode">
+              <enum>QListView::Fixed</enum>
              </property>
             </widget>
            </item>
