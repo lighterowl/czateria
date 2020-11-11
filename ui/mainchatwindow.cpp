@@ -22,6 +22,7 @@
 #include <QToolBar>
 #include <QUrl>
 
+#include <czatlib/chatblocker.h>
 #include <czatlib/chatsession.h>
 #include <czatlib/message.h>
 #include <czatlib/userlistmodel.h>
@@ -200,7 +201,8 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                                const Czateria::Room &room,
                                const AppSettings &settings, MainWindow *mainWin)
     : QMainWindow(nullptr), ui(new Ui::ChatWidget), mMainWindow(mainWin),
-      mChatSession(new Czateria::ChatSession(login, avatars, room, this)),
+      mChatSession(
+          new Czateria::ChatSession(login, avatars, room, mBlocker, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)),

@@ -19,6 +19,7 @@ public:
   const QDateTime &receivedAt() const { return mReceivedAt; }
   const QString &nickname() const { return mNickname; }
   QString message(IconReplaceMode) const;
+  const QString &rawMessage() const { return mRawMessage; }
 
 private:
   Message(const QString &msg, const QString &nick);

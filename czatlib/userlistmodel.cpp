@@ -5,6 +5,7 @@
 #include <QTextStream>
 
 #include "avatarhandler.h"
+#include "chatblocker.h"
 
 namespace {
 template <typename ForwardIt, typename T>
@@ -78,8 +79,9 @@ QString createToolTip(const Czateria::User &user,
 
 namespace Czateria {
 
-UserListModel::UserListModel(const AvatarHandler &avatars, QObject *parent)
-    : QAbstractListModel(parent), mAvatarHandler(avatars) {}
+UserListModel::UserListModel(const AvatarHandler &avatars,
+                             const ChatBlocker &blocker, QObject *parent)
+    : QAbstractListModel(parent), mAvatarHandler(avatars), mBlocker(blocker) {}
 
 void UserListModel::setUserData(const QJsonArray &userData) {
   if (mCardDataCache) {
@@ -106,7 +108,10 @@ void UserListModel::populateUsers(const QJsonArray &userData,
   const auto finalIdx = std::min(userData.count(), cardData.count());
   mUsers.reserve(static_cast<unsigned>(finalIdx));
   for (int i = 0; i < finalIdx; ++i) {
-    mUsers.push_back(User(userData[i].toObject(), cardData[i].toObject()));
+    auto usr = User(userData[i].toObject(), cardData[i].toObject());
+    if (!mBlocker.isUserBlocked(usr.mLogin)) {
+      mUsers.emplace_back(usr);
+    }
   }
 
   std::sort(std::begin(mUsers), std::end(mUsers));

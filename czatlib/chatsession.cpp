@@ -12,6 +12,7 @@
 
 #include <array>
 
+#include "chatblocker.h"
 #include "icons.h"
 #include "loginsession.h"
 #include "message.h"
@@ -182,14 +183,15 @@ namespace Czateria {
 
 ChatSession::ChatSession(QSharedPointer<LoginSession> login,
                          const AvatarHandler &avatars, const Room &room,
-                         QObject *parent)
+                         const ChatBlocker &blocker, QObject *parent)
     : QObject(parent), mWebSocket(new QWebSocket(
                            QString(), QWebSocketProtocol::VersionLatest, this)),
       mNickname(login->nickname()),
       mHost(QString(QLatin1String("wss://%1-proxy-czateria.interia.pl"))
                 .arg(room.port)),
-      mHelloReceived(false), mUserListModel(new UserListModel(avatars, this)),
-      mLoginSession(login), mRoom(room) {
+      mHelloReceived(false),
+      mUserListModel(new UserListModel(avatars, blocker, this)),
+      mLoginSession(login), mRoom(room), mBlocker(blocker) {
   connect(this, &ChatSession::userLeft, mUserListModel,
           &UserListModel::removeUser);
   connect(mWebSocket, &QWebSocket::textMessageReceived, this,
@@ -301,7 +303,9 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   switch (code) {
   case 129: {
     auto msg = Message::roomMessage(obj);
-    if (msg.nickname() != mNickname) {
+    if (msg.nickname() != mNickname &&
+        !mBlocker.isUserBlocked(msg.nickname()) &&
+        !mBlocker.isMessageBlocked(msg.rawMessage())) {
       emit roomMessageReceived(msg);
     }
     break;
@@ -398,6 +402,9 @@ void ChatSession::onTextMessageReceived(const QString &text) {
 bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
   auto user = json[QLatin1String("user")].toString();
   auto subcode = json[QLatin1String("subcode")].toInt();
+  if (mBlocker.isUserBlocked(user)) {
+    return true;
+  }
   auto it = mCurrentPrivate.find(user);
   if (subcode == 1 || subcode == 2) {
     // incoming message
