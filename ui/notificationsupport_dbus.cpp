@@ -42,8 +42,7 @@ void NotificationSupportDBus::displayNotification(MainChatWindow *chatWin,
   args.append(tr("Incoming private conversation"));
   args.append(QString(QLatin1String("<b>%1</b> in room <b>%2</b> wants to "
                                     "start a conversation."))
-                  .arg(nickname)
-                  .arg(channel));
+                  .arg(nickname, channel));
   args.append(QStringList() << acceptPrivConvAction << tr("Accept")
                             << rejectPrivConvAction << tr("Reject"));
   args.append(QMap<QString, QVariant>{

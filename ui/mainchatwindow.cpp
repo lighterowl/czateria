@@ -41,11 +41,10 @@ imageDefaultPath(const QString &channel, const QString &nickname,
                  const QByteArray &format,
                  const QDateTime &datetime = QDateTime::currentDateTime()) {
   return QString(QLatin1String("%1/czateria_%2_%3_%4.%5"))
-      .arg(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation))
-      .arg(channel)
-      .arg(nickname)
-      .arg(datetime.toString(QLatin1String("yyyyMMddHHmmss")))
-      .arg(QLatin1String(format.constData()));
+      .arg(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation),
+           channel, nickname,
+           datetime.toString(QLatin1String("yyyyMMddHHmmss")),
+           QLatin1String(format.constData()));
 }
 
 void saveImage(const QByteArray &data, const QString &fileName) {
@@ -140,9 +139,7 @@ QString getKickBanMsgStr(const QString &blockTypeStr,
                       : MainChatWindow::tr(" for inappropriate %1")
                             .arg(explainBlockCause(why));
   return QString(QLatin1String("You were %1%2%3"))
-      .arg(blockTypeStr)
-      .arg(bannedBy)
-      .arg(causeStr);
+      .arg(blockTypeStr, bannedBy, causeStr);
 }
 } // namespace
 
@@ -151,8 +148,8 @@ public:
   SettingsDialog(MainChatWindow *parent)
       : QDialog(parent), mChatWindow(*parent), ui(new Ui::ChatSettingsForm()) {
     setWindowTitle(QString(QLatin1String("%1/%2 : Settings"))
-                       .arg(parent->mChatSession->channel())
-                       .arg(parent->mChatSession->nickname()));
+                       .arg(parent->mChatSession->channel(),
+                            parent->mChatSession->nickname()));
     setAttribute(Qt::WA_DeleteOnClose);
     setModal(true);
 
@@ -334,7 +331,7 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
            "perhaps with a different nickname."));
   });
 
-  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed,
+  connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed, this,
           [=](auto &&nickname) {
             mChatSession->notifyPrivateConversationClosed(nickname);
             updateWindowTitle();
