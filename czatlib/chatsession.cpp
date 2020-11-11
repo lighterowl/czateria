@@ -409,6 +409,10 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
   if (subcode == 1 || subcode == 2) {
     // incoming message
     auto msg = Message::privMessage(json);
+    if (mBlocker.isMessageBlocked(msg.rawMessage())) {
+      return true;
+    }
+
     if (it == std::end(mCurrentPrivate) ||
         it->mState == ConversationState::Closed) {
       auto &ctx = mCurrentPrivate[user];
