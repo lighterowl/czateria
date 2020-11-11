@@ -83,7 +83,10 @@ namespace Czateria {
 UserListModel::UserListModel(const AvatarHandler &avatars,
                              const ChatBlocker &blocker, ChatSession *parent)
     : QAbstractListModel(parent), mSession(*parent), mAvatarHandler(avatars),
-      mBlocker(blocker) {}
+      mBlocker(blocker) {
+  connect(&mBlocker, &ChatBlocker::changed, this,
+          &UserListModel::onBlockerChanged);
+}
 
 void UserListModel::setUserData(const QJsonArray &userData) {
   if (mCardDataCache) {
@@ -120,6 +123,26 @@ void UserListModel::populateUsers(const QJsonArray &userData,
   mUserDataCache.reset();
   mCardDataCache.reset();
   endResetModel();
+}
+
+void UserListModel::onBlockerChanged() {
+  auto it = std::begin(mUsers);
+  while (it != std::end(mUsers)) {
+    if (mBlocker.isUserBlocked(it->mLogin)) {
+      it = removeUserInternal(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
+std::vector<User>::iterator
+UserListModel::removeUserInternal(std::vector<User>::iterator it) {
+  auto row = static_cast<int>(std::distance(std::begin(mUsers), it));
+  beginRemoveRows(QModelIndex(), row, row);
+  auto rv = mUsers.erase(it);
+  endRemoveRows();
+  return rv;
 }
 
 void UserListModel::updateCardData(const QJsonObject &json) {
@@ -167,10 +190,7 @@ void UserListModel::removeUser(const QString &nickname) {
   const auto itEnd = std::end(mUsers);
   auto it = binary_find(itBegin, itEnd, User(nickname));
   if (it != itEnd) {
-    auto row = static_cast<int>(std::distance(itBegin, it));
-    beginRemoveRows(QModelIndex(), row, row);
-    mUsers.erase(it);
-    endRemoveRows();
+    removeUserInternal(it);
   }
 }
 

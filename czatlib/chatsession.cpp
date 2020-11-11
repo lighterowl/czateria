@@ -202,6 +202,8 @@ ChatSession::ChatSession(QSharedPointer<LoginSession> login,
   connect(mWebSocket, errSig, this, &ChatSession::onSocketError);
   connect(mLoginSession.data(), &LoginSession::loginSuccessful, this,
           &ChatSession::start);
+  connect(&mBlocker, &ChatBlocker::changed, this,
+          &ChatSession::onBlockerChanged);
 }
 
 ChatSession::~ChatSession() {
@@ -538,6 +540,20 @@ void ChatSession::emitPendingMessages(const QString &nickname) {
   auto it = mCurrentPrivate.find(nickname);
   if (it != std::end(mCurrentPrivate)) {
     emitPendingMessages(it);
+  }
+}
+
+void ChatSession::onBlockerChanged() {
+  auto it = mCurrentPrivate.begin();
+  while (it != mCurrentPrivate.end()) {
+    auto &&user = it.key();
+    if (mBlocker.isUserBlocked(user)) {
+      emit privateConversationStateChanged(user,
+                                           Czateria::ConversationState::Closed);
+      it = mCurrentPrivate.erase(it);
+    } else {
+      ++it;
+    }
   }
 }
 

@@ -20,7 +20,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="generalTab">
       <attribute name="title">
@@ -112,7 +112,7 @@ They are applied to all new chat sessions.</string>
        <item>
         <widget class="QTabWidget" name="tabWidget_3">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="blockingUsersTab">
           <attribute name="title">
