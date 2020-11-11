@@ -204,21 +204,17 @@ They are applied to all new chat sessions.</string>
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="logGeneralFilePath">
+        <widget class="QCheckBox" name="logJoinsPartsCheckBox">
          <property name="enabled">
           <bool>false</bool>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="logJoinsPartsCheckBox">
          <property name="text">
           <string>Log joins/parts in main chat</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="logJoinsPartsFilePath">
+        <widget class="QLineEdit" name="logGeneralFilePath">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -299,24 +295,8 @@ They are applied to all new chat sessions.</string>
      <y>73</y>
     </hint>
     <hint type="destinationlabel">
-     <x>159</x>
-     <y>107</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>logJoinsPartsCheckBox</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>logJoinsPartsFilePath</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>131</x>
-     <y>154</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>132</x>
-     <y>189</y>
+     <x>170</x>
+     <y>177</y>
     </hint>
    </hints>
   </connection>
@@ -327,12 +307,28 @@ They are applied to all new chat sessions.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>103</x>
-     <y>227</y>
+     <x>114</x>
+     <y>222</y>
     </hint>
     <hint type="destinationlabel">
      <x>108</x>
      <y>261</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>logGeneralCheckBox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>logJoinsPartsCheckBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>77</x>
+     <y>73</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>69</x>
+     <y>123</y>
     </hint>
    </hints>
   </connection>
