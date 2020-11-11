@@ -5,6 +5,8 @@
 #include <QTextStream>
 
 #include "avatarhandler.h"
+#include "chatblocker.h"
+#include "chatsession.h"
 
 namespace {
 template <typename ForwardIt, typename T>
@@ -78,8 +80,10 @@ QString createToolTip(const Czateria::User &user,
 
 namespace Czateria {
 
-UserListModel::UserListModel(const AvatarHandler &avatars, QObject *parent)
-    : QAbstractListModel(parent), mAvatarHandler(avatars) {}
+UserListModel::UserListModel(const AvatarHandler &avatars,
+                             const ChatBlocker &blocker, ChatSession *parent)
+    : QAbstractListModel(parent), mSession(*parent), mAvatarHandler(avatars),
+      mBlocker(blocker) {}
 
 void UserListModel::setUserData(const QJsonArray &userData) {
   if (mCardDataCache) {
@@ -106,7 +110,10 @@ void UserListModel::populateUsers(const QJsonArray &userData,
   const auto finalIdx = std::min(userData.count(), cardData.count());
   mUsers.reserve(static_cast<unsigned>(finalIdx));
   for (int i = 0; i < finalIdx; ++i) {
-    mUsers.push_back(User(userData[i].toObject(), cardData[i].toObject()));
+    auto usr = User(userData[i].toObject(), cardData[i].toObject());
+    if (!mBlocker.isUserBlocked(usr.mLogin)) {
+      mUsers.emplace_back(usr);
+    }
   }
 
   std::sort(std::begin(mUsers), std::end(mUsers));
@@ -144,11 +151,14 @@ void UserListModel::setPrivStatus(const QString &nickname, bool hasPrivs) {
 void UserListModel::addUsers(const QJsonArray &userData) {
   for (int i = 0; i < userData.size(); ++i) {
     auto user = User(userData[i].toObject());
-    auto it = std::upper_bound(std::begin(mUsers), std::end(mUsers), user);
-    auto row = static_cast<int>(std::distance(std::begin(mUsers), it));
-    beginInsertRows(QModelIndex(), row, row);
-    mUsers.insert(it, user);
-    endInsertRows();
+    if (user.mLogin == mSession.nickname() ||
+        !mBlocker.isUserBlocked(user.mLogin)) {
+      auto it = std::upper_bound(std::begin(mUsers), std::end(mUsers), user);
+      auto row = static_cast<int>(std::distance(std::begin(mUsers), it));
+      beginInsertRows(QModelIndex(), row, row);
+      mUsers.insert(it, user);
+      endInsertRows();
+    }
   }
 }
 

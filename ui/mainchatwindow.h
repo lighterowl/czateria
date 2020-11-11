@@ -22,6 +22,7 @@ class ChatSession;
 class Message;
 class AvatarHandler;
 struct Room;
+struct ChatBlocker;
 } // namespace Czateria
 
 class MainChatWindow : public QMainWindow {
@@ -31,7 +32,9 @@ public:
   explicit MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                           Czateria::AvatarHandler &avatars,
                           const Czateria::Room &room,
-                          const AppSettings &settings, MainWindow *mainWin);
+                          const AppSettings &settings,
+                          const Czateria::ChatBlocker &blocker,
+                          MainWindow *mainWin);
   ~MainChatWindow();
 
   void onPrivateConvNotificationAccepted(const QString &nickname);

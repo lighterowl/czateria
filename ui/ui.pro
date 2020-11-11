@@ -28,6 +28,7 @@ SOURCES += \
     chatwindowtabwidget.cpp \
     notificationsupport.cpp \
     notificationsupport_msgbox.cpp \
+    settingsbasedblocker.cpp \
     settingsdialog.cpp \
     userlistview.cpp
 
@@ -41,6 +42,7 @@ HEADERS += \
     notificationsupport.h \
     notificationsupport_msgbox.h \
     notificationsupport_native.h \
+    settingsbasedblocker.h \
     settingsdialog.h \
     userlistview.h \
     util.h

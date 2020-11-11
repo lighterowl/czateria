@@ -16,6 +16,7 @@ SOURCES += room.cpp \
     icons.cpp
 
 HEADERS += room.h \
+  chatblocker.h \
   roomlistmodel.h \
     loginfailreason.h \
     captcha.h \

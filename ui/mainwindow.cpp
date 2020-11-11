@@ -180,7 +180,8 @@ MainWindow::MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
       mRoomListModel(new Czateria::RoomListModel(this, nam, settings)),
       mRoomSortModel(new QSortFilterProxyModel(this)), mAvatarHandler(nam),
       mAppSettings(settings),
-      mNotifications(createNotificationSupport(settings.notificationStyle)) {
+      mNotifications(createNotificationSupport(settings.notificationStyle)),
+      mBlocker(settings) {
   ui->setupUi(this);
 
   auto refreshAct =
@@ -373,8 +374,8 @@ void MainWindow::createChatWindow(
   // we keep our own list of this instead of using parenting because
   // having these windows as children of MainWindow causes
   // QApplication::alert not to work properly.
-  auto win =
-      new MainChatWindow(session, mAvatarHandler, room, mAppSettings, this);
+  auto win = new MainChatWindow(session, mAvatarHandler, room, mAppSettings,
+                                mBlocker, this);
   mChatWindows.push_back(win);
   if (!session->nickname().isEmpty()) {
     mCurrentSessions[session->nickname()] = session.toWeakRef();

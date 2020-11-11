@@ -3,6 +3,9 @@
 
 #include <QDialog>
 
+class QLineEdit;
+class QListWidget;
+
 namespace Ui {
 class SettingsDialog;
 class ChatSettingsForm;
@@ -19,7 +22,11 @@ public:
 
 private:
   void readSettings();
+  void onLineEditReturnPressed(QLineEdit *, QListWidget *);
   void accept() override;
+
+  void keyPressEvent(QKeyEvent *) override;
+  bool eventFilter(QObject *, QEvent *) override;
 
   Ui::SettingsDialog *const ui;
   Ui::ChatSettingsForm *const uiForm;

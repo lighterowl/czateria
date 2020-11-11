@@ -21,12 +21,14 @@ class LoginSession;
 class Message;
 class UserListModel;
 class AvatarHandler;
+struct ChatBlocker;
 
 class ChatSession : public QObject {
   Q_OBJECT
 public:
   ChatSession(QSharedPointer<LoginSession> login, const AvatarHandler &avatars,
-              const Room &room, QObject *parent = nullptr);
+              const Room &room, const ChatBlocker &blocker,
+              QObject *parent = nullptr);
   ~ChatSession() override;
 
   void start();
@@ -99,6 +101,7 @@ private:
   UserListModel *const mUserListModel;
   QSharedPointer<Czateria::LoginSession> mLoginSession;
   const Room mRoom;
+  const ChatBlocker &mBlocker;
 
   struct PrivConvContext {
     ConversationState mState;
