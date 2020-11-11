@@ -2,6 +2,39 @@
 
 #include <QMetaEnum>
 
+namespace {
+QList<QVariant> toVariantList(const QVector<QRegularExpression> &regExpVec) {
+  QList<QVariant> rv;
+  rv.reserve(regExpVec.size());
+  for (auto &&rgx : regExpVec) {
+    rv.push_back(QVariant::fromValue(rgx));
+  }
+  return rv;
+}
+
+QVector<QRegularExpression> fromVariantList(const QList<QVariant> &varList) {
+  QVector<QRegularExpression> rv;
+  rv.reserve(varList.size());
+  for (auto &&var : varList) {
+    if (var.type() == QVariant::RegularExpression) {
+      auto rgx = var.toRegularExpression();
+      if (rgx.isValid()) {
+        rv.push_back(rgx);
+      }
+    }
+  }
+  return rv;
+}
+
+void readRegexList(const QSettings &settings, const QLatin1String &key,
+                   QVector<QRegularExpression> &dest) {
+  auto variant = settings.value(key);
+  if (variant.isValid() && variant.type() == QVariant::List) {
+    dest = fromVariantList(variant.toList());
+  }
+}
+} // namespace
+
 template <>
 bool (QVariant::*const AppSettings::Setting<bool>::mConvFn)() const =
     &QVariant::toBool;
@@ -13,6 +46,7 @@ AppSettings::AppSettings()
       ignoreUnacceptedMessages(mSettings, QLatin1String("ignore_unaccepted"),
                                false),
       autoAcceptPrivs(mSettings, QLatin1String("auto_accept_privs"), false) {
+
   auto variant = mSettings.value(QLatin1String("logins"));
   if (variant.isValid() && variant.type() == QVariant::Hash) {
     auto loginsHash = variant.toHash();
@@ -20,6 +54,7 @@ AppSettings::AppSettings()
       logins[it.key()] = it.value().toString();
     }
   }
+
   variant = mSettings.value(QLatin1String("notifications"));
   if (variant.isValid() && variant.type() == QVariant::String) {
     auto styleStr = variant.toString();
@@ -30,6 +65,10 @@ AppSettings::AppSettings()
       notificationStyle = static_cast<AppSettings::NotificationStyle>(idx);
     }
   }
+
+  readRegexList(mSettings, QLatin1String("blocked_users"), blockedUsers);
+  readRegexList(mSettings, QLatin1String("blocked_contents"), blockedContents);
+
   mSettings.beginGroup(QLatin1String("autologin"));
   for (auto &&idStr : mSettings.childGroups()) {
     bool ok;
@@ -51,11 +90,18 @@ AppSettings::AppSettings()
 
 AppSettings::~AppSettings() {
   mSettings.setValue(QLatin1String("logins"), logins);
+
+  mSettings.setValue(QLatin1String("blocked_users"),
+                     toVariantList(blockedUsers));
+  mSettings.setValue(QLatin1String("blocked_contents"),
+                     toVariantList(blockedContents));
+
   mSettings.setValue(
       QLatin1String("notifications"),
       QLatin1String(
           QMetaEnum::fromType<AppSettings::NotificationStyle>().valueToKey(
               static_cast<int>(notificationStyle))));
+
   mSettings.beginGroup(QLatin1String("autologin"));
   for (auto it = mAutologinData.cbegin(); it != mAutologinData.cend(); ++it) {
     mSettings.beginGroup(QString(QLatin1String("%1")).arg(it.key()));

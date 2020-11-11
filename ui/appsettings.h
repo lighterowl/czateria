@@ -48,6 +48,9 @@ public:
   QHash<QString, QVariant> logins;
   QMultiHash<Czateria::RoomListModel::LoginData, int> autologinHash() const;
 
+  QVector<QRegularExpression> blockedUsers;
+  QVector<QRegularExpression> blockedContents;
+
 private:
   Czateria::RoomListModel::LoginData
   getAutologin(const Czateria::Room &room) const override;

@@ -9,6 +9,24 @@
 #include <QRegularExpression>
 #include <QStandardItemModel>
 
+namespace {
+void fillListWidget(QListWidget *listWidget,
+                    const QVector<QRegularExpression> &data) {
+  for (auto &&rgx : data) {
+    listWidget->addItem(rgx.pattern());
+  }
+}
+
+QVector<QRegularExpression> saveListWidget(const QListWidget *listWidget) {
+  QVector<QRegularExpression> rv;
+  rv.reserve(listWidget->count());
+  for (int i = 0; i < listWidget->count(); ++i) {
+    rv.push_back(QRegularExpression(listWidget->item(i)->text()));
+  }
+  return rv;
+}
+} // namespace
+
 SettingsDialog::SettingsDialog(AppSettings &settings, QWidget *parent)
     : QDialog(parent), ui(new Ui::SettingsDialog),
       uiForm(new Ui::ChatSettingsForm), mAppSettings(settings) {
@@ -49,6 +67,9 @@ void SettingsDialog::readSettings() {
   uiForm->useEmojiIcons->setChecked(mAppSettings.useEmojiIcons);
   ui->notifStyleComboBox->setCurrentIndex(
       static_cast<int>(mAppSettings.notificationStyle));
+
+  fillListWidget(ui->blockedMsgsList, mAppSettings.blockedContents);
+  fillListWidget(ui->blockedUsersList, mAppSettings.blockedUsers);
 }
 
 void SettingsDialog::onLineEditReturnPressed(QLineEdit *lineEdit,
@@ -72,6 +93,9 @@ void SettingsDialog::accept() {
   mAppSettings.useEmojiIcons = uiForm->useEmojiIcons->isChecked();
   mAppSettings.notificationStyle = static_cast<AppSettings::NotificationStyle>(
       ui->notifStyleComboBox->currentIndex());
+
+  mAppSettings.blockedContents = saveListWidget(ui->blockedMsgsList);
+  mAppSettings.blockedUsers = saveListWidget(ui->blockedUsersList);
 
   QDialog::accept();
 }
