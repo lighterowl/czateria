@@ -191,9 +191,8 @@ void ChatWindowTabWidget::updateTabActivity(int idx) {
 
 QString ChatWindowTabWidget::formatMessage(const Czateria::Message &msg) const {
   return QString(QLatin1String("[%1] <%2> %3"))
-      .arg(msg.receivedAt().toString(QLatin1String("HH:mm:ss")))
-      .arg(msg.nickname())
-      .arg(msg.message(mUseEmoji ? Czateria::IconReplaceMode::Emoji
+      .arg(msg.receivedAt().toString(QLatin1String("HH:mm:ss")), msg.nickname(),
+           msg.message(mUseEmoji ? Czateria::IconReplaceMode::Emoji
                                  : Czateria::IconReplaceMode::Text));
 }
 
@@ -269,7 +268,7 @@ void ChatWindowTabWidget::writePrivateInfo(PrivateChatTab *tab,
                                            const QIcon &icon) {
   tab->appendPlainText(
       QString(QLatin1String("[%1] %2"))
-          .arg(QDateTime::currentDateTime().toString(QLatin1String("HH:mm:ss")))
-          .arg(message));
+          .arg(QDateTime::currentDateTime().toString(QLatin1String("HH:mm:ss")),
+               message));
   indicateTabActivity(tab, icon);
 }
