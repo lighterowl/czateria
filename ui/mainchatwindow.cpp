@@ -199,10 +199,12 @@ private:
 MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                                Czateria::AvatarHandler &avatars,
                                const Czateria::Room &room,
-                               const AppSettings &settings, MainWindow *mainWin)
+                               const AppSettings &settings,
+                               const Czateria::ChatBlocker &blocker,
+                               MainWindow *mainWin)
     : QMainWindow(nullptr), ui(new Ui::ChatWidget), mMainWindow(mainWin),
       mChatSession(
-          new Czateria::ChatSession(login, avatars, room, mBlocker, this)),
+          new Czateria::ChatSession(login, avatars, room, blocker, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)),

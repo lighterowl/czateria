@@ -10,6 +10,7 @@
 #include <czatlib/loginfailreason.h>
 
 #include "notificationsupport.h"
+#include "settingsbasedblocker.h"
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -53,6 +54,7 @@ private:
   QList<MainChatWindow *> mChatWindows;
   QHash<QString, QWeakPointer<Czateria::LoginSession>> mCurrentSessions;
   std::unique_ptr<NotificationSupport> mNotifications;
+  SettingsBasedBlocker mBlocker;
 
   void onChannelDoubleClicked(const QModelIndex &);
   void onChannelClicked(const QModelIndex &);

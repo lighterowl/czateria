@@ -5,8 +5,6 @@
 #include <QMainWindow>
 #include <QSharedPointer>
 
-#include <czatlib/chatblocker.h>
-
 class QSortFilterProxyModel;
 class QCompleter;
 class QMessageBox;
@@ -24,13 +22,8 @@ class ChatSession;
 class Message;
 class AvatarHandler;
 struct Room;
+struct ChatBlocker;
 } // namespace Czateria
-
-class StupidBlocker : public Czateria::ChatBlocker {
-public:
-  bool isUserBlocked(const QString &) const override { return true; }
-  bool isMessageBlocked(const QString &) const override { return true; }
-};
 
 class MainChatWindow : public QMainWindow {
   Q_OBJECT
@@ -39,7 +32,9 @@ public:
   explicit MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                           Czateria::AvatarHandler &avatars,
                           const Czateria::Room &room,
-                          const AppSettings &settings, MainWindow *mainWin);
+                          const AppSettings &settings,
+                          const Czateria::ChatBlocker &blocker,
+                          MainWindow *mainWin);
   ~MainChatWindow();
 
   void onPrivateConvNotificationAccepted(const QString &nickname);
@@ -65,7 +60,6 @@ private:
 
   Ui::ChatWidget *ui;
   MainWindow *const mMainWindow;
-  StupidBlocker mBlocker;
   Czateria::ChatSession *const mChatSession;
   QSortFilterProxyModel *const mSortProxy;
   QCompleter *const mNicknameCompleter;
