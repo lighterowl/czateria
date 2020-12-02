@@ -183,7 +183,8 @@ namespace Czateria {
 
 ChatSession::ChatSession(QSharedPointer<LoginSession> login,
                          const AvatarHandler &avatars, const Room &room,
-                         const ChatBlocker &blocker, QObject *parent)
+                         const ChatBlocker &blocker,
+                         ChatSessionListener *listener, QObject *parent)
     : QObject(parent), mWebSocket(new QWebSocket(
                            QString(), QWebSocketProtocol::VersionLatest, this)),
       mNickname(login->nickname()),
@@ -191,7 +192,8 @@ ChatSession::ChatSession(QSharedPointer<LoginSession> login,
                 .arg(room.port)),
       mHelloReceived(false),
       mUserListModel(new UserListModel(avatars, blocker, this)),
-      mLoginSession(login), mRoom(room), mBlocker(blocker) {
+      mLoginSession(login), mRoom(room), mBlocker(blocker),
+      mListener(listener) {
   connect(this, &ChatSession::userLeft, mUserListModel,
           &UserListModel::removeUser);
   connect(mWebSocket, &QWebSocket::textMessageReceived, this,
