@@ -1,6 +1,7 @@
 #include "appsettings.h"
 #include "mainwindow.h"
 #include <QApplication>
+#include <QDir>
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
 #include <QNetworkProxyFactory>
@@ -53,8 +54,48 @@ struct Logger : public Czateria::ChatSessionListener {
     }
   }
 
+  static QString makeLogPath(const QString &input) {
+    auto date = QDate::currentDate();
+    QString out;
+    QRegularExpression rgx(QLatin1String("%[~%uYMDc]"));
+    auto it = rgx.globalMatch(input);
+    int inpos = 0;
+    while (it.hasNext()) {
+      auto m = it.next();
+      auto matchStart = m.capturedStart();
+      if (inpos != m.capturedStart()) {
+        out.append(QStringRef(&input, inpos, matchStart - inpos));
+      }
+      out.append(replaceToken(m.capturedRef().at(1), date));
+      inpos = m.capturedEnd();
+    }
+    if (inpos != input.length()) {
+      out.append(QStringRef(&input, inpos, input.length() - inpos));
+    }
+    return out;
+  }
+
 private:
   static const bool mEnableLogging = true;
+  static QString replaceToken(QChar token, const QDate &date) {
+    switch (token.unicode()) {
+    case '%':
+      return QLatin1String("%");
+    case '~':
+      return QDir::homePath();
+    case 'u':
+      return QLatin1String("kochamkoty69");
+    case 'Y':
+      return date.toString(QLatin1String("yyyy"));
+    case 'M':
+      return date.toString(QLatin1String("MM"));
+    case 'D':
+      return date.toString(QLatin1String("dd"));
+    case 'c':
+      return QString::fromUtf8("tajny pokój ruchu ośmiu gwiazdek");
+    }
+    return QString();
+  }
 };
 } // namespace
 
