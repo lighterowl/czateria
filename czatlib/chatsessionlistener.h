@@ -17,8 +17,11 @@ struct ChatSessionListener {
   virtual ~ChatSessionListener() = 0;
   virtual void onRoomMessage(const Room &room, const QString &nickname,
                              const QString &message) = 0;
-  virtual void onPrivateMessage(const Room &room, const QString &nickname,
-                                const QString &message) = 0;
+  virtual void onPrivateMessageReceived(const Room &room,
+                                        const QString &nickname,
+                                        const QString &message) = 0;
+  virtual void onPrivateMessageSent(const Room &room, const QString &nickname,
+                                    const QString &message) = 0;
   virtual void onUserJoined(const Room &room, const QString &nickname) = 0;
   virtual void onUserLeft(const Room &room, const QString &nickname) = 0;
 };

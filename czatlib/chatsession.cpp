@@ -13,6 +13,7 @@
 #include <array>
 
 #include "chatblocker.h"
+#include "chatsessionlistener.h"
 #include "icons.h"
 #include "loginsession.h"
 #include "message.h"
@@ -247,6 +248,7 @@ void ChatSession::sendRoomMessage(const QString &message) {
 
 void ChatSession::sendPrivateMessage(const QString &nickname,
                                      const QString &message) {
+  mListener->onPrivateMessageSent(mRoom, mNickname, message);
   auto it = mCurrentPrivate.find(nickname);
   if (it == std::end(mCurrentPrivate) ||
       it->mState == ConversationState::Rejected ||
@@ -307,6 +309,7 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   switch (code) {
   case 129: {
     auto msg = Message::roomMessage(obj);
+    mListener->onRoomMessage(mRoom, msg.nickname(), msg.rawMessage());
     if (msg.nickname() != mNickname &&
         !mBlocker.isUserBlocked(msg.nickname()) &&
         !mBlocker.isMessageBlocked(msg.rawMessage())) {
@@ -317,7 +320,9 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   case 128: {
     auto users = obj[QLatin1String("users")].toArray();
     for (auto &&user : users) {
-      emit userJoined(user.toObject()[QLatin1String("login")].toString());
+      const auto nickname = user.toObject()[QLatin1String("login")].toString();
+      emit userJoined(nickname);
+      mListener->onUserJoined(mRoom, nickname);
     }
     mUserListModel->addUsers(users);
     break;
@@ -334,6 +339,7 @@ void ChatSession::onTextMessageReceived(const QString &text) {
       }
     }
     emit userLeft(user);
+    mListener->onUserLeft(mRoom, user);
     break;
   }
 
@@ -404,16 +410,16 @@ void ChatSession::onTextMessageReceived(const QString &text) {
 }
 
 bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
-  auto user = json[QLatin1String("user")].toString();
-  auto subcode = json[QLatin1String("subcode")].toInt();
-  if (mBlocker.isUserBlocked(user)) {
-    return true;
-  }
-  auto it = mCurrentPrivate.find(user);
+  const auto user = json[QLatin1String("user")].toString();
+  const auto subcode = json[QLatin1String("subcode")].toInt();
+  const auto userBlocked = mBlocker.isUserBlocked(user);
+  const auto it = mCurrentPrivate.find(user);
+
   if (subcode == 1 || subcode == 2) {
     // incoming message
     auto msg = Message::privMessage(json);
-    if (mBlocker.isMessageBlocked(msg.rawMessage())) {
+    mListener->onPrivateMessageReceived(mRoom, user, msg.rawMessage());
+    if (mBlocker.isMessageBlocked(msg.rawMessage()) || userBlocked) {
       return true;
     }
 
@@ -438,8 +444,14 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
       }
     }
     return true;
-  } else if (subcode == 14 && (it != std::end(mCurrentPrivate)) &&
-             it->mState == ConversationState::InviteReceived) {
+  }
+
+  if (userBlocked) {
+    return true;
+  }
+
+  if (subcode == 14 && (it != std::end(mCurrentPrivate)) &&
+      it->mState == ConversationState::InviteReceived) {
     // conversation request cancelled before accepting.
     emitPendingMessages(user);
     mCurrentPrivate.remove(user);

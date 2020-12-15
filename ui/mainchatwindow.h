@@ -23,6 +23,7 @@ class Message;
 class AvatarHandler;
 struct Room;
 class ChatBlocker;
+struct ChatSessionListener;
 } // namespace Czateria
 
 class MainChatWindow : public QMainWindow {
@@ -34,6 +35,7 @@ public:
                           const Czateria::Room &room,
                           const AppSettings &settings,
                           const Czateria::ChatBlocker &blocker,
+                          Czateria::ChatSessionListener *listener,
                           MainWindow *mainWin);
   ~MainChatWindow();
 

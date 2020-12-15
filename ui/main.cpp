@@ -6,6 +6,8 @@
 #include <QNetworkProxyFactory>
 #include <QStandardPaths>
 
+#include "czatlib/chatsessionlistener.h"
+
 namespace {
 QtMessageHandler defaultHandler;
 
@@ -17,6 +19,43 @@ void msgOutput(QtMsgType type, const QMessageLogContext &context,
     defaultHandler(type, context, msg);
   }
 }
+
+struct Logger : public Czateria::ChatSessionListener {
+  void onRoomMessage(const Czateria::Room &room, const QString &nickname,
+                     const QString &message) override {
+    if (mEnableLogging) {
+      qInfo() << room.name << nickname << message;
+    }
+  }
+  void onPrivateMessageReceived(const Czateria::Room &room,
+                                const QString &nickname,
+                                const QString &message) override {
+    if (mEnableLogging) {
+      qInfo() << room.name << nickname << message;
+    }
+  }
+  void onPrivateMessageSent(const Czateria::Room &room, const QString &nickname,
+                            const QString &message) override {
+    if (mEnableLogging) {
+      qInfo() << room.name << nickname << message;
+    }
+  }
+  void onUserJoined(const Czateria::Room &room,
+                    const QString &nickname) override {
+    if (mEnableLogging) {
+      qInfo() << nickname << "joined" << room.name;
+    }
+  }
+  void onUserLeft(const Czateria::Room &room,
+                  const QString &nickname) override {
+    if (mEnableLogging) {
+      qInfo() << nickname << "left" << room.name;
+    }
+  }
+
+private:
+  static const bool mEnableLogging = true;
+};
 } // namespace
 
 int main(int argc, char **argv) {
@@ -37,7 +76,8 @@ int main(int argc, char **argv) {
       QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
   nam.setCache(cache);
   AppSettings settings;
-  MainWindow w(&nam, settings);
+  Logger l;
+  MainWindow w(&nam, settings, &l);
   w.show();
 
   return a.exec();

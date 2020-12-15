@@ -27,6 +27,7 @@ namespace Czateria {
 class RoomListModel;
 class LoginSession;
 struct Room;
+struct ChatSessionListener;
 } // namespace Czateria
 
 class MainWindow : public QMainWindow {
@@ -34,6 +35,7 @@ class MainWindow : public QMainWindow {
 
 public:
   explicit MainWindow(QNetworkAccessManager *nam, AppSettings &settings,
+                      Czateria::ChatSessionListener *listener,
                       QWidget *parent = nullptr);
   ~MainWindow() override;
   void displayNotification(MainChatWindow *chatWin, const QString &nickname,
@@ -55,6 +57,7 @@ private:
   QHash<QString, QWeakPointer<Czateria::LoginSession>> mCurrentSessions;
   std::unique_ptr<NotificationSupport> mNotifications;
   SettingsBasedBlocker mBlocker;
+  Czateria::ChatSessionListener *mListener;
 
   void onChannelDoubleClicked(const QModelIndex &);
   void onChannelClicked(const QModelIndex &);
