@@ -221,9 +221,6 @@ They are applied to all new chat sessions.</string>
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Following variables are supported :&lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%%&lt;/span&gt; - a literal % character&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%~&lt;/span&gt; - the current user's home directory&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%u&lt;/span&gt; - (&lt;span style=&quot; font-style:italic;&quot;&gt;you)&lt;/span&gt; your username in the given chat session&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%Y &lt;/span&gt;, &lt;span style=&quot; font-weight:600;&quot;&gt;%M&lt;/span&gt; , &lt;span style=&quot; font-weight:600;&quot;&gt;%D&lt;/span&gt; - year (4-digit), month (2-digit) and day (2-digit)&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%c&lt;/span&gt; - the channel name&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
-         <property name="text">
-          <string>%~/.czateria/logs/%u/%Y-%M-%D/%c.log</string>
-         </property>
         </widget>
        </item>
        <item>
@@ -240,9 +237,6 @@ They are applied to all new chat sessions.</string>
          </property>
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;All variables supported by main chat logging can be used here, as well as :&lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%p&lt;/span&gt; - nickname of the conversation partner&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>%~/.czateria/logs/%u/%Y-%M-%D/%c/%p.log</string>
          </property>
         </widget>
        </item>
@@ -298,7 +292,7 @@ They are applied to all new chat sessions.</string>
   </connection>
   <connection>
    <sender>logGeneralCheckBox</sender>
-   <signal>clicked(bool)</signal>
+   <signal>toggled(bool)</signal>
    <receiver>logGeneralFilePath</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
@@ -314,7 +308,7 @@ They are applied to all new chat sessions.</string>
   </connection>
   <connection>
    <sender>logPrivateCheckBox</sender>
-   <signal>clicked(bool)</signal>
+   <signal>toggled(bool)</signal>
    <receiver>logPrivateFilePath</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
@@ -330,7 +324,7 @@ They are applied to all new chat sessions.</string>
   </connection>
   <connection>
    <sender>logGeneralCheckBox</sender>
-   <signal>clicked(bool)</signal>
+   <signal>toggled(bool)</signal>
    <receiver>logJoinsPartsCheckBox</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>

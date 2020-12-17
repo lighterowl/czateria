@@ -39,13 +39,24 @@ template <>
 bool (QVariant::*const AppSettings::Setting<bool>::mConvFn)() const =
     &QVariant::toBool;
 
+template <>
+QString (QVariant::*const AppSettings::Setting<QString>::mConvFn)() const =
+    &QVariant::toString;
+
 AppSettings::AppSettings()
     : useEmojiIcons(mSettings, QLatin1String("use_emoji"), true),
       savePicturesAutomatically(mSettings, QLatin1String("auto_pic_save"),
                                 false),
       ignoreUnacceptedMessages(mSettings, QLatin1String("ignore_unaccepted"),
                                false),
-      autoAcceptPrivs(mSettings, QLatin1String("auto_accept_privs"), false) {
+      autoAcceptPrivs(mSettings, QLatin1String("auto_accept_privs"), false),
+      logMainChat(mSettings, QLatin1String("log_main_chat"), false),
+      logJoinsParts(mSettings, QLatin1String("log_joins_parts"), false),
+      logPrivs(mSettings, QLatin1String("log_privs"), false),
+      mainChatLogPath(mSettings, QLatin1String("main_log_path"),
+                      QLatin1String("%~/.czateria/logs/%u/%Y-%M-%D/%c.log")),
+      privLogPath(mSettings, QLatin1String("priv_log_path"),
+                  QLatin1String("%~/.czateria/logs/%u/%Y-%M-%D/%c/%p.log")) {
 
   auto variant = mSettings.value(QLatin1String("logins"));
   if (variant.isValid() && variant.type() == QVariant::Hash) {

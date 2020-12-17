@@ -42,6 +42,12 @@ public:
   Setting<bool> savePicturesAutomatically;
   Setting<bool> ignoreUnacceptedMessages;
   Setting<bool> autoAcceptPrivs;
+  Setting<bool> logMainChat;
+  Setting<bool> logJoinsParts;
+  Setting<bool> logPrivs;
+  Setting<QString> mainChatLogPath;
+  Setting<QString> privLogPath;
+
   enum class NotificationStyle { MessageBox, Native };
   Q_ENUM(NotificationStyle)
   NotificationStyle notificationStyle = NotificationStyle::MessageBox;
