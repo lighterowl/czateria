@@ -8,6 +8,7 @@
 #include <QStandardPaths>
 
 #include "czatlib/chatsessionlistener.h"
+#include "czatlib/message.h"
 
 namespace {
 QtMessageHandler defaultHandler;
@@ -22,23 +23,22 @@ void msgOutput(QtMsgType type, const QMessageLogContext &context,
 }
 
 struct Logger : public Czateria::ChatSessionListener {
-  void onRoomMessage(const Czateria::Room &room, const QString &nickname,
-                     const QString &message) override {
+  void onRoomMessage(const Czateria::Room &room,
+                     const Czateria::Message &message) override {
     if (mEnableLogging) {
-      qInfo() << room.name << nickname << message;
+      qInfo() << room.name << message.nickname() << message.rawMessage();
     }
   }
   void onPrivateMessageReceived(const Czateria::Room &room,
-                                const QString &nickname,
-                                const QString &message) override {
+                                const Czateria::Message &message) override {
     if (mEnableLogging) {
-      qInfo() << room.name << nickname << message;
+      qInfo() << room.name << message.nickname() << message.rawMessage();
     }
   }
-  void onPrivateMessageSent(const Czateria::Room &room, const QString &nickname,
-                            const QString &message) override {
+  void onPrivateMessageSent(const Czateria::Room &room,
+                            const Czateria::Message &message) override {
     if (mEnableLogging) {
-      qInfo() << room.name << nickname << message;
+      qInfo() << room.name << message.nickname() << message.rawMessage();
     }
   }
   void onUserJoined(const Czateria::Room &room,

@@ -248,7 +248,8 @@ void ChatSession::sendRoomMessage(const QString &message) {
 
 void ChatSession::sendPrivateMessage(const QString &nickname,
                                      const QString &message) {
-  mListener->onPrivateMessageSent(mRoom, mNickname, message);
+  mListener->onPrivateMessageSent(
+      mRoom, Message(QDateTime::currentDateTime(), message, mNickname));
   auto it = mCurrentPrivate.find(nickname);
   if (it == std::end(mCurrentPrivate) ||
       it->mState == ConversationState::Rejected ||
@@ -309,7 +310,7 @@ void ChatSession::onTextMessageReceived(const QString &text) {
   switch (code) {
   case 129: {
     auto msg = Message::roomMessage(obj);
-    mListener->onRoomMessage(mRoom, msg.nickname(), msg.rawMessage());
+    mListener->onRoomMessage(mRoom, msg);
     if (msg.nickname() != mNickname &&
         !mBlocker.isUserBlocked(msg.nickname()) &&
         !mBlocker.isMessageBlocked(msg.rawMessage())) {
@@ -418,7 +419,7 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
   if (subcode == 1 || subcode == 2) {
     // incoming message
     auto msg = Message::privMessage(json);
-    mListener->onPrivateMessageReceived(mRoom, user, msg.rawMessage());
+    mListener->onPrivateMessageReceived(mRoom, msg);
     if (mBlocker.isMessageBlocked(msg.rawMessage()) || userBlocked) {
       return true;
     }
