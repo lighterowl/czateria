@@ -7,6 +7,7 @@
 #include <QNetworkProxyFactory>
 #include <QStandardPaths>
 
+#include "czatlib/chatsession.h"
 #include "czatlib/chatsessionlistener.h"
 #include "czatlib/message.h"
 
@@ -23,34 +24,37 @@ void msgOutput(QtMsgType type, const QMessageLogContext &context,
 }
 
 struct Logger : public Czateria::ChatSessionListener {
-  void onRoomMessage(const Czateria::Room &room,
+  void onRoomMessage(const Czateria::ChatSession *session,
                      const Czateria::Message &message) override {
     if (mEnableLogging) {
-      qInfo() << room.name << message.nickname() << message.rawMessage();
+      qInfo() << session->channel() << message.nickname()
+              << message.rawMessage();
     }
   }
-  void onPrivateMessageReceived(const Czateria::Room &room,
+  void onPrivateMessageReceived(const Czateria::ChatSession *session,
                                 const Czateria::Message &message) override {
     if (mEnableLogging) {
-      qInfo() << room.name << message.nickname() << message.rawMessage();
+      qInfo() << session->channel() << message.nickname()
+              << message.rawMessage();
     }
   }
-  void onPrivateMessageSent(const Czateria::Room &room,
+  void onPrivateMessageSent(const Czateria::ChatSession *session,
                             const Czateria::Message &message) override {
     if (mEnableLogging) {
-      qInfo() << room.name << message.nickname() << message.rawMessage();
+      qInfo() << session->channel() << message.nickname()
+              << message.rawMessage();
     }
   }
-  void onUserJoined(const Czateria::Room &room,
+  void onUserJoined(const Czateria::ChatSession *session,
                     const QString &nickname) override {
     if (mEnableLogging) {
-      qInfo() << nickname << "joined" << room.name;
+      qInfo() << nickname << "joined" << session->channel();
     }
   }
-  void onUserLeft(const Czateria::Room &room,
+  void onUserLeft(const Czateria::ChatSession *session,
                   const QString &nickname) override {
     if (mEnableLogging) {
-      qInfo() << nickname << "left" << room.name;
+      qInfo() << nickname << "left" << session->channel();
     }
   }
 

@@ -6,6 +6,7 @@
 namespace Czateria {
 struct Room;
 class Message;
+class ChatSession;
 
 /* an observer-like object added as an afterthought rather than conceived right
  * from the start. one can clearly see that it duplicates some of the
@@ -15,13 +16,16 @@ class Message;
  * locally. */
 struct ChatSessionListener {
   virtual ~ChatSessionListener() = 0;
-  virtual void onRoomMessage(const Room &room, const Message &message) = 0;
-  virtual void onPrivateMessageReceived(const Room &room,
+  virtual void onRoomMessage(const ChatSession *session,
+                             const Message &message) = 0;
+  virtual void onPrivateMessageReceived(const ChatSession *session,
                                         const Message &message) = 0;
-  virtual void onPrivateMessageSent(const Room &room,
+  virtual void onPrivateMessageSent(const ChatSession *session,
                                     const Message &message) = 0;
-  virtual void onUserJoined(const Room &room, const QString &nickname) = 0;
-  virtual void onUserLeft(const Room &room, const QString &nickname) = 0;
+  virtual void onUserJoined(const ChatSession *session,
+                            const QString &nickname) = 0;
+  virtual void onUserLeft(const ChatSession *session,
+                          const QString &nickname) = 0;
 };
 } // namespace Czateria
 
