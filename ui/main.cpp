@@ -58,7 +58,8 @@ struct Logger : public Czateria::ChatSessionListener {
     }
   }
 
-  static QString makeLogPath(const QString &input) {
+  static QString makeLogPath(const QString &input,
+                             const Czateria::ChatSession *session) {
     auto date = QDate::currentDate();
     QString out;
     QRegularExpression rgx(QLatin1String("%[~%uYMDc]"));
@@ -70,7 +71,7 @@ struct Logger : public Czateria::ChatSessionListener {
       if (inpos != m.capturedStart()) {
         out.append(QStringRef(&input, inpos, matchStart - inpos));
       }
-      out.append(replaceToken(m.capturedRef().at(1), date));
+      out.append(replaceToken(m.capturedRef().at(1), date, session));
       inpos = m.capturedEnd();
     }
     if (inpos != input.length()) {
@@ -81,14 +82,15 @@ struct Logger : public Czateria::ChatSessionListener {
 
 private:
   static const bool mEnableLogging = true;
-  static QString replaceToken(QChar token, const QDate &date) {
+  static QString replaceToken(QChar token, const QDate &date,
+                              const Czateria::ChatSession *session) {
     switch (token.unicode()) {
     case '%':
       return QLatin1String("%");
     case '~':
       return QDir::homePath();
     case 'u':
-      return QLatin1String("kochamkoty69");
+      return session->nickname();
     case 'Y':
       return date.toString(QLatin1String("yyyy"));
     case 'M':
@@ -96,7 +98,7 @@ private:
     case 'D':
       return date.toString(QLatin1String("dd"));
     case 'c':
-      return QString::fromUtf8("tajny pokój ruchu ośmiu gwiazdek");
+      return session->channel();
     }
     return QString();
   }
