@@ -6,6 +6,7 @@ include(../czateria.pri)
 QT += core network websockets
 
 SOURCES += room.cpp \
+    chatsessionlistener.cpp \
   roomlistmodel.cpp \
     captcha.cpp \
     loginsession.cpp \
@@ -17,6 +18,7 @@ SOURCES += room.cpp \
 
 HEADERS += room.h \
   chatblocker.h \
+    chatsessionlistener.h \
   roomlistmodel.h \
     loginfailreason.h \
     captcha.h \

@@ -198,10 +198,11 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                                const Czateria::Room &room,
                                const AppSettings &settings,
                                const Czateria::ChatBlocker &blocker,
+                               Czateria::ChatSessionListener *listener,
                                MainWindow *mainWin)
     : QMainWindow(nullptr), ui(new Ui::ChatWidget), mMainWindow(mainWin),
-      mChatSession(
-          new Czateria::ChatSession(login, avatars, room, blocker, this)),
+      mChatSession(new Czateria::ChatSession(login, avatars, room, blocker,
+                                             listener, this)),
       mSortProxy(new QSortFilterProxyModel(this)),
       mNicknameCompleter(
           createNicknameCompleter(mChatSession->userListModel(), this)),

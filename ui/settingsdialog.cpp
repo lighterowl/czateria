@@ -70,6 +70,12 @@ void SettingsDialog::readSettings() {
 
   fillListWidget(ui->blockedMsgsList, mAppSettings.blockedContents);
   fillListWidget(ui->blockedUsersList, mAppSettings.blockedUsers);
+
+  ui->logGeneralCheckBox->setChecked(mAppSettings.logMainChat);
+  ui->logJoinsPartsCheckBox->setChecked(mAppSettings.logJoinsParts);
+  ui->logGeneralFilePath->setText(mAppSettings.mainChatLogPath);
+  ui->logPrivateCheckBox->setChecked(mAppSettings.logPrivs);
+  ui->logPrivateFilePath->setText(mAppSettings.privLogPath);
 }
 
 void SettingsDialog::onLineEditReturnPressed(QLineEdit *lineEdit,
@@ -96,6 +102,12 @@ void SettingsDialog::accept() {
 
   mAppSettings.blockedContents = saveListWidget(ui->blockedMsgsList);
   mAppSettings.blockedUsers = saveListWidget(ui->blockedUsersList);
+
+  mAppSettings.logMainChat = ui->logGeneralCheckBox->isChecked();
+  mAppSettings.logJoinsParts = ui->logJoinsPartsCheckBox->isChecked();
+  mAppSettings.mainChatLogPath = ui->logGeneralFilePath->text();
+  mAppSettings.logPrivs = ui->logPrivateCheckBox->isChecked();
+  mAppSettings.privLogPath = ui->logPrivateFilePath->text();
 
   QDialog::accept();
 }

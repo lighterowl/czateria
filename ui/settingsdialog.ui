@@ -191,6 +191,57 @@ They are applied to all new chat sessions.</string>
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="loggingTab">
+      <attribute name="title">
+       <string>Logging</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_7">
+       <item>
+        <widget class="QCheckBox" name="logGeneralCheckBox">
+         <property name="text">
+          <string>Log main chat</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="logJoinsPartsCheckBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Log joins/parts in main chat</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="logGeneralFilePath">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Following variables are supported :&lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%%&lt;/span&gt; - a literal % character&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%~&lt;/span&gt; - the current user's home directory&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%u&lt;/span&gt; - (&lt;span style=&quot; font-style:italic;&quot;&gt;you)&lt;/span&gt; your username in the given chat session&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%Y &lt;/span&gt;, &lt;span style=&quot; font-weight:600;&quot;&gt;%M&lt;/span&gt; , &lt;span style=&quot; font-weight:600;&quot;&gt;%D&lt;/span&gt; - year (4-digit), month (2-digit) and day (2-digit)&lt;/li&gt;&lt;li style=&quot; margin-top:0px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%c&lt;/span&gt; - the channel name&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="logPrivateCheckBox">
+         <property name="text">
+          <string>Log private conversations</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="logPrivateFilePath">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;All variables supported by main chat logging can be used here, as well as :&lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;&gt;&lt;li style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;%p&lt;/span&gt; - nickname of the conversation partner&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item>
@@ -236,6 +287,54 @@ They are applied to all new chat sessions.</string>
     <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>logGeneralCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>logGeneralFilePath</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>165</x>
+     <y>73</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>170</x>
+     <y>177</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>logPrivateCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>logPrivateFilePath</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>114</x>
+     <y>222</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>108</x>
+     <y>261</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>logGeneralCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>logJoinsPartsCheckBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>77</x>
+     <y>73</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>69</x>
+     <y>123</y>
     </hint>
    </hints>
   </connection>

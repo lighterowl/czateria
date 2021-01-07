@@ -1,5 +1,7 @@
 #include "appsettings.h"
+#include "filebasedlogger.h"
 #include "mainwindow.h"
+
 #include <QApplication>
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
@@ -37,7 +39,8 @@ int main(int argc, char **argv) {
       QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
   nam.setCache(cache);
   AppSettings settings;
-  MainWindow w(&nam, settings);
+  FileBasedLogger l(settings);
+  MainWindow w(&nam, settings, &l);
   w.show();
 
   return a.exec();

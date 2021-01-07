@@ -11,13 +11,13 @@ on:
 jobs:
   build-linux:
 
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v1
     
     - name: Install Qt
-      run: sudo apt install qt5-default qtbase5-dev libqt5websockets5-dev
+      run: sudo apt-get update; sudo apt-get install qt5-default qtbase5-dev libqt5websockets5-dev;
       
     - name: Build with gcc
       run: ./workflow_build_linux.sh g++
