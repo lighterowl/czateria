@@ -22,7 +22,7 @@ class Message;
 class UserListModel;
 class AvatarHandler;
 class ChatBlocker;
-class ChatSessionListener;
+struct ChatSessionListener;
 
 class ChatSession : public QObject {
   Q_OBJECT
