@@ -21,6 +21,7 @@ INCLUDEPATH += ..
 SOURCES += \
     appsettings.cpp \
     autologindatadialog.cpp \
+    filebasedlogger.cpp \
     main.cpp \
     mainwindow.cpp \
     captchadialog.cpp \
@@ -35,6 +36,7 @@ SOURCES += \
 HEADERS += \
     appsettings.h \
     autologindatadialog.h \
+    filebasedlogger.h \
     mainwindow.h \
     captchadialog.h \
     mainchatwindow.h \

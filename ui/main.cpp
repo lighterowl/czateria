@@ -1,5 +1,7 @@
 #include "appsettings.h"
+#include "filebasedlogger.h"
 #include "mainwindow.h"
+
 #include <QApplication>
 #include <QDir>
 #include <QNetworkAccessManager>
@@ -22,87 +24,6 @@ void msgOutput(QtMsgType type, const QMessageLogContext &context,
     defaultHandler(type, context, msg);
   }
 }
-
-struct Logger : public Czateria::ChatSessionListener {
-  void onRoomMessage(const Czateria::ChatSession *session,
-                     const Czateria::Message &message) override {
-    if (mEnableLogging) {
-      qInfo() << session->channel() << message.nickname()
-              << message.rawMessage();
-    }
-  }
-  void onPrivateMessageReceived(const Czateria::ChatSession *session,
-                                const Czateria::Message &message) override {
-    if (mEnableLogging) {
-      qInfo() << session->channel() << message.nickname()
-              << message.rawMessage();
-    }
-  }
-  void onPrivateMessageSent(const Czateria::ChatSession *session,
-                            const Czateria::Message &message) override {
-    if (mEnableLogging) {
-      qInfo() << session->channel() << message.nickname()
-              << message.rawMessage();
-    }
-  }
-  void onUserJoined(const Czateria::ChatSession *session,
-                    const QString &nickname) override {
-    if (mEnableLogging) {
-      qInfo() << nickname << "joined" << session->channel();
-    }
-  }
-  void onUserLeft(const Czateria::ChatSession *session,
-                  const QString &nickname) override {
-    if (mEnableLogging) {
-      qInfo() << nickname << "left" << session->channel();
-    }
-  }
-
-  static QString makeLogPath(const QString &input,
-                             const Czateria::ChatSession *session) {
-    auto date = QDate::currentDate();
-    QString out;
-    QRegularExpression rgx(QLatin1String("%[~%uYMDc]"));
-    auto it = rgx.globalMatch(input);
-    int inpos = 0;
-    while (it.hasNext()) {
-      auto m = it.next();
-      auto matchStart = m.capturedStart();
-      if (inpos != m.capturedStart()) {
-        out.append(QStringRef(&input, inpos, matchStart - inpos));
-      }
-      out.append(replaceToken(m.capturedRef().at(1), date, session));
-      inpos = m.capturedEnd();
-    }
-    if (inpos != input.length()) {
-      out.append(QStringRef(&input, inpos, input.length() - inpos));
-    }
-    return out;
-  }
-
-private:
-  static const bool mEnableLogging = true;
-  static QString replaceToken(QChar token, const QDate &date,
-                              const Czateria::ChatSession *session) {
-    switch (token.unicode()) {
-    case '%':
-      return QLatin1String("%");
-    case '~':
-      return QDir::homePath();
-    case 'u':
-      return session->nickname();
-    case 'Y':
-      return date.toString(QLatin1String("yyyy"));
-    case 'M':
-      return date.toString(QLatin1String("MM"));
-    case 'D':
-      return date.toString(QLatin1String("dd"));
-    case 'c':
-      return session->channel();
-    }
-    return QString();
-  }
-};
 } // namespace
 
 int main(int argc, char **argv) {
@@ -123,7 +44,7 @@ int main(int argc, char **argv) {
       QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
   nam.setCache(cache);
   AppSettings settings;
-  Logger l;
+  FileBasedLogger l(settings);
   MainWindow w(&nam, settings, &l);
   w.show();
 

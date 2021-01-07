@@ -243,13 +243,15 @@ void ChatSession::notifyPrivateConversationClosed(const QString &nickname) {
 }
 
 void ChatSession::sendRoomMessage(const QString &message) {
+  mListener->onRoomMessage(
+      this, Message(QDateTime::currentDateTime(), message, mNickname));
   SendTextMessage(mWebSocket, messageMsg(message));
 }
 
 void ChatSession::sendPrivateMessage(const QString &nickname,
                                      const QString &message) {
   mListener->onPrivateMessageSent(
-      this, Message(QDateTime::currentDateTime(), message, mNickname));
+      this, Message(QDateTime::currentDateTime(), message, nickname));
   auto it = mCurrentPrivate.find(nickname);
   if (it == std::end(mCurrentPrivate) ||
       it->mState == ConversationState::Rejected ||
