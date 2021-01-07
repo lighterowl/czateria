@@ -3,15 +3,10 @@
 #include "mainwindow.h"
 
 #include <QApplication>
-#include <QDir>
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
 #include <QNetworkProxyFactory>
 #include <QStandardPaths>
-
-#include "czatlib/chatsession.h"
-#include "czatlib/chatsessionlistener.h"
-#include "czatlib/message.h"
 
 namespace {
 QtMessageHandler defaultHandler;

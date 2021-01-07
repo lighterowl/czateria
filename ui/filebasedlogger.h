@@ -9,8 +9,8 @@
 #include <QHash>
 #include <unordered_map>
 
-// Qt containers do not accept move-only objects (QTBUG-59188), which is why we
-// need to use std containers here.
+// Qt containers do not accept move-only objects by design (QTBUG-59188), which
+// is why we need to use std containers here.
 namespace std {
 template <> struct hash<QString> {
   std::size_t operator()(const QString &s) const noexcept { return qHash(s); }
