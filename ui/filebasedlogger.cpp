@@ -12,6 +12,16 @@
 #include <QRegularExpression>
 
 namespace {
+QString sanitize(const QString &source) {
+  // externally-originating strings might contain '/', which really shouldn't
+  // be a part of the path passed to system calls : it is replaced with '@',
+  // which is not a valid nickname character so won't lead to potential clashes
+  // with another nickname that would have a '@' in place of a '/'.
+  auto rv = source;
+  rv.replace(QLatin1Char('/'), QLatin1Char('@'));
+  return rv;
+}
+
 template <typename F>
 QString replaceToken(QChar token, const QDate &date,
                      const Czateria::ChatSession *session, F &&unknownTokenFn) {
@@ -21,7 +31,7 @@ QString replaceToken(QChar token, const QDate &date,
   case '~':
     return QDir::homePath();
   case 'u':
-    return session->nickname();
+    return sanitize(session->nickname());
   case 'Y':
     return date.toString(QLatin1String("yyyy"));
   case 'M':
@@ -29,7 +39,7 @@ QString replaceToken(QChar token, const QDate &date,
   case 'D':
     return date.toString(QLatin1String("dd"));
   case 'c':
-    return session->channel();
+    return sanitize(session->channel());
   }
   return unknownTokenFn(token);
 }
@@ -78,7 +88,7 @@ QFileInfo makePrivLogPath(const QString &path,
                           const Czateria::Message &msg) {
   return makeLogPath(path, privTokensRgx, session, [&](auto t) {
     if (t.unicode() == 'p') {
-      return msg.nickname();
+      return sanitize(msg.nickname());
     } else {
       return QString();
     }
