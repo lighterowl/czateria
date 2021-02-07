@@ -575,8 +575,9 @@ void ChatSession::onBlockerChanged() {
 }
 
 void ChatSession::emitPendingMessages(PrivConvHash::iterator it) {
-  for (auto &&msg : it->mPendingMessages) {
-    emit privateMessageReceived(msg);
+  auto &msgs = it->mPendingMessages;
+  for (auto msgIt = msgs.cbegin(); msgIt != msgs.cend(); ++msgIt) {
+    emit privateMessageReceived(*msgIt);
   }
   it->mPendingMessages.clear();
 }
