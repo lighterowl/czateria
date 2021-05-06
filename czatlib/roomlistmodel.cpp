@@ -29,6 +29,10 @@ RoomListModel::RoomListModel(QObject *parent, QNetworkAccessManager *nam,
 }
 
 void RoomListModel::download() {
+  if (mReply) {
+    qInfo() << "Download request already pending";
+    return;
+  }
   mReply = mNAM->get(QNetworkRequest(
       QUrl(QLatin1String("https://czateria.interia.pl/rooms-list"))));
   connect(mReply, &QNetworkReply::finished, this,
@@ -114,6 +118,9 @@ QVector<Room> RoomListModel::jsonToChannels(const QJsonArray &arr) {
 }
 
 void RoomListModel::onDownloadFinished() {
+  if (!mReply) {
+    return;
+  }
   if (mReply->error() != QNetworkReply::NoError) {
     mReply->deleteLater();
     mReply = nullptr;
