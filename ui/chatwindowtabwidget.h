@@ -41,7 +41,7 @@ public:
 signals:
   void privateConversationAccepted(const QString &nickname);
   void privateConversationRejected(const QString &nickname);
-  void privateConversationClosed(const QString &nickname);
+  void privateConversationClosed(const QString &nickname, int tabIndex);
 
 private:
   void onTabCloseRequested(int index);

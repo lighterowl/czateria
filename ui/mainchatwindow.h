@@ -11,6 +11,7 @@ class QMessageBox;
 struct AppSettings;
 class MainWindow;
 class QMimeData;
+class QLineEdit;
 
 namespace Ui {
 class ChatWidget;
@@ -54,6 +55,8 @@ private:
   bool sendImageFromMime(const QMimeData *);
   void onUserLeft(const QString &);
   void onPrivateConversationCancelled(const QString &);
+  QLineEdit *createLineEdit();
+  QLineEdit *currentLineEdit() const;
 
   void dragEnterEvent(QDragEnterEvent *) override;
   void dropEvent(QDropEvent *) override;

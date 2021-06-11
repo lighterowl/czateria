@@ -333,15 +333,20 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   });
 
   connect(ui->tabWidget, &ChatWindowTabWidget::privateConversationClosed, this,
-          [=](auto &&nickname) {
+          [=](auto &&nickname, auto tabIndex) {
+            auto lineEdit = ui->stackedLineEdits->widget(tabIndex);
+            ui->stackedLineEdits->removeWidget(lineEdit);
+            lineEdit->deleteLater();
+
             mChatSession->notifyPrivateConversationClosed(nickname);
             updateWindowTitle();
           });
   connect(ui->tabWidget, &ChatWindowTabWidget::currentChanged, this,
           [=](int tabIdx) {
-            // disable completer for private conversations
-            ui->lineEdit->setCompleter(tabIdx == 0 ? mNicknameCompleter
-                                                   : nullptr);
+            if (tabIdx >= ui->stackedLineEdits->count()) {
+              ui->stackedLineEdits->insertWidget(tabIdx, createLineEdit());
+            }
+            ui->stackedLineEdits->setCurrentIndex(tabIdx);
             updateWindowTitle();
           });
   connect(mChatSession, &Czateria::ChatSession::banned, this,
@@ -361,10 +366,6 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
                               QLatin1String("HH:mm:ss"))));
           });
 
-  connect(ui->lineEdit, &QLineEdit::returnPressed, this,
-          &MainChatWindow::onReturnPressed);
-  ui->lineEdit->setCompleter(mNicknameCompleter);
-
   connect(ui->listView, &QAbstractItemView::doubleClicked, this,
           &MainChatWindow::onUserNameDoubleClicked);
   connect(ui->listView, &UserListView::mouseMiddleClicked, this,
@@ -383,7 +384,10 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
             mainWin->removeNotification(this, nickname);
           });
 
-  ui->lineEdit->installEventFilter(this);
+  // nickname completer is only used for the main channel lineEdit
+  auto lineEdit = createLineEdit();
+  lineEdit->setCompleter(mNicknameCompleter);
+  ui->stackedLineEdits->addWidget(lineEdit);
 
   mChatSession->start();
 }
@@ -413,7 +417,7 @@ void MainChatWindow::onNewPrivateConversation(const QString &nickname) {
 }
 
 void MainChatWindow::onReturnPressed() {
-  auto text = ui->lineEdit->text();
+  auto text = currentLineEdit()->text();
   auto currentNickname = ui->tabWidget->getCurrentNickname();
   if (currentNickname.isNull()) {
     mChatSession->sendRoomMessage(text);
@@ -422,7 +426,7 @@ void MainChatWindow::onReturnPressed() {
   } else {
     return;
   }
-  ui->lineEdit->clear();
+  currentLineEdit()->clear();
   ui->tabWidget->addMessageToCurrent(
       {QDateTime::currentDateTime(), text, mChatSession->nickname()});
 }
@@ -432,7 +436,7 @@ void MainChatWindow::onUserNameDoubleClicked(const QModelIndex &proxyIdx) {
   auto nickname = mChatSession->userListModel()->data(idx).toString();
   if (nickname != mChatSession->nickname()) {
     ui->tabWidget->openPrivateMessageTab(nickname);
-    ui->lineEdit->setFocus(Qt::OtherFocusReason);
+    currentLineEdit()->setFocus(Qt::OtherFocusReason);
   }
 }
 
@@ -440,12 +444,12 @@ void MainChatWindow::onUserNameMiddleClicked() {
   auto idx =
       mSortProxy->mapToSource(ui->listView->selectionModel()->currentIndex());
   auto nickname = mChatSession->userListModel()->data(idx).toString();
-  ui->lineEdit->insert(nickname);
+  currentLineEdit()->insert(nickname);
 }
 
 void MainChatWindow::doAcceptPrivateConversation(const QString &nickname) {
   mChatSession->acceptPrivateConversation(nickname);
-  ui->lineEdit->setFocus(Qt::OtherFocusReason);
+  currentLineEdit()->setFocus(Qt::OtherFocusReason);
   notifyActivity();
 }
 
@@ -508,6 +512,19 @@ void MainChatWindow::onPrivateConversationCancelled(const QString &nickname) {
   }
 }
 
+QLineEdit *MainChatWindow::createLineEdit() {
+  auto rv = new QLineEdit;
+  connect(rv, &QLineEdit::returnPressed, this,
+          &MainChatWindow::onReturnPressed);
+  rv->installEventFilter(this);
+  return rv;
+}
+
+QLineEdit *MainChatWindow::currentLineEdit() const {
+  return static_cast<QLineEdit *>(
+      ui->stackedLineEdits->widget(ui->tabWidget->currentIndex()));
+}
+
 void MainChatWindow::dragEnterEvent(QDragEnterEvent *ev) {
   if (ui->tabWidget->getCurrentNickname().isEmpty()) {
     return;
@@ -540,7 +557,7 @@ void MainChatWindow::dropEvent(QDropEvent *ev) {
 }
 
 bool MainChatWindow::eventFilter(QObject *obj, QEvent *ev) {
-  if (obj == ui->lineEdit && ev->type() == QEvent::KeyPress) {
+  if (obj == currentLineEdit() && ev->type() == QEvent::KeyPress) {
     auto keyEv = static_cast<QKeyEvent *>(ev);
     if (keyEv == QKeySequence::Paste &&
         !ui->tabWidget->getCurrentNickname().isEmpty()) {
