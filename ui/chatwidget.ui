@@ -148,7 +148,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit"/>
+       <widget class="QStackedWidget" name="stackedLineEdits"/>
       </item>
      </layout>
     </widget>

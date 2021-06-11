@@ -260,7 +260,7 @@ void ChatWindowTabWidget::onTabCloseRequested(int index) {
   removeTab(index);
   delete w;
   mPrivateTabs.remove(nickname);
-  emit privateConversationClosed(nickname);
+  emit privateConversationClosed(nickname, index);
 }
 
 void ChatWindowTabWidget::writePrivateInfo(PrivateChatTab *tab,
