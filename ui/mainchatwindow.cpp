@@ -273,8 +273,14 @@ MainChatWindow::MainChatWindow(QSharedPointer<Czateria::LoginSession> login,
   mSortProxy->setFilterCaseSensitivity(Qt::CaseInsensitive);
   mSortProxy->setSortLocaleAware(true);
   mSortProxy->setDynamicSortFilter(true);
+
   void (QSortFilterProxyModel::*setFilterFn)(const QString &) =
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
       &QSortFilterProxyModel::setFilterRegExp;
+#else
+      &QSortFilterProxyModel::setFilterRegularExpression;
+#endif
+
   connect(ui->lineEdit_2, &QLineEdit::textChanged, mSortProxy, setFilterFn);
 
   ui->listView->setModel(mSortProxy);

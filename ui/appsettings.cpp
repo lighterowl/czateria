@@ -16,7 +16,7 @@ QVector<QRegularExpression> fromVariantList(const QList<QVariant> &varList) {
   QVector<QRegularExpression> rv;
   rv.reserve(varList.size());
   for (auto &&var : varList) {
-    if (var.type() == QVariant::RegularExpression) {
+    if (var.canConvert<QRegularExpression>()) {
       auto rgx = var.toRegularExpression();
       if (rgx.isValid()) {
         rv.push_back(rgx);
@@ -29,7 +29,7 @@ QVector<QRegularExpression> fromVariantList(const QList<QVariant> &varList) {
 void readRegexList(const QSettings &settings, const QLatin1String &key,
                    QVector<QRegularExpression> &dest) {
   auto variant = settings.value(key);
-  if (variant.isValid() && variant.type() == QVariant::List) {
+  if (variant.isValid() && variant.canConvert<QVariantList>()) {
     dest = fromVariantList(variant.toList());
   }
 }
@@ -59,7 +59,7 @@ AppSettings::AppSettings()
                   QLatin1String("%~/.czateria/logs/%u/%Y-%M-%D/%c/%p.log")) {
 
   auto variant = mSettings.value(QLatin1String("logins"));
-  if (variant.isValid() && variant.type() == QVariant::Hash) {
+  if (variant.isValid() && variant.canConvert<QVariantHash>()) {
     auto loginsHash = variant.toHash();
     for (auto it = loginsHash.cbegin(); it != loginsHash.cend(); ++it) {
       logins[it.key()] = it.value().toString();
@@ -67,7 +67,7 @@ AppSettings::AppSettings()
   }
 
   variant = mSettings.value(QLatin1String("notifications"));
-  if (variant.isValid() && variant.type() == QVariant::String) {
+  if (variant.isValid() && variant.canConvert<QString>()) {
     auto styleStr = variant.toString();
     bool ok = false;
     auto metaEnum = QMetaEnum::fromType<AppSettings::NotificationStyle>();

@@ -16,7 +16,7 @@
 #include <QCompleter>
 #include <QDebug>
 #include <QMessageBox>
-#include <QRegExpValidator>
+#include <QRegularExpressionValidator>
 #include <QSettings>
 #include <QSharedPointer>
 #include <QSortFilterProxyModel>
@@ -85,7 +85,8 @@ void loginErrorMessageBox(QWidget *parent, Ui::MainWindow *ui,
 // this should really be placed somewhere in czatlib, but QValidator lives
 // inside Qt's gui module that we don't want czatlib to depend on.
 const QValidator *getNicknameValidator() {
-  static const QRegExpValidator validator(QRegExp(QLatin1String("[^'@\\$]+")));
+  static const QRegularExpressionValidator validator(
+      QRegularExpression(QLatin1String("[^'@\\$]+")));
   return &validator;
 }
 

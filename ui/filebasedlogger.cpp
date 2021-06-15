@@ -55,14 +55,13 @@ QString makeLogPath(const QString &input, const QRegularExpression &rgx,
     auto m = it.next();
     auto matchStart = m.capturedStart();
     if (inpos != m.capturedStart()) {
-      out.append(QStringRef(&input, inpos, matchStart - inpos));
+      out.append(input.constData() + inpos, matchStart - inpos);
     }
-    out.append(
-        replaceToken(m.capturedRef().at(1), date, session, unknownTokenFn));
+    out.append(replaceToken(m.captured().at(1), date, session, unknownTokenFn));
     inpos = m.capturedEnd();
   }
   if (inpos != input.length()) {
-    out.append(QStringRef(&input, inpos, input.length() - inpos));
+    out.append(input.constData() + inpos, input.length() - inpos);
   }
   return out;
 }
@@ -79,20 +78,20 @@ static const QRegularExpression privTokensRgx(QLatin1String("%[" COMMON_TOKENS
 
 QFileInfo makeRoomLogPath(const QString &path,
                           const Czateria::ChatSession *session) {
-  return makeLogPath(path, roomTokensRgx, session,
-                     [](auto) { return QString(); });
+  return QFileInfo{makeLogPath(path, roomTokensRgx, session,
+                               [](auto) { return QString(); })};
 }
 
 QFileInfo makePrivLogPath(const QString &path,
                           const Czateria::ChatSession *session,
                           const Czateria::Message &msg) {
-  return makeLogPath(path, privTokensRgx, session, [&](auto t) {
+  return QFileInfo{makeLogPath(path, privTokensRgx, session, [&](auto t) {
     if (t.unicode() == 'p') {
       return sanitize(msg.nickname());
     } else {
       return QString();
     }
-  });
+  })};
 }
 } // namespace
 

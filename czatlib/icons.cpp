@@ -66,8 +66,7 @@ namespace Czateria {
 QString convertRawMessage(const QString &str, IconReplaceMode replaceMode) {
   const auto member = replaceMode == IconReplaceMode::Text ? &Icon::text : &Icon::emoji;
   static const auto re =
-      QRegularExpression(QLatin1String("<icon>(\\d+)</icon>"),
-                         QRegularExpression::OptimizeOnFirstUsageOption);
+      QRegularExpression(QLatin1String("<icon>(\\d+)</icon>"));
   auto rv = str;
   auto it = re.globalMatch(str);
   int offset = 0;
