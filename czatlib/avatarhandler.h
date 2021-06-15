@@ -90,7 +90,12 @@ public:
     auto request = QNetworkRequest(QUrl(address));
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                          QNetworkRequest::PreferCache);
+#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#else
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
+#endif
     auto reply = mNAM->get(request);
     QObject::connect(reply, &QNetworkReply::finished, [=]() {
       if (reply->error() == QNetworkReply::NoError) {
