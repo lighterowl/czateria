@@ -119,6 +119,7 @@ QJsonObject sessionEndMsg() { return czateriaCodeMsg(80); }
 QJsonObject keepaliveMsg() { return czateriaCodeMsg(1003); }
 
 bool shouldUseQueuedConnectionForWebSocket() {
+#if QT_VERSION < QT_VERSION_CHECK(5, 8, 0)
   // QTBUG-55506
   static QVariant cached_result;
   if (cached_result.isValid()) {
@@ -142,6 +143,9 @@ bool shouldUseQueuedConnectionForWebSocket() {
   }
   cached_result = rv;
   return rv;
+#else
+  return false;
+#endif
 }
 
 bool privSubcodeToState(int subcode, Czateria::ConversationState &state) {
