@@ -42,6 +42,8 @@ NotificationSupportWin10::NotificationSupportWin10()
   mWinToast.setAppName(appname);
   mWinToast.setAppUserModelId(WinToast::configureAUMI(
       QCoreApplication::organizationName().toStdWString(), appname));
+  mWinToast.setShortcutPolicy(WinToast::SHORTCUT_POLICY_IGNORE);
+  mWinToast.initialize();
 }
 
 void NotificationSupportWin10::displayNotification(MainChatWindow *chatWin,
@@ -70,7 +72,7 @@ void NotificationSupportWin10::displayNotification(MainChatWindow *chatWin,
 }
 
 bool NotificationSupportWin10::supported() const {
-  return mWinToast.initialize() && WinToast::isSupportingModernFeatures();
+  return WinToast::isSupportingModernFeatures();
 }
 
 void NotificationSupportWin10::onChatWindowDestroyed(QObject *obj) {
