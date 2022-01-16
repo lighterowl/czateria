@@ -25,4 +25,4 @@ jobs:
       
     - name: Build with MSVC
       shell: cmd
-      run: workflow_build_windows.bat
+      run: ./.github/workflow_build_windows.bat
