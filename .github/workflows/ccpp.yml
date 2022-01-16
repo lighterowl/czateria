@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v1
     
     - name: Install Qt
-      run: sudo apt-get update; sudo apt-get install qt5-default qtbase5-dev libqt5websockets5-dev ninja;
+      run: sudo apt-get update; sudo apt-get install qt5-default qtbase5-dev libqt5websockets5-dev ninja-build;
       
     - name: Build for Linux
       run: ./.github/workflow_build_linux.sh
