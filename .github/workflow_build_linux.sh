@@ -5,7 +5,9 @@ set -x
 
 for c in g++ clang++; do
   for t in Debug Release; do
-    pushd "build_${c}_${t}"
+    blddir="build_${c}_${t}"
+    mkdir "$blddir"
+    pushd "$blddir"
     CXX=$c cmake -DCMAKE_BUILD_TYPE=$t -GNinja ..
     ninja
     popd
