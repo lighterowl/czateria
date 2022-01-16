@@ -17,6 +17,6 @@ rem hidden inside .prl files for Qt5Xyz, so everything worked out of the box.
 cmake -DCMAKE_PREFIX_PATH=C:\Qt\5.6.3-Static-XP\lib\cmake^
   -GNinja -DCMAKE_BUILD_TYPE=Release -DTARGET_WINDOWS_XP=TRUE^
   -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded^
-  -DUI_EXTRA_QT_LIBS=C:\Qt\5.6.3-Static-XP\lib\libeay32.lib;C:\Qt\5.6.3-Static-XP\lib\qtpcre.lib;C:\Qt\5.6.3-Static-XP\lib\ssleay32.lib;ws2_32;crypt32;dnsapi;iphlpapi^
+  -DUI_EXTRA_QT_LIBS=C:\Qt\5.6.3-Static-XP\plugins\platforms\qwindows.lib;C:\Qt\5.6.3-Static-XP\lib\libeay32.lib;C:\Qt\5.6.3-Static-XP\lib\qtpcre.lib;C:\Qt\5.6.3-Static-XP\lib\ssleay32.lib;ws2_32;crypt32;dnsapi;iphlpapi^
   ..
 ninja
