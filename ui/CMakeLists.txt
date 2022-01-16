@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 project(czatui CXX)
 
 add_executable(ui
@@ -24,5 +24,5 @@ elseif(${${qt_ver_pfx}DBus_FOUND})
     set(extra_libs ${qt_ver_pfx}::DBus)
 endif()
 
-target_link_libraries(ui PRIVATE czatlib ${qt_ver_pfx}::Widgets ${extra_libs})
+target_link_libraries(ui PRIVATE czatlib ${qt_ver_pfx}::Widgets ${extra_libs} ${UI_EXTRA_QT_LIBS})
 target_include_directories(ui PRIVATE ${CMAKE_SOURCE_DIR})

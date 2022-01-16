@@ -1,5 +1,14 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_policy(SET CMP0091 NEW)
 project(czateria CXX)
+
+if(TARGET_WINDOWS_XP)
+    # this is an internal cmake variable set by the MSVC support module,
+    # but there is no other way to change the subsystem passed to the linker.
+    set(CMAKE_CREATE_WIN32_EXE "/subsystem:windows,5.01")
+    # used by newer cmake
+    set(CMAKE_CXX_CREATE_WIN32_EXE "/subsystem:windows,5.01")
+endif()
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
