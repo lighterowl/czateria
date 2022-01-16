@@ -3,10 +3,11 @@
 set -e
 set -x
 
-compiler=$1
-qmakeflags=(CONFIG+=debug_and_release)
-
-mkdir -p "build_${compiler}"
-cd "build_${compiler}"
-qmake ../czateria.pro -spec "linux-${compiler}" "${qmakeflags[@]}"
-make -j$(grep -c ^processor /proc/cpuinfo) all
+for c in g++ clang++; do
+  for t in Debug Release; do
+    pushd "build_${c}_${t}"
+    CXX=$c cmake -DCMAKE_BUILD_TYPE=$t -GNinja ..
+    ninja
+    popd
+  done
+done

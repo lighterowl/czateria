@@ -1,4 +1,3 @@
-
 mkdir C:\Qt\
 powershell -Command "Invoke-WebRequest https://github.com/xavery/qt563xp/releases/download/1.2/Qt-5.6.3-Static-XP.7z -O qt-xp-static.7z"
 7z x -oC:\Qt\ qt-xp-static.7z

@@ -3,11 +3,11 @@ cmake_policy(SET CMP0091 NEW)
 project(czateria CXX)
 
 if(TARGET_WINDOWS_XP)
-    # this is an internal cmake variable set by the MSVC support module,
-    # but there is no other way to change the subsystem passed to the linker.
-    set(CMAKE_CREATE_WIN32_EXE "/subsystem:windows,5.01")
-    # used by newer cmake
-    set(CMAKE_CXX_CREATE_WIN32_EXE "/subsystem:windows,5.01")
+  # this is an internal cmake variable set by the MSVC support module, but there
+  # is no other way to change the subsystem passed to the linker.
+  set(CMAKE_CREATE_WIN32_EXE "/subsystem:windows,5.01")
+  # used by newer cmake
+  set(CMAKE_CXX_CREATE_WIN32_EXE "/subsystem:windows,5.01")
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
@@ -18,7 +18,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-add_compile_definitions(QT_DEPRECATED_WARNINGS QT_NO_CAST_FROM_ASCII QT_NO_CAST_TO_ASCII)
+add_compile_definitions(QT_DEPRECATED_WARNINGS QT_NO_CAST_FROM_ASCII
+  QT_NO_CAST_TO_ASCII)
 
 if(MSVC)
   add_compile_options(-WX)

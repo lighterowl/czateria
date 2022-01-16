@@ -25,5 +25,5 @@ jobs:
     - uses: actions/upload-artifact@master
       with:
         name: Main UI binary
-        path: build/ui/release/ui.exe
+        path: build/ui/ui.exe
       name: upload-ui-build
