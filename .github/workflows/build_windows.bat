@@ -1,4 +1,4 @@
-call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
 mkdir build
 cd build
 powershell -Command "Invoke-WebRequest http://download.qt.io/official_releases/jom/jom.zip -O jom.zip"
