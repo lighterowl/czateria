@@ -20,7 +20,7 @@ jobs:
       run: sudo apt-get update; sudo apt-get install qt5-default qtbase5-dev libqt5websockets5-dev;
       
     - name: Build with gcc
-      run: ./workflow_build_linux.sh g++
+      run: .github/workflows/build_linux.sh g++
       
     - name: Build with clang
-      run: ./workflow_build_linux.sh clang
+      run: .github/workflows/build_linux.sh clang

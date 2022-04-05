@@ -20,7 +20,7 @@ jobs:
 
     - name: Build for Windows XP
       shell: cmd
-      run: workflow_build_winxp.bat
+      run: .github/workflows/build_winxp.bat
 
     - uses: actions/upload-artifact@master
       with:
