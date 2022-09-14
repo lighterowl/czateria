@@ -254,17 +254,18 @@ void ChatSession::sendRoomMessage(const QString &message) {
 
 void ChatSession::sendPrivateMessage(const QString &nickname,
                                      const QString &message) {
-  mListener->onPrivateMessageSent(
-      this, Message(QDateTime::currentDateTime(), message, nickname));
+  auto msg = Message{QDateTime::currentDateTime(), message, nickname};
+  mListener->onPrivateMessageSent(this, msg);
   auto it = mCurrentPrivate.find(nickname);
   if (it == std::end(mCurrentPrivate) ||
       it->mState == ConversationState::Rejected ||
       it->mState == ConversationState::Closed) {
     SendTextMessage(mWebSocket, privInviteMsg(message, nickname));
     mCurrentPrivate[nickname].mState = ConversationState::InviteSent;
-  } else if (it->mState == ConversationState::Active ||
-             it->mState == ConversationState::InviteSent) {
+  } else if (it->mState == ConversationState::Active) {
     SendTextMessage(mWebSocket, privMessageMsg(message, nickname));
+  } else if (it->mState == ConversationState::InviteSent) {
+    it->mPendingOutgoingMessages.push_back(msg);
   } else {
     Q_ASSERT(false && "unknown private conversation state");
   }
@@ -434,17 +435,22 @@ bool ChatSession::handlePrivateMessage(const QJsonObject &json) {
         it->mState == ConversationState::Closed) {
       auto &ctx = mCurrentPrivate[user];
       ctx.mState = ConversationState::InviteReceived;
-      ctx.mPendingMessages.push_back(msg);
+      ctx.mPendingIncomingMessages.push_back(msg);
       emit newPrivateConversation(user);
     } else {
       const auto state = it->mState;
       if (state == ConversationState::InviteSent) {
         it->mState = ConversationState::Active;
         emit privateMessageReceived(msg);
+        for (auto &&savedMsg : it->mPendingOutgoingMessages) {
+          SendTextMessage(mWebSocket, privMessageMsg(savedMsg.rawMessage(),
+                                                     savedMsg.nickname()));
+        }
+        it->mPendingOutgoingMessages.clear();
       } else if (state == ConversationState::Active) {
         emit privateMessageReceived(msg);
       } else if (state == ConversationState::InviteReceived) {
-        it->mPendingMessages.push_back(msg);
+        it->mPendingIncomingMessages.push_back(msg);
       } else {
         Q_ASSERT(false && "unknown state in handlePrivateMessage");
         return false;
@@ -579,11 +585,11 @@ void ChatSession::onBlockerChanged() {
 }
 
 void ChatSession::emitPendingMessages(PrivConvHash::iterator it) {
-  auto &msgs = it->mPendingMessages;
+  auto &msgs = it->mPendingIncomingMessages;
   for (auto msgIt = msgs.cbegin(); msgIt != msgs.cend(); ++msgIt) {
     emit privateMessageReceived(*msgIt);
   }
-  it->mPendingMessages.clear();
+  it->mPendingIncomingMessages.clear();
 }
 
 } // namespace Czateria

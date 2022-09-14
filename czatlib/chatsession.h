@@ -109,7 +109,8 @@ private:
 
   struct PrivConvContext {
     ConversationState mState;
-    QVector<Message> mPendingMessages;
+    QVector<Message> mPendingIncomingMessages;
+    QVector<Message> mPendingOutgoingMessages;
   };
   using PrivConvHash = QHash<QString, PrivConvContext>;
   PrivConvHash mCurrentPrivate;
